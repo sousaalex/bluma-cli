@@ -1,0 +1,88 @@
+{
+  "mcpServers": {
+    "notebook": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "mcp-sequentialthinking-tools"
+      ]
+    },
+    "github": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+      }
+    },
+    "notion": {
+        "command": "cmd",
+        "args": [
+          "/c",
+          "npx",
+          "-y",
+          "@suekou/mcp-notion-server"
+        ],
+        "env": {
+          "NOTION_API_TOKEN": "ntn_J69752023466CtQaNyFz6zfrvBlsXodE6SEsFKZjui59Gl"
+        }
+    },
+    "upstash_context7-mcp": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    },
+    "shell_command": {
+      "type": "sse",
+      "url": "http://localhost:8080/sse"
+    },
+    "file_operations": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\file_operations",
+        "run",
+        "file_operations.py"
+      ]
+    },
+    "message": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\message",
+        "run",
+        "message_mcp.py"
+      ]
+    },
+    "idle": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\idle",
+        "run",
+        "idle.py"
+      ]
+    },
+    "edit": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\edit",
+        "run",
+        "edit.py"
+      ]
+    }
+  }
+}

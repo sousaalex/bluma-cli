@@ -1,13 +1,21 @@
 [project]
-name = "deepseek-engineer"
+name = "bluma-engineer"
 version = "0.1.0"
-description = "Add your description here"
+description = "BluMA engineer"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "fastmcp>=2.6.1",
+    "fpdf>=1.7.2",
+    "httpx>=0.28.1",
+    "markdown>=3.8",
+    "mcp-server>=0.1.4",
+    "ollama>=0.5.1",
     "openai>=1.58.1",
+    "pdfkit>=1.0.0",
     "prompt-toolkit>=3.0.50",
     "pydantic>=2.10.4",
     "python-dotenv>=1.0.1",
+    "reportlab>=4.4.1",
     "rich>=13.9.4",
 ]

@@ -1,0 +1,164 @@
+{
+  "api_configuration": {
+    "description": "🎯 ADVANCED AZURE OPENAI API CONFIGURATION",
+    "version": "2025-04-01-preview",
+    "last_updated": "2025-01-04"
+  },
+  
+  "model_specific_params": {
+    "gpt-4.1": {
+      "temperature": 0.25,
+      "max_tokens": 8192,
+      "max_completion_tokens": 8192,
+      "top_p": 0.8,
+      "frequency_penalty": 0.15,
+      "presence_penalty": 0.1,
+      "seed": 42,
+      "timeout": 120.0,
+      "description": "🚀 Optimized for precision and consistency"
+    },
+    
+    "gpt-4o": {
+      "temperature": 0.3,
+      "max_tokens": 8192,
+      "max_completion_tokens": 8192,
+      "top_p": 0.85,
+      "frequency_penalty": 0.15,
+      "presence_penalty": 0.1,
+      "seed": null,
+      "timeout": 120.0,
+      "description": "🎯 Balanced performance and creativity"
+    },
+    
+    "gpt-4o-mini": {
+      "temperature": 0.35,
+      "max_tokens": 4096,
+      "max_completion_tokens": 4096,
+      "top_p": 0.9,
+      "frequency_penalty": 0.1,
+      "presence_penalty": 0.05,
+      "seed": null,
+      "timeout": 60.0,
+      "description": "🏃 Fast mode with creative flexibility"
+    },
+    
+    "o1-preview": {
+      "temperature": 0.2,
+      "max_tokens": 16384,
+      "max_completion_tokens": 16384,
+      "top_p": 0.75,
+      "frequency_penalty": 0.05,
+      "presence_penalty": 0.05,
+      "reasoning_effort": "medium",
+      "seed": 42,
+      "timeout": 180.0,
+      "description": "🧠 Reasoning model with enhanced logical processing"
+    },
+    
+    "o3": {
+      "temperature": 0.2,
+      "max_tokens": 16384,
+      "max_completion_tokens": 16384,
+      "top_p": 0.75,
+      "frequency_penalty": 0.05,
+      "presence_penalty": 0.05,
+      "reasoning_effort": "medium",
+      "seed": 42,
+      "timeout": 240.0,
+      "description": "🧠 Advanced reasoning model"
+    },
+    
+    "o4-mini": {
+      "temperature": 0.25,
+      "max_tokens": 8192,
+      "max_completion_tokens": 8192,
+      "top_p": 0.8,
+      "frequency_penalty": 0.05,
+      "presence_penalty": 0.05,
+      "reasoning_effort": "low",
+      "seed": 42,
+      "timeout": 120.0,
+      "description": "🧠 Fast reasoning model"
+    }
+  },
+  
+  "global_defaults": {
+    "n": 1,
+    "logprobs": false,
+    "parallel_tool_calls": true,
+    "stream": false,
+    "user": "bluma-agent",
+    "response_format": { "type": "text" }
+  },
+  
+  "advanced_parameters": {
+    "logit_bias": {
+      "description": "🎯 Fine-tune token probabilities",
+      "common_optimizations": {
+        "50256": -15,
+        "198": -8,
+        "314": -5,
+        "25": -10
+      },
+      "usage": "Control unwanted tokens and repetition"
+    },
+    
+    "response_formats": {
+      "text": { "type": "text" },
+      "json_object": { "type": "json_object" },
+      "json_schema": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "structured_response",
+          "strict": true,
+          "schema": "Dynamic based on request"
+        }
+      },
+      "description": "🚀 Multiple output format options"
+    },
+    
+    "stream_options": {
+      "enabled": false,
+      "include_usage": true,
+      "description": "⚡ Real-time streaming with usage data"
+    },
+    
+    "logprobs_config": {
+      "enabled": false,
+      "top_logprobs": 5,
+      "description": "📊 Token probability analysis for quality monitoring"
+    },
+    
+    "metadata_tracking": {
+      "store": false,
+      "metadata": {
+        "session_type": "engineering",
+        "quality_mode": "high",
+        "tracking_enabled": true
+      },
+      "description": "📋 Enhanced session and quality tracking"
+    }
+  },
+  
+  "experimental_features": {
+    "enable_caching": true,
+    "enable_reasoning_summaries": true,
+    "enable_prediction_optimization": false,
+    "enable_stored_completions": false,
+    "description": "🧪 Experimental features for advanced use cases"
+  },
+  
+  "performance_monitoring": {
+    "enable_token_tracking": true,
+    "enable_latency_monitoring": true,
+    "enable_quality_scoring": true,
+    "log_level": "info"
+  },
+  
+  "safety_settings": {
+    "content_filter_level": "default",
+    "max_retries": 3,
+    "retry_delay": 1.0,
+    "enable_timeout_fallback": true
+  }
+} 

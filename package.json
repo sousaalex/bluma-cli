@@ -1,0 +1,32 @@
+{
+  "devDependencies": {
+    "@types/mongodb": "^4.0.6",
+    "@types/node": "^24.0.4",
+    "@types/react": "^19.1.8",
+    "@types/uuid": "^10.0.0",
+    "esbuild": "^0.25.5",
+    "esbuild-register": "^3.6.0",
+    "ink": "^6.0.1",
+    "ink-testing-library": "^4.0.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^19.1.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx cli/index.tsx",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "dependencies": {
+    "ink-big-text": "^2.0.0",
+    "ink-divider": "^4.1.1",
+    "ink-gradient": "^3.0.0",
+    "ink-spinner": "^5.0.0",
+    "node-fetch": "^3.3.2",
+    "uuid": "^11.1.0"
+  }
+}
