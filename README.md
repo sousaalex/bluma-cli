@@ -19,20 +19,28 @@
 
 ```
 bluma-engineer/
+├── BLUMA_CLI_PLAN.md           # Planejamento e visão geral do projeto
 ├── cli/
-│   ├── backend/         # Lógica em Python: agente, métricas, feedback, notebook
-│   ├── components/      # Componentes React/Ink da interface CLI
-│   ├── config/          # Arquivos de configuração (JSON)
-│   ├── mcp/             # Ferramentas MCP: manipulação de arquivos, shell, edição, etc.
-│   ├── prompt_core/     # Sistema de prompts dinâmicos
-│   ├── protocols/       # Protocolos operacionais (idle, notificações, etc.)
-│   └── index.tsx        # Ponto de entrada da interface CLI (Ink/React)
-├── logs/                # Logs e métricas detalhadas
-├── sessions/            # Sessões/contextos salvos
-├── requirements.txt     # Dependências do backend (Python)
-├── package.json         # Dependências do frontend (Node.js/TypeScript)
-├── tsconfig.json        # Configuração do TypeScript
-└── README.md            # Documentação principal
+│   ├── backend/                # Lógica em Python: agente, métricas, feedback, notebook
+│   │   ├── core/              # Núcleo: agent.py, feedback.py, metrics.py, notebook.py, tools.py
+│   │   └── bluma.py           # Entrypoint do backend Python
+│   ├── components/            # Componentes React/Ink da interface CLI
+│   │   └── ui/                # Subcomponentes de UI (AsciiArt)
+│   ├── config/                # Arquivos de configuração (JSON)
+│   ├── mcp/                   # Ferramentas MCP: code_analysis, code_manipulation, edit, end_task, file_operations, idle, message, shell
+│   ├── prompt_core/           # Sistema de prompts dinâmicos
+│   │   ├── description/       # Descrições de prompt
+│   │   └── prompt/            # Núcleo dos prompts
+│   ├── protocols/             # Protocolos operacionais (idle, notificações, documentação)
+│   └── index.tsx              # Ponto de entrada da interface CLI (Ink/React)
+├── logs/                      # Logs e métricas detalhadas
+├── sessions/                  # Sessões/contextos salvos (JSON)
+├── package.json               # Dependências do frontend (Node.js/TypeScript)
+├── pyproject.toml             # Configuração avançada Python (opcional)
+├── requirements.txt           # Dependências do backend (Python)
+├── tsconfig.json              # Configuração do TypeScript
+├── uv.lock                    # Lockfile Python (opcional)
+└── README.md                  # Documentação principal
 ```
 
 ---
