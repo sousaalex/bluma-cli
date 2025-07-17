@@ -83,3 +83,4 @@ node_modules/
 
 #sessions
 sessions/
+sessions/*
