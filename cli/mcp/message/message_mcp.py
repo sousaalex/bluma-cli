@@ -8,20 +8,17 @@ mcp = FastMCP("messages")
 @mcp.tool(
         description=(
             """ 
-                Send notifications to the developer without requiring a response. Use to acknowledge receipt of tasks, provide progress updates, communicate task completion, or explain changes in approach.
-                text_markdown (str): Notification content use GitHub-style Markdown
-                needed_send_more_notfications (bool): Whether there will be more notifications to the human dev during their work loop. Default: true
-                If the DEV's task is sweating or greeting, you must notify and call **idle_idle** immediately.
+                Send a message to dev without requiring a response. Use for acknowledging receipt of messages, providing progress updates, reporting task completion, or explaining changes in approach.
             """
         )
 )
 def notify_dev(
     text_markdown: str,
-    needed_send_more_notfications: bool = True,
+    # needed_send_more_notfications: bool = True,
 
 ) -> dict:
     return {
-        "type": "notify_dev",
+        "type": "message_notify_dev",
         "id": f"notify_{uuid.uuid4()}",
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "content": {
@@ -30,30 +27,30 @@ def notify_dev(
         },
         "success": True,
         "delivered": True,
-        "needed_send_more_notfications": needed_send_more_notfications,
+        # "needed_send_more_notfications": needed_send_more_notfications,
     }
 
-@mcp.tool()
-def ask_dev(question: str) -> Dict[str, str]:
-    """
-    Ask a question to the developer and wait for a response. Use only to request clarification, confirmation, or provide additional information.
+# @mcp.tool()
+# def ask_dev(question: str) -> Dict[str, str]:
+#     """
+#     Ask a question to the developer and wait for a response. Use only to request clarification, confirmation, or provide additional information.
 
-    **Argument**
-    question (str): A question that will be sent to the developer.
+#     **Argument**
+#     question (str): A question that will be sent to the developer.
 
-    **Returns**
-    Dict[str, str]: Return the human dev response.
-    """
-    return {
-        "type":"question",
-        "id": f"ask_{uuid.uuid4()}",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-         "content": {
-            "format": "markdown",
-            "body": question
-        },
-        "sended": True,
-        }
+#     **Returns**
+#     Dict[str, str]: Return the human dev response.
+#     """
+#     return {
+#         "type":"question",
+#         "id": f"ask_{uuid.uuid4()}",
+#         "timestamp": datetime.utcnow().isoformat() + "Z",
+#          "content": {
+#             "format": "markdown",
+#             "body": question
+#         },
+#         "sended": True,
+#         }
 
 
 # @mcp.tool()

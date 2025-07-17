@@ -384,12 +384,7 @@ async def main():
             try:
                 user_input = json.loads(line)
                 
-                if user_input.get("type") == "user_message":
-                    # Antes de cada turno, recarrega o histórico do arquivo para garantir que nada ficou na RAM
-                    # with open(session_file, "r", encoding="utf-8") as f:
-                    #     session_data = json.load(f)
-                    #     history = session_data.get("conversation_history", [])
-                    
+                if user_input.get("type") == "user_message":   
                     history.append({"role": "user", "content": user_input["content"]})
                     
                     async for event in agent.process_turn(history):
@@ -397,11 +392,9 @@ async def main():
                         if event.get("type") == "done":
                             history = event["history"]
                             save_session_history(session_file, history) # Salva o histórico
-                            # Limpa a RAM após salvar
-                            # history.clear()
                             if event.get("status") == "completed":
                                 break 
-                
+                    
             except json.JSONDecodeError:
                 send_message({"type": "error", "message": "Input inválido do frontend (não é JSON)."})
             except Exception as e:

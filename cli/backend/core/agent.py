@@ -6,7 +6,7 @@ from .metrics import AgentMetricsTracker
 from .notebook import log_notebook_entry
 from .tools import ToolInvoker
 from cli.protocols.documentation import DocumentationProtocol
-from cli.protocols.idle import IdleProtocol
+# from cli.protocols.idle import IdleProtocol
 from cli.protocols.notification import NotificationProtocol
 
 class BluMaConfig:
@@ -46,7 +46,7 @@ class Agent:
         
         # Initialize protocols
         self.documentation_protocol = DocumentationProtocol()
-        self.idle_protocol = IdleProtocol()
+        # self.idle_protocol = IdleProtocol()
         self.notification_protocol = NotificationProtocol()
         
         # Performance tracking
@@ -94,7 +94,6 @@ class Agent:
                 - You must analyze task requirements before selecting tools
                 - You must use message_notify_dev for **ALL** communications and notfications initial
                 - You must implement complete, tested solutions
-                - You must enter idle state only after task completion
 
                 PERFORMANCE TRACKING: Your cumulative score affects future task assignments. Maintain high standards."""
             })
@@ -113,7 +112,7 @@ class Agent:
         
         # NO ITERATION LIMITS - Agent has complete freedom to work
         iteration_count = 0
-        recent_actions = []  # Track recent actions to detect real loops
+        recent_actions = [] # Track recent actions to detect real loops
         
         try:
             while True:  # Unlimited iterations - agent decides when to stop
@@ -203,15 +202,7 @@ class Agent:
 
                     # Execute tools with enhanced tracking
                     tool_responses = []
-                    is_idle = False
                     tools_executed = 0
-                    
-                    # Check current notification state
-                    if self.notify_dev_pending:
-                        yield {
-                            "type": "notification_state",
-                            "message": "⏳ Notifications pending - idle calls will be blocked"
-                        }
 
                     for tool_call in response_message.tool_calls:
                         tool_name = tool_call.function.name
@@ -266,7 +257,7 @@ class Agent:
                             # Use the error result for further processing
                             result = error_result
                         
-                        # Generate tool execution feedback with error protection
+                        # Feedback (mantém para rastreio de performance)
                         try:
                             tool_success = not (isinstance(result, dict) and result.get("error"))
                             tool_feedback = self.feedback_system.generate_feedback({
@@ -275,8 +266,6 @@ class Agent:
                                 "success": tool_success,
                                 "response_time": tool_execution_time
                             })
-                            
-                            # Send feedback to UI for all notable events
                             if tool_feedback["level"] in ["error", "excellent", "good"]:
                                 yield {
                                     "type": "feedback",
@@ -284,8 +273,6 @@ class Agent:
                                     "message": tool_feedback['message'],
                                     "score": tool_feedback['score']
                                 }
-                            
-                            # ✨ DIRECT TECHNICAL FEEDBACK TO BLUMA
                             if tool_feedback["level"] in ["excellent", "good"]:
                                 current_history.append({
                                     "role": "system",
@@ -297,12 +284,10 @@ class Agent:
                                     "content": f"CORRECTION REQUIRED: {tool_feedback['message']} You must adjust your approach immediately. Analyze the task requirements more thoroughly before selecting tools."
                                 })
                         except Exception as feedback_error:
-                            # Feedback generation failed - continue without feedback
                             yield {
                                 "type": "warning",
                                 "message": f"Feedback generation failed: {str(feedback_error)}"
                             }
-
                         tool_responses.append({
                             "role": "tool",
                             "tool_call_id": tool_call.id,
@@ -310,238 +295,44 @@ class Agent:
                             "content": str(result)
                         })
 
-                    # Check for special conditions with error protection
-                    try:
-                        # First check for notify_dev to set pending flag
-                        if "notify_dev" in tool_name or "message_notify_dev" in tool_name:
-                            try:
-                                result_json = {}
-                                if isinstance(result, str):
-                                    try:
-                                        result_json = json.loads(result)
-                                    except json.JSONDecodeError:
-                                        pass
-                                elif isinstance(result, dict):
-                                    result_json = result
-                                
-                                if isinstance(result_json, dict) and result_json.get("needed_send_more_notfications", False):
-                                    self.notify_dev_pending = True
-                                    yield {
-                                        "type": "notification_pending",
-                                        "message": "🔄 Notification indicates more actions needed - idle blocked"
-                                    }
-                                else:
-                                    # Notification completed - clear pending flag
-                                    self.notify_dev_pending = False
-                                    yield {
-                                        "type": "notification_completed",
-                                        "message": "✅ Notification completed - idle now allowed"
-                                    }
-                                    
-                                    # If message_notify_dev was used without continuation flag,
-                                    # this likely means the task is complete
-                                    # Check if this seems like a completion message
-                                    message_content = str(result).lower()
-                                    completion_indicators = [
-                                        "completed", "finished", "done", "ready",
-                                        "implemented", "created", "updated", "complete"
-                                    ]
-                                    
-                                    if any(indicator in message_content for indicator in completion_indicators):
-                                        yield {
-                                            "type": "auto_completion_detected",
-                                            "message": "✅ Task seems to be complete. Entering idle automatically."
-                                        }
-                                        is_idle = True
-                            except Exception:
-                                pass
-                        
-                        # Check for idle ONLY if no notifications are pending
-                        if 'idle' in tool_name:
-                            if self.notify_dev_pending:
-                                # Block idle when notifications are pending
+                        # NOVA LÓGICA: se for agent_end_task, encerra ciclo imediatamente (idle é só estado interno)
+                        if tool_name == "agent_end_task":
+                            self.metrics_tracker.end_task(success=True, quality_score=1.0)
+                            performance = self.metrics_tracker.get_performance_summary()
+                            if performance.get("status") != "no_data":
                                 yield {
-                                    "type": "idle_blocked",
-                                    "message": "🚫 IDLE BLOCKED: Previous notification indicated more actions needed"
+                                    "type": "performance_summary",
+                                    "data": performance,
+                                    "message": f"Cycles completed: {self.cycles_completed + 1}"
                                 }
-                                
-                                # CRITICAL: Add tool response to maintain API consistency
-                                # Even when blocking, we must respond to the tool_call
-                                # blocked_response = {
-                                #     "error": "idle_blocked_pending_notifications",
-                                #     "message": "Idle call blocked - pending notifications require completion",
-                                #     "notify_dev_pending": self.notify_dev_pending,
-                                #     "required_action": "Complete pending work before attempting idle"
-                                # }
-                                
-                                # tool_responses.append({
-                                #     "role": "tool",
-                                #     "tool_call_id": tool_call.id,
-                                #     "name": tool_name,
-                                #     "content": json.dumps(blocked_response)
-                                # })
-                                
-                                # Generate and apply penalty feedback
-                                violation_feedback = self.feedback_system.generate_feedback({
-                                    "event": "error_occurred",
-                                    "error_type": "idle_violation_pending_notifications",
-                                    "severity": "high",
-                                    "tool_name": tool_name,
-                                    "notify_dev_pending": self.notify_dev_pending
-                                })
-                                
-                                # Log the violation with full details
-                                log_notebook_entry("Idle call blocked - pending notifications", {
-                                    "tool_name": tool_name,
-                                    "notify_dev_pending": self.notify_dev_pending,
-                                    "violation_penalty": -2.0,
-                                    "feedback_score": violation_feedback.get("score", 0),
-                                    "feedback_level": violation_feedback.get("level", "error")
-                                })
-                                
-                                # Show violation feedback in UI
-                                yield {
-                                    "type": "feedback",
-                                    "level": "error",
-                                    "message": f"IDLE VIOLATION: {violation_feedback.get('message', 'Attempted idle while notifications pending')}",
-                                    "score": violation_feedback.get("score", -2.0)
-                                }
-                                
-                                # Additional debug info for user
-                                yield {
-                                    "type": "debug",
-                                    "message": f"🔍 Debug: Agent state -> notify_dev_pending={self.notify_dev_pending}, attempted_tool={tool_name}"
-                                }
-                                
-                                # Do NOT set is_idle to True - block the idle attempt
-                                is_idle = False
-                            else:
-                                # Allow idle when no notifications are pending
-                                is_idle = True
-                                yield {
-                                    "type": "idle_allowed",
-                                    "message": "✅ Idle allowed - no pending notifications"
-                                }
-                        
-                    except Exception as condition_error:
-                        # Condition checking failed - continue without special handling
-                        yield {
-                            "type": "warning",
-                            "message": f"⚠️ Condition checking failed: {str(condition_error)}"
-                        }
-                    
-                    # Add tool responses to history
+                            self.cycles_completed += 1
+                            log_notebook_entry("Agent entrou em idle (interno) após end_task", {
+                                "cycles_completed": self.cycles_completed,
+                                "cumulative_score": self.feedback_system.get_cumulative_score()
+                            })
+                            # Adiciona as tool_responses antes de terminar
+                            current_history.extend(tool_responses)
+                            yield {
+                                "type": "done",
+                                "status": "completed",
+                                "history": current_history
+                            }
+                            return
+
+                    # Adiciona tool_responses normalmente
                     current_history.extend(tool_responses)
 
-                    # Add system feedback for blocked idle calls AFTER tool responses
-                    if any('idle' in resp['name'] and 'idle_blocked_pending_notifications' in resp['content'] for resp in tool_responses):
-                        # Add strong feedback to history to correct the agent
-                        current_history.append({
-                            "role": "system",
-                            "content": """IDLE INPUT REJECTED - PROTOCOL VIOLATION DETECTED
+                    # Remove toda a lógica de notify_dev_pending, needed_send_more_notfications e bloqueio de idle
+                    # Remove também a verificação de idle manual
 
-                            VIOLATION DETAILS:
-                            - You attempted to call idle_idle while having pending notifications
-                            - Previous notification set needed_send_more_notfications=true
-                            - This indicates more work is required before task completion
-                            - Idle calls are BLOCKED until all notifications are resolved
-
-                            PENALTY APPLIED: -2.0 points deducted from cumulative score
-
-                            CURRENT STATUS:
-                            - Notification State: PENDING (blocking idle)
-                            - Required Action: Continue task execution
-                            - Idle Permission: DENIED until notifications cleared
-
-                            CORRECTION PROTOCOL:
-                            1. Complete all pending work as indicated by your previous notifications
-                            2. Ensure your next message_notify_dev has needed_send_more_notfications=false
-                            3. Only then attempt idle_idle to complete the task
-                            4. Do not attempt idle again until notification state is cleared
-
-                            PERFORMANCE IMPACT: Repeated idle violations will result in severe scoring penalties. Follow notification protocols strictly."""
-                        })
-                        
-                        # Add contextual guidance to help agent understand the violation
-                        current_history.append({
-                            "role": "system",
-                            "content": f"""CONTEXT: Your last notification response contained 'needed_send_more_notfications: true' which set a blocking flag on idle calls.
-
-                                ANALYSIS OF VIOLATION:
-                                - Tool attempted: idle_idle
-                                - Blocking reason: Previous notification indicated incomplete work
-                                - Session cycle: {self.cycles_completed + 1}
-
-                                LEARNING POINT: Always ensure your notifications accurately reflect task completion status."""
-                        })
-
-                    # Decision logic with performance considerations
+                    # Decisão de ciclo: só encerra se for pelo fluxo agent_end_task acima
+                    # Caso contrário, continua normalmente
                     cycle_duration = time.time() - cycle_start_time
                     
-                    if is_idle:
-                        # Complete the task successfully
-                        self.metrics_tracker.end_task(success=True, quality_score=0.8)
-                        
-                        # Generate cycle completion feedback
-                        cycle_feedback = self.feedback_system.generate_feedback({
-                            "event": "cycle_completed"
-                        })
-                        
-                        # ✨ DIRECT PERFORMANCE ASSESSMENT TO BLUMA
-                        performance = self.metrics_tracker.get_performance_summary()
-                        if performance.get("status") != "no_data":
-                            performance_message = f"""PERFORMANCE ASSESSMENT: Task cycle completed. {cycle_feedback['message']}
+                    # Decision logic with performance considerations
+                    # The cycle ends when agent_end_task is executed.
+                    # (Removido: ciclo nunca termina por timeout, só por agent_end_task)
 
-                            CURRENT METRICS:
-                            - Success Rate: {(performance.get('success_rate', 0) * 100):.1f}%
-                            - Tool Efficiency: {(performance.get('avg_efficiency', 0) * 100):.1f}%
-                            - Cumulative Score: {performance.get('current_reward_score', 0):.1f} points
-                            - Completed Cycles: {self.cycles_completed + 1}
-
-                            PERFORMANCE ANALYSIS:"""
-                            
-                            # Add learning insights
-                            insights = self.metrics_tracker.get_learning_insights()
-                            if insights.get("insights"):
-                                for insight in insights["insights"][:2]:  # Top 2 insights
-                                    performance_message += f"\n- {insight}"
-                            else:
-                                performance_message += "\n- Performance metrics stable within acceptable parameters"
-                            
-                            performance_message += f"\n\nNEXT ACTIONS: Apply these performance patterns to maintain scoring consistency."
-                            
-                            current_history.append({
-                                "role": "system",
-                                "content": performance_message
-                            })
-                        
-                        # yield {
-                        #     "type": "completion",
-                        #     "message": f"🎯 {cycle_feedback['message']}",
-                        #     "score": cycle_feedback['score']
-                        # }
-                        
-                        # Show performance summary
-                        if performance.get("status") != "no_data":
-                            yield {
-                                "type": "performance_summary",
-                                "data": performance,
-                                "message": f"Cycles completed: {self.cycles_completed + 1}"
-                            }
-                        
-                        self.cycles_completed += 1
-                        log_notebook_entry("Agent entered idle state", {
-                            "cycles_completed": self.cycles_completed,
-                            "cumulative_score": self.feedback_system.get_cumulative_score()
-                        })
-                        
-                        yield {
-                            "type": "done",
-                            "status": "completed",
-                            "history": current_history
-                        }
-                        return
-                    
                     if self.notify_dev_pending:
                         self.metrics_tracker.record_context_switch()
                         yield {
@@ -648,27 +439,12 @@ class Agent:
                     "history": current_history
                 }
             else:
-                # Non-critical error - end session gracefully
+                # Non-critical error - apenas envia warning e continua o loop principal
                 yield {
                     "type": "warning",
                     "message": f"⚠️ Minor issue encountered: {error_msg}"
                 }
-                
-                yield {
-                    "type": "completion", 
-                    "message": "✅ Session ended - can send new task"
-                }
-                
-                log_notebook_entry("Minor exception - session ended gracefully", {
-                    "exception": error_msg,
-                    "action": "end_session"
-                })
-                
-                yield {
-                    "type": "done",
-                    "status": "completed",
-                    "history": current_history
-                }
+                # O loop já continua normalmente, não precisa de continue
 
     def get_training_data(self):
         """Export comprehensive training data"""

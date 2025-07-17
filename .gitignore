@@ -80,3 +80,6 @@ secrets.json
 node_modules/
 .pytest_cache/
 .mypy_cache/ 
+
+#sessions
+sessions/

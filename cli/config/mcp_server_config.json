@@ -65,14 +65,13 @@
         "run",
         "message_mcp.py"
       ]
-    },
-    "idle": {
+    },"agent": {
       "command": "uv",
       "args": [
         "--directory",
-        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\idle",
+        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\end_task",
         "run",
-        "idle.py"
+        "end_task.py"
       ]
     },
     "edit": {

@@ -21,13 +21,14 @@ interface ToolCallProps {
 }
 
 const ToolCall = ({ toolName, args }: ToolCallProps) => {
-  // Não mostrar a chamada para a ferramenta de notificação ou idle, para uma UI mais limpa.
   if (
     toolName.includes("message_notify_dev") ||
-    toolName.includes("idle_idle")
+    toolName.includes("agent_end_task")
   ) {
     return null;
   }
+
+  
 
   if (toolName.includes("notebook_sequentialthinking_tools")) {
     try {
@@ -149,8 +150,7 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
   const visibleLines = isTruncated ? lines.slice(0, MAX_LINES) : lines;
   const remainingCount = lines.length - MAX_LINES;
 
-  // Regra para a ferramenta idle
-  if (toolName.includes("idle_idle")) {
+  if (toolName.includes("agent_end_task")) {
     return null; // não renderiza nada
   }
 
@@ -352,89 +352,6 @@ const App = React.memo(({ sessionId }: AppProps) => {
               return updatedHistory;
             }
 
-            // Handle thinking states
-            // else if (parsed.type === "thinking") {
-            //   setStatusMessage(parsed.message);
-            //   return prev;
-            // }
-
-            // Handle LLM thinking
-            // else if (parsed.type === "llm_thinking") {
-            //   setStatusMessage(parsed.message);
-            //   return prev;
-            // }
-
-            // Handle LLM response
-            // else if (parsed.type === "llm_response") {
-            //   setStatusMessage(null);
-            //   return [
-            //     ...prev,
-            //     { id: nextId, component: <Text color="blue">⚡ {parsed.message}</Text> }
-            //   ];
-            // }
-
-            // Handle context switch
-            else if (parsed.type === "context_switch") {
-              return [
-                ...prev,
-                { id: nextId, component: <Text color="yellow">🔄 {parsed.message}</Text> }
-              ];
-            }
-
-            // Handle notification state
-            else if (parsed.type === "notification_state") {
-              return [
-                ...prev,
-                { id: nextId, component: <Text color="blue">📌 {parsed.message}</Text> }
-              ];
-            }
-
-            // Handle notification pending
-            else if (parsed.type === "notification_pending") {
-              return [
-                ...prev,
-                { id: nextId, component: <Text color="orange">🔄 {parsed.message}</Text> }
-              ];
-            }
-
-            // Handle notification completed
-            else if (parsed.type === "notification_completed") {
-              return [
-                ...prev,
-                { id: nextId, component: <Text color="green">✅ {parsed.message}</Text> }
-              ];
-            }
-
-            // Handle idle blocked
-            else if (parsed.type === "idle_blocked") {
-              return [
-                ...prev,
-                {
-                  id: nextId,
-                  component: (
-                    <Box
-                      borderStyle="round"
-                      borderColor="red"
-                      marginBottom={1}
-                      paddingX={1}
-                    >
-                      <Text color="red" bold>
-                        {parsed.message}
-                      </Text>
-                    </Box>
-                  ),
-                },
-              ];
-            }
-
-            // Handle idle allowed
-            else if (parsed.type === "idle_allowed") {
-              return [
-                ...prev,
-                { id: nextId, component: <Text color="green">✅ {parsed.message}</Text> }
-              ];
-            }
-
             // Handle debug info
             else if (parsed.type === "debug") {
               return [
@@ -457,98 +374,7 @@ const App = React.memo(({ sessionId }: AppProps) => {
                 },
               ];
             }
-
-            // Handle idle detection
-            // else if (parsed.type === "idle_detected") {
-            //   setIsProcessing(false);
-            //   setStatusMessage(null);
-
-            //   return [
-            //     ...prev,
-            //     {
-            //       id: nextId,
-            //       component: (
-            //         <Box borderStyle="round" borderColor="green" marginBottom={1} paddingX={1}>
-            //           <Text color="green" bold>{parsed.message}</Text>
-            //         </Box>
-            //       )
-            //     }
-            //   ];
-            // }
-
-            // Handle auto completion detection
-            else if (parsed.type === "auto_completion_detected") {
-              setIsProcessing(false);
-              setStatusMessage(null);
-
-              return [
-                ...prev,
-                {
-                  id: nextId,
-                  component: (
-                    <Box
-                      borderStyle="round"
-                      borderColor="blue"
-                      marginBottom={1}
-                      paddingX={1}
-                    >
-                      <Text color="blue" bold>
-                        {parsed.message}
-                      </Text>
-                    </Box>
-                  ),
-                },
-              ];
-            }
-
-            // Handle forced idle
-            else if (parsed.type === "forced_idle") {
-              setIsProcessing(false);
-              setStatusMessage(null);
-
-              return [
-                ...prev,
-                {
-                  id: nextId,
-                  component: (
-                    <Box
-                      borderStyle="round"
-                      borderColor="red"
-                      marginBottom={1}
-                      paddingX={1}
-                    >
-                      <Text color="red" bold>
-                        {parsed.message}
-                      </Text>
-                      <Text color="gray">
-                        Sistema resetado. Pode enviar nova tarefa.
-                      </Text>
-                    </Box>
-                  ),
-                },
-              ];
-            }
-
-            // Handle performance summary
-            // else if (parsed.type === "performance_summary") {
-            //   const { data } = parsed;
-            //   return [
-            //     ...prev,
-            //     {
-            //       id: nextId,
-            //       component: (
-            //         <Box borderStyle="round" borderColor="blue" flexDirection="column" marginBottom={1} paddingX={1}>
-            //           <Text color="blue" bold>📊 Performance Summary</Text>
-            //           <Text>Success Rate: <Text color="green">{(data.success_rate * 100).toFixed(1)}%</Text></Text>
-            //           <Text>Avg Duration: <Text color="cyan">{data.avg_task_duration?.toFixed(1)}s</Text></Text>
-            //           <Text>Tool Efficiency: <Text color="magenta">{(data.avg_efficiency * 100).toFixed(1)}%</Text></Text>
-            //           <Text>Score: <Text color="yellow">{data.current_reward_score?.toFixed(1)} points</Text></Text>
-            //         </Box>
-            //       )
-            //     }
-            //   ];
-            // }
-
+           
             // Handle feedback
             else if (parsed.type === "feedback") {
               const colorMap = {
@@ -717,12 +543,7 @@ const App = React.memo(({ sessionId }: AppProps) => {
             }
 
             // Handle tool results
-            else if (parsed.type === "tool_result") {
-              // Reset processing state when idle_idle tool is executed
-              if (parsed.tool_name.includes("idle_idle")) {
-                setIsProcessing(false);
-                setStatusMessage(null);
-              }
+            else if (parsed.type === "tool_result") {         
               return [
                 ...prev,
                 {
