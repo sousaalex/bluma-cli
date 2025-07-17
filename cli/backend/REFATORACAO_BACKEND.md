@@ -8,8 +8,6 @@ O backend do projeto apresenta módulos extensos e responsabilidades sobrepostas
 - **Ficheiros muito extensos:**
   - `bluma.py` (~414 linhas)
   - `core/agent.py` (~718 linhas)
-  - `core/metrics.py` (~347 linhas)
-  - `core/feedback.py` (~371 linhas)
 - **Responsabilidades misturadas:**
   - Lógica de sessão, histórico, integração LLM, processamento de turnos e gestão de contexto estão misturados.
 - **Dificuldade em testar e evoluir:**
@@ -34,25 +32,13 @@ O backend do projeto apresenta módulos extensos e responsabilidades sobrepostas
     - `agent_utils.py`: Funções auxiliares comuns ao agente.
   - Manter em `agent.py` apenas a classe principal e delegação para submódulos.
 
-### 3. **Modularização de Métricas e Feedback**
-- **metrics.py**
-  - Dividir em:
-    - `metrics_collector.py`: Coleta e agregação de métricas.
-    - `metrics_exporter.py`: Exportação/logging das métricas.
-    - `metrics_utils.py`: Funções auxiliares para métricas.
-- **feedback.py**
-  - Dividir em:
-    - `feedback_manager.py`: Gestão centralizada do feedback.
-    - `feedback_types.py`: Definição dos tipos/níveis de feedback.
-    - `feedback_utils.py`: Funções utilitárias para feedback.
-
-### 4. **Ferramentas e Utilitários**
+### 3. **Ferramentas e Utilitários**
 - **tools.py**
   - Separar ferramentas em ficheiros individuais por domínio (ex: `tool_file_ops.py`, `tool_shell.py`, etc).
 - **helpers/** (novo diretório)
   - Centralizar funções utilitárias comuns usadas por vários módulos (ex: manipulação JSON, validação, logging customizado).
 
-### 5. **Testes Automatizados**
+### 4. **Testes Automatizados**
 - Criar diretório `tests/backend/` com testes unitários para cada novo módulo criado.
 
 ---
@@ -61,8 +47,6 @@ O backend do projeto apresenta módulos extensos e responsabilidades sobrepostas
 |-------------------------------|-------------------------------------------|
 | bluma.py                      | bluma.py (entrypoint), session_manager.py, config_loader.py |
 | core/agent.py                 | agent.py, agent_context.py, agent_llm.py, agent_turns.py, agent_utils.py |
-| core/metrics.py               | metrics_collector.py, metrics_exporter.py, metrics_utils.py |
-| core/feedback.py              | feedback_manager.py, feedback_types.py, feedback_utils.py |
 | core/tools.py                 | tool_file_ops.py, tool_shell.py, ...      |
 | helpers/ (novo)               | utils comuns                              |
 
@@ -92,12 +76,6 @@ bliuma-engineer/
         │   ├── agent_llm.py
         │   ├── agent_turns.py
         │   ├── agent_utils.py
-        │   ├── metrics_collector.py
-        │   ├── metrics_exporter.py
-        │   ├── metrics_utils.py
-        │   ├── feedback_manager.py
-        │   ├── feedback_types.py
-        │   ├── feedback_utils.py
         │   ├── tool_file_ops.py
         │   ├── tool_shell.py
         │   └── ...

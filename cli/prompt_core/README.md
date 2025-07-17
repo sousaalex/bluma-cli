@@ -1,4 +1,4 @@
-C:\Users\sousa\Desktop\Projects\bluma-engineer# BluMa Prompt Core
+# BluMa Prompt Core
 
 Sistema de prompts dinâmicos para o agente BluMa com informações de ambiente adaptativas.
 

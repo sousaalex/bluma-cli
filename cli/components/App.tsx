@@ -61,7 +61,7 @@ const ToolCall = ({ toolName, args }: ToolCallProps) => {
             <Text color="green" bold>
               Thinking Process
             </Text>
-            <Text color="gray"> (Step {thinkingData.thought_number}/{thinkingData.total_thoughts})</Text>
+            {/* <Text color="gray"> (Step {thinkingData.thought_number}/{thinkingData.total_thoughts})</Text> */}
           </Box>
 
           <Box flexDirection="column" marginBottom={1}>
@@ -151,6 +151,7 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
   const remainingCount = lines.length - MAX_LINES;
 
   if (toolName.includes("agent_end_task")) {
+    
     return null; // não renderiza nada
   }
 
@@ -323,7 +324,9 @@ const App = React.memo(({ sessionId }: AppProps) => {
 
           setHistory((prev) => {
             const nextId = prev.length;
-
+            // console.log("=========================evento recebido=====================");
+              
+            // console.log(parsed.type)
             // Handle connection status
             if (parsed.type === "connection_status") {
               setStatusMessage(parsed.message);
@@ -446,56 +449,16 @@ const App = React.memo(({ sessionId }: AppProps) => {
 
             // Handle task completion
             else if (parsed.type === "done") {
+              // console.log("Terminou..");
+              
               // IMPORTANT: Reset processing state immediately
               setIsProcessing(false);
               setStatusMessage(null);
-
-              if (parsed.status === "completed") {
-                // Não mostrar nenhuma mensagem visual quando concluído
-                return prev;
-              } else if (parsed.status === "error") {
-                return [
-                  ...prev,
-                  {
-                    id: nextId,
-                    component: (
-                      <Box
-                        borderStyle="round"
-                        borderColor="red"
-                        marginBottom={1}
-                        paddingX={1}
-                      >
-                        <Text color="red" bold>
-                          ❌ Erro no processamento
-                        </Text>
-                        <Text color="gray">Pode tentar novamente.</Text>
-                      </Box>
-                    ),
-                  },
-                ];
-              } else if (parsed.status === "max_iterations") {
-                return [
-                  ...prev,
-                  {
-                    id: nextId,
-                    component: (
-                      <Box
-                        borderStyle="round"
-                        borderColor="yellow"
-                        marginBottom={1}
-                        paddingX={1}
-                      >
-                        <Text color="yellow" bold>
-                          ⚠️ Máximo de iterações atingido
-                        </Text>
-                        <Text color="gray">Pode enviar nova tarefa.</Text>
-                      </Box>
-                    ),
-                  },
-                ];
-              }
+              
               return prev;
             }
+
+            
 
             // Legacy event handling for backward compatibility
             else if (parsed.type === "agent_response") {
@@ -528,6 +491,13 @@ const App = React.memo(({ sessionId }: AppProps) => {
 
             // Handle tool calls
             else if (parsed.type === "tool_call") {
+              // Verifica se é um agent_end_task
+              if (parsed.tool_name.includes("agent_end_task")) {
+                setIsProcessing(false);
+                setStatusMessage(null);
+                return prev;
+              }
+
               return [
                 ...prev,
                 {
@@ -544,6 +514,13 @@ const App = React.memo(({ sessionId }: AppProps) => {
 
             // Handle tool results
             else if (parsed.type === "tool_result") {         
+              // Verifica se é um agent_end_task
+              if (parsed.tool_name.includes("agent_end_task")) {
+                setIsProcessing(false);
+                setStatusMessage(null);
+                return prev;
+              }
+
               return [
                 ...prev,
                 {

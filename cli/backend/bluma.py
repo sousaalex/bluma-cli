@@ -1,3 +1,5 @@
+# --- INÍCIO DO FICHEIRO COMPLETO: cli/backend/bluma_core.py ---
+
 import asyncio
 import os
 import sys
@@ -148,20 +150,8 @@ class MCPClient:
             return True
         return False
 
-    # async def call_mcp_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> Any:
-    #     if "message_ask_user" in tool_name:
-    #         # Esta ferramenta é inerentemente interativa.
-    #         # No modo pipe, não podemos pedir input ao utilizador desta forma.
-    #         return {"error": "A ferramenta 'ask_user' não é suportada no modo não-interativo."}
-    #     if tool_name not in self.tool_to_server_map:
-    #         return {"error": f"Ferramenta '{tool_name}' não encontrada"}
-    #     tool_info = self.tool_to_server_map[tool_name]
-    #     server_to_call = tool_info["server"]
-
     async def call_mcp_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> Any:
         if "message_ask_user" in tool_name:
-            # Esta ferramenta é inerentemente interativa.
-            # No modo pipe, não podemos pedir input ao utilizador desta forma.
             return {"error": "A ferramenta 'ask_user' não é suportada no modo não-interativo."}
         if tool_name not in self.tool_to_server_map:
             return {"error": f"Ferramenta '{tool_name}' não encontrada"}
@@ -175,7 +165,6 @@ class MCPClient:
         session_to_use = self.sessions[server_to_call]
         result = None
         try:
-            # Processamento normal para outras ferramentas
             if original_tool_name != 'idle':
                 result = await session_to_use.call_tool(original_tool_name, tool_args)
                 
@@ -187,51 +176,34 @@ class MCPClient:
             elif result:
                 tool_content = json.dumps(result.content)
                 
-            # Garantir que respostas de notify_dev com needed_send_more_notfications=true sejam preservadas
             if result and "notify_dev" in tool_name and isinstance(result.content, dict) and result.content.get("needed_send_more_notfications") == True:
-                # Preservar o formato de dicionário para garantir que o flag seja detectado corretamente
                 return result.content
                 
             return tool_content
         except Exception as e:
             error_msg = f"Erro ao chamar a ferramenta: {str(e)}"
             return {"error": error_msg}
+
 def get_unified_system_prompt() -> str:
-    # Esta função agora é chamada apenas dentro de `main`
     description = get_description()
     system = get_system_prompt()
-    # output = get_output()
     return dedent(f"{description}\n\n{system}").strip()
 
-# --- LÓGICA PRINCIPAL DO AGENTE ---
-
 def create_api_context_window(full_history: List[Dict[str, Any]], max_messages: int) -> List[Dict[str, Any]]:
-    """
-    Retorna o histórico completo, ou, se precisar truncar, garante que nunca corta pares assistant/tool.
-    """
     if len(full_history) <= max_messages:
         return full_history
-    # Truncamento seguro: só remove blocos completos de interação
-    # Busca do final para o início o primeiro bloco válido
     idx = len(full_history) - 1
     while idx > 0:
-        # Se encontrar um user, pode cortar aqui
         if full_history[idx]["role"] == "user":
             break
         idx -= 1
-    # Retorna apenas o bloco final completo
     return full_history[idx:]
 
 def validate_history_integrity(history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Garante que toda mensagem 'tool' seja precedida por uma mensagem 'assistant' com 'tool_calls' e o mesmo 'tool_call_id'.
-    Remove pares desbalanceados do início do histórico até garantir integridade.
-    """
     valid_history = []
     pending_tool_calls = {}
     for msg in history:
         if msg["role"] == "assistant" and msg.get("tool_calls"):
-            # Registra todos os tool_call_ids deste assistant
             for tc in msg["tool_calls"]:
                 pending_tool_calls[tc["id"]] = True
             valid_history.append(msg)
@@ -239,21 +211,14 @@ def validate_history_integrity(history: List[Dict[str, Any]]) -> List[Dict[str, 
             tcid = msg.get("tool_call_id")
             if tcid and pending_tool_calls.get(tcid):
                 valid_history.append(msg)
-                # Remove o tool_call_id já respondido
                 del pending_tool_calls[tcid]
             else:
-                # Tool sem assistant correspondente: ignora
                 continue
         else:
             valid_history.append(msg)
     return valid_history
 
-# --- GERENCIAMENTO DE SESSÕES ---
 def load_or_create_session(session_id: str) -> Tuple[str, List[Dict[str, Any]]]:
-    """
-    Carrega o histórico de uma sessão existente ou cria uma nova com base no session_id.
-    Retorna o caminho do arquivo e o histórico da conversa.
-    """
     session_dir = Path("sessions")
     session_dir.mkdir(exist_ok=True)
     session_file = session_dir / f"{session_id}.json"
@@ -262,13 +227,10 @@ def load_or_create_session(session_id: str) -> Tuple[str, List[Dict[str, Any]]]:
         try:
             with open(session_file, "r", encoding="utf-8") as f:
                 session_data = json.load(f)
-            # Retorna o histórico salvo
             return str(session_file), session_data.get("conversation_history", [])
         except (json.JSONDecodeError, IOError):
-            # Se o arquivo estiver corrompido ou ilegível, cria um novo
             pass
 
-    # Cria um novo arquivo de sessão se não existir ou estiver corrompido
     session_data = {
         "session_id": session_id,
         "created_at": datetime.now().isoformat(),
@@ -280,42 +242,30 @@ def load_or_create_session(session_id: str) -> Tuple[str, List[Dict[str, Any]]]:
     return str(session_file), []
 
 def save_session_history(session_file: str, history: List[Dict[str, Any]]) -> None:
-    """
-    Salva o histórico atual da conversa no arquivo de sessão.
-    """
     try:
         with open(session_file, "r+", encoding="utf-8") as f:
-            # Carrega os dados existentes para não sobrescrever o created_at
             session_data = json.load(f)
             session_data["conversation_history"] = history
             session_data["last_updated"] = datetime.now().isoformat()
             
-            # Volta ao início do arquivo para sobrescrever
             f.seek(0)
             json.dump(session_data, f, ensure_ascii=False, indent=2)
             f.truncate()
     except (IOError, json.JSONDecodeError) as e:
-        # Se houver um erro, apenas reporta no stderr, não para o frontend
         print(f"Error saving session: {e}", file=sys.stderr)
 
-# --- FUNÇÃO PRINCIPAL E LOOP DE EXECUÇÃO ---
 async def main():
-    # 1. Validação de Argumentos
     if len(sys.argv) < 2 or not sys.argv[1]:
         send_message({"type": "error", "message": "ID da sessão não fornecido."})
         return
 
     session_id = sys.argv[1]
 
-    # 2. Carregamento de Configuração e Variáveis de Ambiente
-    # Encontra a raiz do projeto (assumindo que bluma_core.py está em cli/backend)
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-    # Adiciona a raiz do projeto ao sys.path para importações
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
     
-    # Carrega o .env da raiz do projeto
     dotenv_path = os.path.join(project_root, '.env')
     if os.path.exists(dotenv_path):
         load_dotenv(dotenv_path=dotenv_path)
@@ -323,24 +273,17 @@ async def main():
         send_message({"type": "error", "message": f"Ficheiro .env não encontrado em: {dotenv_path}"})
         return
 
-    # --- INÍCIO DA DEPURAÇÃO: Usar valores hardcoded ---
-    # Temporariamente usamos os mesmos valores do bluma.py para testar a conexão.
-    # Se isto funcionar, o problema está 100% no seu ficheiro .env.
     endpoint = "https://hubdemor3dai7450370013.openai.azure.com/"
-    api_version = "2025-04-01-preview"  # 🚀 UPGRADED: Latest preview API with new features
+    api_version = "2025-04-01-preview"
     deployment_name = "gpt-4.1"
     
-    # A API Key ainda será lida do .env
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
     if not api_key:
         send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_API_KEY não foi encontrada no seu ficheiro .env."})
         return
-    # --- FIM DA DEPURAÇÃO ---
 
-    # 4. Inicialização dos Clientes
     mcp_client = MCPClient()
     try:
-        # Inicializa o cliente Azure OpenAI
         try:
             client = AsyncAzureOpenAI(
                 azure_endpoint=endpoint,
@@ -351,7 +294,6 @@ async def main():
             send_message({"type": "error", "message": f"Erro ao inicializar o cliente Azure OpenAI: {e}"})
             return
 
-        # Conecta aos servidores MCP
         connected = await mcp_client.connect_to_all_servers()
         if connected:
             send_message({
@@ -361,9 +303,7 @@ async def main():
             })
         else:
             send_message({"type": "error", "message": "Falha ao conectar aos servidores MCP. Verifique a configuração."})
-            # Não retornamos aqui, pode ser que o user queira interagir sem ferramentas.
         
-        # Initialize the enhanced Agent with session tracking
         agent = Agent(
             mcp_client, 
             client, 
@@ -371,15 +311,12 @@ async def main():
             None, 
             session_id)
 
-        # 5. Carregar ou Criar Sessão e Histórico
         session_file, history = load_or_create_session(session_id)
         
-        # Garante que o prompt do sistema está presente no início de um novo histórico
         if not history:
             system_prompt = get_unified_system_prompt()
             history.append({"role": "system", "content": system_prompt})
         
-        # 6. Loop Principal de Execução
         for line in sys.stdin:
             try:
                 user_input = json.loads(line)
@@ -387,13 +324,16 @@ async def main():
                 if user_input.get("type") == "user_message":   
                     history.append({"role": "user", "content": user_input["content"]})
                     
+                    # --- CORREÇÃO APLICADA AQUI ---
+                    # O loop agora irá até o gerador 'agent.process_turn' se esgotar naturalmente.
+                    # Ele vai processar TODOS os eventos que o agente enviar, incluindo o 'done'.
                     async for event in agent.process_turn(history):
                         send_message(event)
                         if event.get("type") == "done":
+                            # Apenas salvamos o histórico quando o evento 'done' é recebido.
+                            # NÃO usamos 'break' para garantir que o loop termine corretamente.
                             history = event["history"]
-                            save_session_history(session_file, history) # Salva o histórico
-                            if event.get("status") == "completed":
-                                break 
+                            save_session_history(session_file, history)
                     
             except json.JSONDecodeError:
                 send_message({"type": "error", "message": "Input inválido do frontend (não é JSON)."})
@@ -401,14 +341,15 @@ async def main():
                 send_message({"type": "error", "message": f"Erro inesperado no loop principal: {str(e)}"})
 
     finally:
-        # Cleanup MCP connections
         try:
             await mcp_client.exit_stack.aclose()
         except Exception:
-            pass  # Ignore cleanup errors
+            pass
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, EOFError):
-        pass # Sai silenciosamente
+        pass
+
+# --- FIM DO FICHEIRO COMPLETO: cli/backend/bluma_core.py ---
