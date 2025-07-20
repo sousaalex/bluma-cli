@@ -73,6 +73,21 @@ class MCPClient:
         connected_any = False
         self.global_tools_for_llm = []
         self.tool_to_server_map = {}
+        
+        # Add native tools from tools.json
+        try:
+            with open('cli/config/tools.json', 'r') as f:
+                native_tools_config = json.load(f)
+                
+            for tool in native_tools_config.get("nativeTools", []):
+                self.global_tools_for_llm.append(tool)
+                tool_name = tool["function"]["name"]
+                self.tool_to_server_map[tool_name] = {
+                    "server": "native",
+                    "original_name": tool_name
+                }
+        except Exception as e:
+            send_message({"type": "error", "message": f"Erro ao carregar ferramentas nativas do tools.json: {e}"})
 
         # Connect to SSE servers
         for server_name, server_conf in sse_servers.items():
@@ -158,6 +173,30 @@ class MCPClient:
         tool_info = self.tool_to_server_map[tool_name]
         server_to_call = tool_info["server"]
         original_tool_name = tool_info["original_name"]
+        
+        # Handle native tools
+        if server_to_call == "native":
+            try:
+                if original_tool_name == "shell_command":
+                    from custom_tools.shell_command import shell_command
+                    result = shell_command(**tool_args)
+                    return result
+                elif original_tool_name == "agent_end_task":
+                    from custom_tools.end_task import agent_end_task
+                    result = agent_end_task()
+                    return result
+                # elif original_tool_name == "message_notify_dev":
+                #     from custom_tools.message import message_notify_dev
+                #     result = message_notify_dev(**tool_args)
+                #     return result
+                elif original_tool_name == "edit_tool":
+                    from custom_tools.edit import edit_tool
+                    result = edit_tool(**tool_args)
+                    return result
+                else:
+                    return {"error": f"Ferramenta nativa '{original_tool_name}' não implementada"}
+            except Exception as e:
+                return {"error": f"Erro ao executar {original_tool_name}: {str(e)}"}
         
         if server_to_call not in self.sessions:
             return {"error": f"Servidor '{server_to_call}' não está conectado"}

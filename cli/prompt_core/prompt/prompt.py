@@ -464,6 +464,20 @@ After writing code, always test:
 - No hidden dependencies or assumptions
 </engineering_best_practices>
 
+<edit_tool_rules>
+- Use this tool to perform precise text replacements inside files based on exact literal matches.
+- Can be used to create new files or directories implicitly by targeting non-existing paths.
+- Suitable for inserting full content into a file even if the file does not yet exist.
+- Shell access is not required for file or directory creation when using this tool.
+- Always prefer this tool over shell_command when performing structured edits or creating files with specific content.
+- Ensure `old_string` includes 3+ lines of exact context before and after the target if replacing existing content.
+- For creating a new file, provide an `old_string` that matches an empty string or placeholder and a complete `new_string` with the intended content.
+- When generating or modifying todo.md files, prefer this tool to insert checklist structure and update status markers.
+- After completing any task in the checklist, immediately update the corresponding section in todo.md using this tool.
+- Reconstruct the entire file from task planning context if todo.md becomes outdated or inconsistent.
+- Track all progress related to planning and execution inside todo.md using text replacement only.
+</edit_tool_rules>
+
       
 ## Examples os iteration with dev
 <example>

@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "@types/marked-terminal": "^6.1.1",
     "@types/mongodb": "^4.0.6",
     "@types/node": "^24.0.4",
     "@types/react": "^19.1.8",
@@ -26,6 +27,8 @@
     "ink-divider": "^4.1.1",
     "ink-gradient": "^3.0.0",
     "ink-spinner": "^5.0.0",
+    "marked": "^4.0.10",
+    "marked-terminal": "^7.3.0",
     "node-fetch": "^3.3.2",
     "uuid": "^11.1.0"
   }

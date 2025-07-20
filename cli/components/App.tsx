@@ -149,7 +149,6 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
   const isTruncated = lines.length > MAX_LINES;
   const visibleLines = isTruncated ? lines.slice(0, MAX_LINES) : lines;
   const remainingCount = lines.length - MAX_LINES;
-
   if (toolName.includes("agent_end_task")) {
     
     return null; // não renderiza nada
@@ -160,10 +159,14 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
     return null; // não renderiza resultado pois já foi renderizado na call
   }
 
+  
+
   // Regra especial para a ferramenta message_notify_dev para uma UI mais limpa.
   if (toolName.includes("message_notify_dev")) {
     try {
       const parsed = JSON.parse(result);
+      // console.log("JSON PARCED:", parsed);
+      
       // Se o resultado for um JSON válido com a mensagem do agente, renderiza de forma especial.
       if (parsed.content && parsed.content.body) {
         return (

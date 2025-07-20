@@ -9,18 +9,6 @@
         "mcp-sequentialthinking-tools"
       ]
     },
-    "github": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
-      }
-    },
     "notion": {
         "command": "cmd",
         "args": [
@@ -44,43 +32,22 @@
       "disabled": false,
       "autoApprove": []
     },
-    "shell_command": {
-      "type": "sse",
-      "url": "http://localhost:8080/sse"
-    },
-    "file_operations": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\file_operations",
-        "run",
-        "file_operations.py"
-      ]
-    },
     "message": {
-      "command": "uv",
+      "command": "cmd",
       "args": [
-        "--directory",
-        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\message",
-        "run",
-        "message_mcp.py"
-      ]
-    },"agent": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\end_task",
-        "run",
-        "end_task.py"
+       "/c",
+        "npx",
+        "-y",
+        "@sousaalex1605/message_mcp_server"
       ]
     },
-    "edit": {
-      "command": "uv",
+    "file_manager": {
+      "command": "cmd",
       "args": [
-        "--directory",
-        "C:\\Users\\sousa\\Desktop\\Projects\\bluma-engineer\\cli\\mcp\\edit",
-        "run",
-        "edit.py"
+       "/c",
+        "npx",
+        "-y",
+        "@sousaalex1605/file_manager_mcp_server"
       ]
     }
   }

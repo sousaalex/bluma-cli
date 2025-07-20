@@ -20,7 +20,7 @@ class BluMaConfig:
         Returns optimized parameters for GPT-4.1 with BluMa feedback system
         """
         return {
-            "temperature": 0.0,        # 🎯 Deterministic for protocol adherence
+            "temperature": 0.3,        # 🎯 Deterministic for protocol adherence
             "max_tokens": 4096,        # ✅ Adequate for complex responses
             "top_p": 1,                # 🎯 Focused token selection
             "frequency_penalty": 0.15, # 🚫 Reduce repetitive patterns
