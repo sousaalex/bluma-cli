@@ -6,6 +6,14 @@ import { Header, SessionInfo } from "./UI";
 import { spawn } from "child_process";
 import { ChildProcessWithoutNullStreams } from "child_process";
 import path from "path";
+import { fileURLToPath } from 'url';
+
+// =========================================================================
+// PARTE 1 DA CORREÇÃO: Recriar __dirname para Módulos ES (usado pelo tsx)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// =========================================================================
+
 
 interface HistoryItem {
   id: number;
@@ -271,13 +279,25 @@ const App = React.memo(({ sessionId }: AppProps) => {
       },
     ]);
 
-    // Inicia o processo de backend
-    // Detecta plataforma e executável correto
+    // =======================================================================================
+    // PARTE 2 DA CORREÇÃO: Lógica de caminho inteligente para funcionar em DEV e PROD
+    // =======================================================================================
     const isWin = process.platform === 'win32';
-    // Caminho absoluto para o executável do backend (compatível com React Ink)
-    const backendPath = isWin 
-      ? path.resolve(process.cwd(), 'dist', 'bluma.exe') 
-      : path.resolve(process.cwd(), 'dist', 'bluma');
+    const backendExecutableName = isWin ? 'bluma.exe' : 'bluma';
+    
+    // Deteta se estamos a correr o código fonte (.tsx) ou o compilado (.js)
+    const isDev = __filename.endsWith('.tsx');
+
+    const backendPath = isDev
+      // Em DEV: o caminho a partir de `cli/components/App.tsx` para a pasta `dist` na raiz
+      ? path.resolve(__dirname, '..', '..', 'dist', backendExecutableName)
+      // Em PROD: o executável está na mesma pasta que o script compilado
+      : path.resolve(__dirname, backendExecutableName);
+
+    // Para depuração, pode verificar o caminho que está a ser usado:
+    console.log(`Ambiente detetado: ${isDev ? 'Desenvolvimento' : 'Produção'}`);
+    console.log("A iniciar o backend a partir de:", backendPath);
+      
     const backend = spawn(backendPath, [sessionId]);
     backendProcess.current = backend;
 
