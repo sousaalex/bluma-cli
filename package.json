@@ -42,7 +42,10 @@
     "tsx": "^4.20.3"
   },
   "files": [
-    "dist/bluma.exe"
+    "dist/bluma.exe",
+    "dist/bluma",
+    "bin/bluma-cli.cjs",
+    "cli/"
   ],
   "publishConfig": {
     "access": "public"
