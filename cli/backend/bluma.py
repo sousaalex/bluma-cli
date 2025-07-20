@@ -54,9 +54,26 @@ class MCPClient:
         self._sse_session_context = None
 
     async def connect_to_all_servers(self):
+        import re
         try:
             with open('cli/config/mcp_server_config.json', 'r') as f:
                 config = json.load(f)
+                # Substitui placeholders do tipo ${VAR_NAME} por variáveis do ambiente
+                def replace_env_placeholders(obj):
+                    if isinstance(obj, dict):
+                        return {k: replace_env_placeholders(v) for k, v in obj.items()}
+                    elif isinstance(obj, list):
+                        return [replace_env_placeholders(i) for i in obj]
+                    elif isinstance(obj, str):
+                        match = re.match(r'\$\{([A-Za-z0-9_]+)\}', obj)
+                        if match:
+                            env_val = os.environ.get(match.group(1))
+                            if env_val is not None:
+                                return env_val
+                        return obj
+                    else:
+                        return obj
+                config = replace_env_placeholders(config)
         except Exception as e:
             send_message({"type": "error", "message": f"Erro ao carregar mcp_server_config.json: {e}"})
             return False
@@ -306,19 +323,28 @@ async def main():
         sys.path.insert(0, project_root)
     
     dotenv_path = os.path.join(project_root, '.env')
+    # Carrega .env se existir, mas não aborta se não existir
     if os.path.exists(dotenv_path):
         load_dotenv(dotenv_path=dotenv_path)
-    else:
-        send_message({"type": "error", "message": f"Ficheiro .env não encontrado em: {dotenv_path}"})
-        return
+    # Se não existir, segue normalmente (confia nas variáveis do ambiente)
 
-    endpoint = "https://hubdemor3dai7450370013.openai.azure.com/"
-    api_version = "2025-04-01-preview"
-    deployment_name = "gpt-4.1"
-    
+    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+    api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
+
+    # Checagem de obrigatoriedade
+    if not endpoint:
+        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_ENDPOINT não foi encontrada."})
+        return
+    if not api_version:
+        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_API_VERSION não foi encontrada."})
+        return
+    if not deployment_name:
+        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_DEPLOYMENT não foi encontrada."})
+        return
     if not api_key:
-        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_API_KEY não foi encontrada no seu ficheiro .env."})
+        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_API_KEY não foi encontrada."})
         return
 
     mcp_client = MCPClient()

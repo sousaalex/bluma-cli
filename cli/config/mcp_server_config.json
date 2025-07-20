@@ -18,7 +18,7 @@
           "@suekou/mcp-notion-server"
         ],
         "env": {
-          "NOTION_API_TOKEN": "ntn_J69752023466CtQaNyFz6zfrvBlsXodE6SEsFKZjui59Gl"
+          "NOTION_API_TOKEN": "${NOTION_API_TOKEN}"
         }
     },
     "upstash_context7-mcp": {
