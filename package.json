@@ -1,6 +1,6 @@
 {
   "name": "bluma-cli",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "CLI autônomo BluMa para automação e engenharia de software avançada.",
   "author": "Alex Fonseca",
   "license": "MIT",
@@ -44,7 +44,8 @@
   "files": [
     "dist/bluma.exe",
     "dist/bluma",
-    "bin/bluma-cli.cjs"
+    "bin/bluma-cli.cjs",
+    "cli/"
   ],
   "publishConfig": {
     "access": "public"
