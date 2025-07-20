@@ -5,6 +5,7 @@ import Spinner from "ink-spinner";
 import { Header, SessionInfo } from "./UI";
 import { spawn } from "child_process";
 import { ChildProcessWithoutNullStreams } from "child_process";
+import path from "path";
 
 interface HistoryItem {
   id: number;
@@ -271,11 +272,13 @@ const App = React.memo(({ sessionId }: AppProps) => {
     ]);
 
     // Inicia o processo de backend
-    const backend = spawn("python", [
-      "-u",
-      "cli/backend/bluma.py",
-      sessionId,
-    ]);
+    // Detecta plataforma e executável correto
+    const isWin = process.platform === 'win32';
+    // Caminho absoluto para o executável do backend (compatível com React Ink)
+    const backendPath = isWin 
+      ? path.resolve(process.cwd(), 'dist', 'bluma.exe') 
+      : path.resolve(process.cwd(), 'dist', 'bluma');
+    const backend = spawn(backendPath, [sessionId]);
     backendProcess.current = backend;
 
     // Log apenas erros críticos

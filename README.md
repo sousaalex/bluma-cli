@@ -58,12 +58,13 @@ bluma-engineer/
 
 ---
 
-## ⚙️ Instalação e Execução
+## ⚙️ Instalação, Build e Execução (CLI Híbrido)
 
 ### Requisitos:
 * Python 3.10+
 * Node.js 18+
 * npm (ou yarn)
+* PyInstaller (`pip install pyinstaller`)
 * (Opcional) Ambiente virtual Python:
   - `python -m venv .venv && source .venv/bin/activate` (Linux/Mac)
   - `.venv\Scripts\activate` (Windows)
@@ -73,6 +74,14 @@ bluma-engineer/
 pip install -r requirements.txt
 npm install
 ```
+
+### Build do backend Python (BluMa engine):
+```bash
+npm run build:backend
+# Isso roda: pyinstaller --onefile cli/backend/bluma.py --distpath dist --name bluma
+```
+O binário será gerado em `dist/bluma.exe` (Windows) ou `dist/bluma` (Linux/Mac).
+
 ### Execução da interface CLI:
 ```bash
 npm start
@@ -81,6 +90,7 @@ Ou diretamente:
 ```bash
 npx tsx cli/index.tsx
 ```
+O frontend detecta a plataforma e chama o binário correto automaticamente.
 
 ---
 
