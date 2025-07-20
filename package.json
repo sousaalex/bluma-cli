@@ -1,4 +1,12 @@
 {
+  "name": "bluma-cli",
+  "version": "1.0.1",
+  "description": "CLI autônomo BluMa para automação e engenharia de software avançada.",
+  "author": "Alex Fonseca",
+  "license": "MIT",
+  "bin": {
+    "bluma-cli": "bin/bluma-cli.cjs"
+  },
   "devDependencies": {
     "@types/marked-terminal": "^6.1.1",
     "@types/mongodb": "^4.0.6",
@@ -14,10 +22,10 @@
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },
-  "description": "",
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "build:backend": "pyinstaller --onefile cli/backend/bluma.py --distpath dist --name bluma",
     "start": "tsx cli/index.tsx",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -30,6 +38,15 @@
     "marked": "^4.0.10",
     "marked-terminal": "^7.3.0",
     "node-fetch": "^3.3.2",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "tsx": "^4.20.3"
+  },
+  "files": [
+    "dist/bluma.exe",
+    "dist/bluma",
+    "bin/bluma-cli.cjs"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }
