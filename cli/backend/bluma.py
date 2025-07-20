@@ -25,6 +25,28 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.client.sse import sse_client
 
+
+
+# =========================================================================================
+# LÓGICA DE CAMINHO GLOBAL (sem alterações, está correta)
+#
+if getattr(sys, 'frozen', False):
+    # Estamos a correr num executável PyInstaller
+    # SCRIPT_DIR aponta para a pasta temporária _MEIPASS
+    SCRIPT_DIR = Path(sys._MEIPASS)
+else:
+    # Estamos a correr como um script Python normal
+    # SCRIPT_DIR aponta para .../cli/backend
+    SCRIPT_DIR = Path(__file__).parent.resolve()
+# =========================================================================================
+
+# Adiciona a raiz do projeto ao sys.path para resolver os imports locais
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+
+
 # Configuration of prompt_core
 from cli.prompt_core.prompt.prompt import get_system_prompt
 from cli.prompt_core.description.description import get_description
@@ -54,9 +76,28 @@ class MCPClient:
         self._sse_session_context = None
 
     async def connect_to_all_servers(self):
+        
         import re
+        # =========================================================================================
+        # CORREÇÃO FINAL E DEFINITIVA PARA A LÓGICA DE CAMINHOS
+        # =========================================================================================
+        if getattr(sys, 'frozen', False):
+            # MODO PRODUÇÃO (.exe):
+            # O SCRIPT_DIR é a raiz da pasta temporária (_MEIPASS).
+            # O nosso ficheiro .spec copiou a pasta 'cli/config' para DENTRO desta raiz.
+            # Portanto, o caminho é relativo a SCRIPT_DIR.
+            config_dir = SCRIPT_DIR / 'cli' / 'config'
+        else:
+            # MODO DESENVOLVIMENTO (.py):
+            # O SCRIPT_DIR é .../bluma-engineer/cli/backend.
+            # Precisamos de subir um nível para .../cli e depois entrar em /config.
+            config_dir = SCRIPT_DIR.parent / 'config'
+
+        mcp_config_path = config_dir / 'mcp_server_config.json'
+        tools_path = config_dir / 'tools.json'
+        # =========================================================================================
         try:
-            with open('cli/config/mcp_server_config.json', 'r') as f:
+            with open(mcp_config_path, 'r', encoding="utf-8") as f:
                 config = json.load(f)
                 # Substitui placeholders do tipo ${VAR_NAME} por variáveis do ambiente
                 def replace_env_placeholders(obj):
@@ -93,7 +134,7 @@ class MCPClient:
         
         # Add native tools from tools.json
         try:
-            with open('cli/config/tools.json', 'r') as f:
+            with open(tools_path, 'r', encoding="utf-8") as f:
                 native_tools_config = json.load(f)
                 
             for tool in native_tools_config.get("nativeTools", []):
