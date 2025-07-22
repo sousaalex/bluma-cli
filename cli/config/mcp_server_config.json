@@ -9,6 +9,18 @@
         "mcp-sequentialthinking-tools"
       ]
     },
+    "github": {
+        "command": "cmd",
+        "args": [
+          "/c",
+          "npx",
+          "-y",
+          "@modelcontextprotocol/server-github"
+        ],
+        "env": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+        }
+      },
     "notion": {
         "command": "cmd",
         "args": [

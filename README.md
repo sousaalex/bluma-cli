@@ -134,3 +134,39 @@ Este projeto ainda não possui um arquivo de licença explícito. Recomenda-se d
 Para dúvidas ou sugestões, utilize as issues do repositório.
 
 ---
+
+# Aula de Inteligência Artificial - PDF Profissional
+
+Este projeto gera um PDF profissional de uma aula sobre Inteligência Artificial utilizando Python e a biblioteca fpdf2, seguindo o padrão BluMa | NomadEngenuity.
+
+## Como usar
+
+1. Crie um ambiente virtual:
+   ```sh
+   python -m venv .venv
+   source .venv/bin/activate  # Linux/macOS
+   .venv\Scripts\activate    # Windows
+   ```
+2. Instale as dependências:
+   ```sh
+   pip install -r requirements.txt
+   ```
+3. Execute o script para gerar o PDF:
+   ```sh
+   python aula_ia_pdf.py
+   ```
+4. O arquivo `aula_inteligencia_artificial.pdf` será gerado na pasta atual.
+
+## Dependências
+- fpdf2 >= 2.7.8
+- Python 3.8+
+
+## Estrutura do PDF
+- Header e footer personalizados com branding BluMa
+- Seções didáticas avançadas sobre IA
+- Tabela comparativa de áreas de IA
+- Cores institucionais (azul/cinza)
+- Compatibilidade total com Unicode (função remove_unicode)
+
+## Suporte
+Dúvidas ou melhorias? Fale com o instrutor ou equipe BluMa.
