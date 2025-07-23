@@ -1,11 +1,11 @@
 {
   "name": "bluma-cli",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "CLI autônomo BluMa para automação e engenharia de software avançada.",
   "author": "Alex Fonseca",
   "license": "MIT",
   "bin": {
-    "bluma-cli": "bin/bluma-cli.cjs"
+    "bluma-cli": "dist/index.js"
   },
   "devDependencies": {
     "@types/marked-terminal": "^6.1.1",
@@ -14,22 +14,28 @@
     "@types/react": "^19.1.8",
     "@types/uuid": "^10.0.0",
     "esbuild": "^0.25.5",
+    "esbuild-plugin-node-externals": "^1.0.1",
     "esbuild-register": "^3.6.0",
-    "ink": "^6.0.1",
     "ink-testing-library": "^4.0.0",
     "react": "^19.1.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },
   "type": "module",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build:backend": "pyinstaller --onefile cli/backend/bluma.py --distpath dist --name bluma",
-    "start": "tsx cli/index.tsx",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:backend": "python -m PyInstaller bluma.spec --distpath dist --noconfirm",
+    "build:frontend": "node scripts/build-frontend.js",
+    "start": "bluma-cli",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepack": "npm run build:frontend"
+  },
+  "overrides": {
+    "react-devtools-core": false
   },
   "keywords": [],
   "dependencies": {
+    "ink": "^6.0.1",
     "ink-big-text": "^2.0.0",
     "ink-divider": "^4.1.1",
     "ink-gradient": "^3.0.0",
@@ -38,14 +44,12 @@
     "marked": "^4.0.10",
     "marked-terminal": "^7.3.0",
     "node-fetch": "^3.3.2",
-    "uuid": "^11.1.0",
-    "tsx": "^4.20.3"
+    "uuid": "^11.1.0"
   },
   "files": [
     "dist/bluma.exe",
     "dist/bluma",
-    "bin/bluma-cli.cjs",
-    "cli/"
+    "dist/index.js"
   ],
   "publishConfig": {
     "access": "public"
