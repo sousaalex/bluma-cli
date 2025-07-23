@@ -48,8 +48,8 @@ export const useSimpleInputBuffer = ({ onSubmit }: UseSimpleInputBufferProps) =>
         return;
       }
 
-      // 4. Ignorar outras teclas de controlo
-      if (key.ctrl || key.meta || key.shift || key.tab) {
+      // 4. Ignorar outras teclas de controlo (Ctrl, Meta, Tab). Shift deve ser permitido para aceitar maiúsculas!
+      if (key.ctrl || key.meta || key.tab) {
         return;
       }
 

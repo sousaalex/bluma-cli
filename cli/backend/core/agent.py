@@ -16,7 +16,7 @@ class BluMaConfig:
         Returns optimized parameters for LLM with BluMa feedback system
         """
         return {
-            "temperature": 0.3,        # 🎯 Deterministic for protocol adherence
+            "temperature": 0.0,        # 🎯 Deterministic for protocol adherence
             "max_tokens": 4096,        # ✅ Adequate for complex responses
             "top_p": 1,                # 🎯 Focused token selection
             "frequency_penalty": 0.15, # 🚫 Reduce repetitive patterns
@@ -111,19 +111,35 @@ class Agent:
                     return
 
                 try:
+                    # NOVO FLUXO: Usa janela de contexto por turnos completos
+                    from cli.backend.core.context_utils import create_api_context_window
+                    context_window = create_api_context_window(current_history, max_turns=300)
+
                     optimal_params = BluMaConfig.get_optimal_params(self.session_id)
                     api_call_params = {
                         "model": self.deployment_name,
-                        "messages": current_history,
+                        # Troca o histórico completo pela janela de contexto otimizada
+                        "messages": context_window,
                         "tools": all_tools,
                         "tool_choice": "auto",
                         **optimal_params
                     }
-                    
-                    yield {"type": "info", "message": "🎯 Using GPT-4.1 with optimized BluMa parameters"}
-                    
+
+                    yield {"type": "info", "message": "🎯 Using GPT-4.1 with optimized BluMa parameters (context window by turns)"}
+
                     response = await self.client.chat.completions.create(**api_call_params)
-                    
+
+                    # ---
+                    # LÓGICA ANTERIOR (caso queira reverter para histórico completo):
+                    # api_call_params = {
+                    #     "model": self.deployment_name,
+                    #     "messages": current_history,
+                    #     "tools": all_tools,
+                    #     "tool_choice": "auto",
+                    #     **optimal_params
+                    # }
+                    # response = await self.client.chat.completions.create(**api_call_params)
+
                 except Exception as api_error:
                     yield {"type": "error", "message": f"🚨 API Error: {str(api_error)}"}
                     yield {"type": "debug", "message": f"🔍 API Params: {json.dumps(api_call_params, indent=2)}"}

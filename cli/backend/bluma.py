@@ -53,6 +53,7 @@ from cli.backend.prompt_core.prompt.prompt import get_system_prompt
 from cli.backend.prompt_core.description.description import get_description
 # from cli.prompt_core.output.output import get_output
 
+# from cli.backend.core.context_utils import create_api_context_window
 # Import the enhanced Agent
 from cli.backend.core.agent import Agent
 
@@ -288,88 +289,28 @@ def get_unified_system_prompt() -> str:
     return dedent(f"{description}\n\n{system}").strip()
 
 
-def create_api_context_window(full_history: List[Dict[str, Any]], max_messages: int) -> List[Dict[str, Any]]:
-    if len(full_history) <= max_messages:
-        return full_history
-    idx = len(full_history) - 1
-    while idx > 0:
-        if full_history[idx]["role"] == "user":
-            break
-        idx -= 1
-    return full_history[idx:]
+# Função de contexto movida para cli/backend/core/context_utils.py
 
-def validate_history_integrity(history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    valid_history = []
-    pending_tool_calls = {}
-    for msg in history:
-        if msg["role"] == "assistant" and msg.get("tool_calls"):
-            for tc in msg["tool_calls"]:
-                pending_tool_calls[tc["id"]] = True
-            valid_history.append(msg)
-        elif msg["role"] == "tool":
-            tcid = msg.get("tool_call_id")
-            if tcid and pending_tool_calls.get(tcid):
-                valid_history.append(msg)
-                del pending_tool_calls[tcid]
-            else:
-                continue
-        else:
-            valid_history.append(msg)
-    return valid_history
+# def validate_history_integrity(history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+#     valid_history = []
+#     pending_tool_calls = {}
+#     for msg in history:
+#         if msg["role"] == "assistant" and msg.get("tool_calls"):
+#             for tc in msg["tool_calls"]:
+#                 pending_tool_calls[tc["id"]] = True
+#             valid_history.append(msg)
+#         elif msg["role"] == "tool":
+#             tcid = msg.get("tool_call_id")
+#             if tcid and pending_tool_calls.get(tcid):
+#                 valid_history.append(msg)
+#                 del pending_tool_calls[tcid]
+#             else:
+#                 continue
+#         else:
+#             valid_history.append(msg)
+#     return valid_history
 
-def load_or_create_session(session_id: str) -> Tuple[str, List[Dict[str, Any]]]:
-    """
-    Carrega ou cria uma sessão de usuário, salvando os dados em uma pasta
-    oculta (.bluma-cli) no diretório home do usuário.
-    """
-    # 1. Obter o caminho para o diretório home do usuário.
-    #    Ex: C:\Users\SeuUsuario ou /home/SeuUsuario
-    home_dir = Path.home()
-
-    # 2. Definir o caminho para a pasta da nossa aplicação.
-    app_dir = home_dir / ".bluma-cli"
-
-    # 3. Criar uma subpasta 'sessions' dentro do diretório da aplicação.
-    session_dir = app_dir / "sessions"
-
-    # 4. Garantir que o caminho completo exista.
-    #    'parents=True' cria tanto '.bluma-cli' quanto 'sessions' se não existirem.
-    session_dir.mkdir(parents=True, exist_ok=True)
-
-    # 5. O resto da lógica para manipular o arquivo é exatamente a mesma.
-    session_file = session_dir / f"{session_id}.json"
-
-    if session_file.exists():
-        try:
-            with open(session_file, "r", encoding="utf-8") as f:
-                session_data = json.load(f)
-            return str(session_file), session_data.get("conversation_history", [])
-        except (json.JSONDecodeError, IOError):
-            pass
-
-    # Cria um novo arquivo de sessão se não existir
-    session_data = {
-        "session_id": session_id,
-        "created_at": datetime.now().isoformat(),
-        "conversation_history": []
-    }
-    with open(session_file, "w", encoding="utf-8") as f:
-        json.dump(session_data, f, ensure_ascii=False, indent=2)
-
-    return str(session_file), []
-
-def save_session_history(session_file: str, history: List[Dict[str, Any]]) -> None:
-    try:
-        with open(session_file, "r+", encoding="utf-8") as f:
-            session_data = json.load(f)
-            session_data["conversation_history"] = history
-            session_data["last_updated"] = datetime.now().isoformat()
-            
-            f.seek(0)
-            json.dump(session_data, f, ensure_ascii=False, indent=2)
-            f.truncate()
-    except (IOError, json.JSONDecodeError) as e:
-        print(f"Error saving session: {e}", file=sys.stderr)
+# Funções de sessão movidas para cli/backend/core/session_utils.py
 
 async def main():
     if len(sys.argv) < 2 or not sys.argv[1]:
@@ -437,6 +378,7 @@ async def main():
             None, 
             session_id)
 
+        from cli.backend.core.session_utils import load_or_create_session, save_session_history
         session_file, history = load_or_create_session(session_id)
         
         if not history:

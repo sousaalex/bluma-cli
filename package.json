@@ -1,11 +1,11 @@
 {
   "name": "bluma-cli",
   "version": "1.0.27",
-  "description": "CLI autônomo BluMa para automação e engenharia de software avançada.",
+  "description": "BluMa independent agent for automation and advanced software engineering.",
   "author": "Alex Fonseca",
   "license": "MIT",
   "bin": {
-    "bluma-cli": "dist/index.js"
+    "bluma": "dist/index.js"
   },
   "devDependencies": {
     "@types/marked-terminal": "^6.1.1",
@@ -26,7 +26,7 @@
   "scripts": {
     "build:backend": "python -m PyInstaller bluma.spec --distpath dist --noconfirm",
     "build:frontend": "node scripts/build-frontend.js",
-    "start": "bluma-cli",
+    "start": "bluma",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepack": "npm run build:frontend"
   },
