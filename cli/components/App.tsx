@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Box, Text, Static } from "ink";
+import { Box, Text, Static, useStdout } from "ink";
 import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
 import { Header, SessionInfo } from "./UI";
@@ -210,12 +210,14 @@ const App = React.memo(({ sessionId }: AppProps) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [query, setQuery] = useState("");
   const [isTextLimited, setIsTextLimited] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>("Iniciando backend...");
+  const [statusMessage, setStatusMessage] = useState<string | null>("Starting...");
   const [toolsCount, setToolsCount] = useState<number | null>(null);
   const [mcpStatus, setMcpStatus] = useState<"connecting" | "connected">("connecting");
   const [isProcessing, setIsProcessing] = useState(false);
   const backendProcess = useRef<ChildProcessWithoutNullStreams | null>(null);
   const [position, setPosition] = useState(0);
+
+  const { stdout } = useStdout();
 
 
   const workdir = process.cwd();
@@ -224,25 +226,17 @@ const App = React.memo(({ sessionId }: AppProps) => {
 
 
   // Função memorizada para lidar com mudanças no input
-  const handleQueryChange = useCallback((text: string) => {
-    // Limita o comprimento do texto no input para evitar problemas
+   const handleQueryChange = useCallback((text: string) => {
     const maxInputLength = 5000;
-
-    // Preserva quebras de linha (\n), tabs (\t) e espaços, mas remove outros caracteres problemáticos
     const cleanText = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+    // IMPORTANTE: Remova a normalização de quebras de linha, pois o TextInput já lida com isso
+    // e queremos que o input seja uma única linha.
+    const singleLineText = cleanText.replace(/(\r\n|\n|\r)/gm, "");
 
-    // Normaliza quebras de linha para \n
-    const normalizedText = cleanText
-      .replace(/\r\n/g, "\n")
-      .replace(/\r/g, "\n");
-
-    // Verifica se o texto foi limitado
-    const wasLimited = normalizedText.length > maxInputLength;
-
-    // Limita o comprimento
+    const wasLimited = singleLineText.length > maxInputLength;
     const limitedText = wasLimited
-      ? normalizedText.substring(0, maxInputLength)
-      : normalizedText;
+      ? singleLineText.substring(0, maxInputLength)
+      : singleLineText;
 
     setQuery(limitedText);
     setIsTextLimited(wasLimited);
@@ -482,6 +476,8 @@ useEffect(() => {
         ];
       });
 
+      
+
       // Envia para o backend (sem limite - envia o texto completo)
       const message = JSON.stringify({ type: "user_message", content: text });
 
@@ -510,39 +506,44 @@ useEffect(() => {
         {(item) => <Box key={item.id}>{item.component}</Box>}
       </Static>
 
-      {statusMessage && (
-        <Box>
-          <Text color="yellow">
-            <Spinner type="dots" /> {statusMessage}
-          </Text>
-        </Box>
-      )}
+      {statusMessage && mcpStatus !== 'connected' && (
+  <Box
+    borderStyle="round"
+    borderColor="white"
+    flexDirection="row"
+  >
+    <Text color="yellow">
+      <Spinner type="dots" /> {statusMessage}
+    </Text>
+  </Box>
+)}
 
-      {isProcessing ? (
-        <Box 
-        borderStyle="round"
-        borderColor="white">
-          <Text color="magenta">
-            ({spacesBeforeDot}●{spacesAfterDot}) Working...
-          </Text>
-        </Box>
-      ) : (
-        <Box
-          borderStyle="round"
-          borderColor="white"
-          flexDirection="row"
-          alignItems="center"
-        >
-          <Text bold>{">"} </Text>
-          <Box flexGrow={1}>
-            <TextInput
-              value={query}
-              onChange={handleQueryChange}
-              onSubmit={handleSubmit}
-            />
-          </Box>
-        </Box>
-      )}
+{isProcessing ? (
+  <Box borderStyle="round" borderColor="white">
+    <Text color="magenta">
+      ({spacesBeforeDot}●{spacesAfterDot}) Working...
+    </Text>
+  </Box>
+) : (
+  mcpStatus === 'connected' && (
+    <Box
+      borderStyle="round"
+      borderColor="white"
+      flexDirection="row"
+      alignItems="center"
+    >
+      <Text bold>{">"} </Text>
+      <Box flexGrow={1}>
+        <TextInput
+          value={query}
+          onChange={handleQueryChange}
+          onSubmit={handleSubmit}
+        />
+      </Box>
+    </Box>
+  )
+)}
+
 
       {isTextLimited && (
         <Box marginTop={1}>
@@ -551,13 +552,15 @@ useEffect(() => {
           </Text>
         </Box>
       )}
-
+       {mcpStatus ===  "connected" && (
       <Box flexDirection="column" justifyContent="center" alignItems="center">
-        <Text color="gray" bold>
+        <Text color="gray" dimColor>
           BluMa Senior Full Stack Developer
         </Text>
       </Box>
+        )}
     </Box>
+       
   );
 });
 
