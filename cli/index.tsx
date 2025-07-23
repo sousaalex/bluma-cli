@@ -1,9 +1,9 @@
-import React from 'react';
 import { render } from 'ink';
+import { v4 as uuidv4 } from 'uuid';
 import App from './components/App';
-import { v4 as uuidv4 } from 'uuid'; // importa a função para gerar UUID
 
-// Recebe sessionId do argumento de linha de comando ou gera um novo UUID
-const sessionId = process.argv[2];
+// 1. Gera um ID de sessão único CADA VEZ que o CLI é iniciado.
+const sessionId = uuidv4();
 
+// 2. Renderiza o componente App, passando o ID gerado como uma prop.
 render(<App sessionId={sessionId} />);

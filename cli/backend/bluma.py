@@ -25,6 +25,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.client.sse import sse_client
 
+from pathlib import Path
 
 
 # =========================================================================================
@@ -316,8 +317,25 @@ def validate_history_integrity(history: List[Dict[str, Any]]) -> List[Dict[str, 
     return valid_history
 
 def load_or_create_session(session_id: str) -> Tuple[str, List[Dict[str, Any]]]:
-    session_dir = Path("sessions")
-    session_dir.mkdir(exist_ok=True)
+    """
+    Carrega ou cria uma sessão de usuário, salvando os dados em uma pasta
+    oculta (.bluma-cli) no diretório home do usuário.
+    """
+    # 1. Obter o caminho para o diretório home do usuário.
+    #    Ex: C:\Users\SeuUsuario ou /home/SeuUsuario
+    home_dir = Path.home()
+
+    # 2. Definir o caminho para a pasta da nossa aplicação.
+    app_dir = home_dir / ".bluma-cli"
+
+    # 3. Criar uma subpasta 'sessions' dentro do diretório da aplicação.
+    session_dir = app_dir / "sessions"
+
+    # 4. Garantir que o caminho completo exista.
+    #    'parents=True' cria tanto '.bluma-cli' quanto 'sessions' se não existirem.
+    session_dir.mkdir(parents=True, exist_ok=True)
+
+    # 5. O resto da lógica para manipular o arquivo é exatamente a mesma.
     session_file = session_dir / f"{session_id}.json"
 
     if session_file.exists():
@@ -328,6 +346,7 @@ def load_or_create_session(session_id: str) -> Tuple[str, List[Dict[str, Any]]]:
         except (json.JSONDecodeError, IOError):
             pass
 
+    # Cria um novo arquivo de sessão se não existir
     session_data = {
         "session_id": session_id,
         "created_at": datetime.now().isoformat(),
@@ -335,7 +354,7 @@ def load_or_create_session(session_id: str) -> Tuple[str, List[Dict[str, Any]]]:
     }
     with open(session_file, "w", encoding="utf-8") as f:
         json.dump(session_data, f, ensure_ascii=False, indent=2)
-    
+
     return str(session_file), []
 
 def save_session_history(session_file: str, history: List[Dict[str, Any]]) -> None:

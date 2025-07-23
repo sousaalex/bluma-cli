@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from collections import defaultdict
+from pathlib import Path  # <-- IMPORTANTE: Adicione esta linha
 
 @dataclass
 class TaskMetrics:
@@ -57,13 +58,16 @@ class SessionMetrics:
 
 class AgentMetricsTracker:
     """Advanced metrics tracking system for agent performance"""
-    
+
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.current_task: Optional[TaskMetrics] = None
         self.session_metrics = SessionMetrics(session_id, time.time())
         self.metrics_history: List[Dict] = []
         self.performance_trends: Dict[str, List[float]] = defaultdict(list)
+
+        # Define o diretório base da aplicação de forma centralizada
+        self._app_dir = Path.home() / ".bluma-cli"
         
         # Load historical data
         self._load_metrics_history()
@@ -303,8 +307,11 @@ class AgentMetricsTracker:
         if not self.current_task:
             return
         
-        os.makedirs('logs/metrics', exist_ok=True)
-        metrics_file = f'logs/metrics/{self.session_id}_metrics.jsonl'
+        # --- CORREÇÃO APLICADA ---
+        metrics_dir = self._app_dir / "logs" / "metrics"
+        metrics_dir.mkdir(parents=True, exist_ok=True)
+        metrics_file = metrics_dir / f'{self.session_id}_metrics.jsonl'
+        # --- FIM DA CORREÇÃO ---
         
         with open(metrics_file, 'a', encoding='utf-8') as f:
             f.write(json.dumps({
@@ -315,10 +322,13 @@ class AgentMetricsTracker:
     
     def _load_metrics_history(self):
         """Load historical metrics for trend analysis"""
-        metrics_file = f'logs/metrics/{self.session_id}_metrics.jsonl'
+        # --- CORREÇÃO APLICADA ---
+        metrics_file = self._app_dir / "logs" / "metrics" / f'{self.session_id}_metrics.jsonl'
+        # --- FIM DA CORREÇÃO ---
+
         if not os.path.exists(metrics_file):
             return
-        
+
         try:
             with open(metrics_file, 'r', encoding='utf-8') as f:
                 for line in f:
@@ -326,7 +336,6 @@ class AgentMetricsTracker:
         except (IOError, json.JSONDecodeError):
             pass  # Ignore errors in historical data
     
-    def export_training_data(self) -> Dict[str, Any]:
         """Export data in format suitable for machine learning"""
         training_data = {
             "session_id": self.session_id,
