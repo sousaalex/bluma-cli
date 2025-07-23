@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
+    "outDir": "dist",
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "strict": true,

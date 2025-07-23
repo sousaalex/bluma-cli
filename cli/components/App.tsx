@@ -8,11 +8,6 @@ import { ChildProcessWithoutNullStreams } from "child_process";
 import path from "path";
 import { fileURLToPath } from 'url';
 
-// =========================================================================
-// PARTE 1 DA CORREÇÃO: Recriar __dirname para Módulos ES (usado pelo tsx)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-// =========================================================================
 
 
 interface HistoryItem {
@@ -278,39 +273,42 @@ const App = React.memo(({ sessionId }: AppProps) => {
         ),
       },
     ]);
+  
+    // Definir o caminho do backend usando process.cwd()
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
 
-    // =======================================================================================
-    // PARTE 2 DA CORREÇÃO: Lógica de caminho inteligente para funcionar em DEV e PROD
-    // =======================================================================================
+    // Definir o caminho do backend
     const isWin = process.platform === 'win32';
     const backendExecutableName = isWin ? 'bluma.exe' : 'bluma';
     
-    // Deteta se estamos a correr o código fonte (.tsx) ou o compilado (.js)
-    const isDev = __filename.endsWith('.tsx');
-
-    const backendPath = isDev
-      // Em DEV: o caminho a partir de `cli/components/App.tsx` para a pasta `dist` na raiz
-      ? path.resolve(__dirname, '..', '..', 'dist', backendExecutableName)
-      // Em PROD: o executável está na mesma pasta que o script compilado
-      : path.resolve(__dirname, backendExecutableName);
-
-    // Para depuração, pode verificar o caminho que está a ser usado:
-    console.log(`Ambiente detetado: ${isDev ? 'Desenvolvimento' : 'Produção'}`);
-    console.log("A iniciar o backend a partir de:", backendPath);
-      
-    const backend = spawn(backendPath, [sessionId]);
-    backendProcess.current = backend;
-
-    // Log apenas erros críticos
-    // backend.stderr.on("data", (data) => {
-    //   console.error("Backend STDERR:", data.toString());
-    // });
-
-    backend.on("error", (error) => {
-      console.error("Erro no processo backend:", error);
+    // Resolver o caminho do executável RELATIVO AO SCRIPT ATUAL
+    const backendPath = path.resolve(
+      __dirname, // <-- Use __dirname em vez de process.cwd()
+      backendExecutableName
+    );
+  
+    // Depuração: verificar o caminho gerado
+    console.log('Caminho final do backend:', backendPath);
+    console.log('Diretório de trabalho atual:', process.cwd());
+  
+    const backend = spawn(backendPath, [sessionId], {
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
-
-    backend.on("exit", (code, signal) => {
+    backendProcess.current = backend;
+  
+    // Capturar erros do processo backend
+    backend.on('error', (error) => {
+      console.error('Erro no processo backend:', error);
+      console.error('Caminho tentado:', backendPath);
+    });
+  
+    // Capturar saída de erro do backend
+    // backend.stderr.on('data', (data) => {
+    //   console.error('Backend STDERR:', data.toString());
+    // });
+  
+    backend.on('exit', (code, signal) => {
       if (code !== 0) {
         // Backend crashed
         setHistory((prev) => [
@@ -341,32 +339,29 @@ const App = React.memo(({ sessionId }: AppProps) => {
         setIsProcessing(false);
       }
     });
-
-    backend.stdout.on("data", (data) => {
-      const messages = data.toString().split("\n").filter(Boolean);
+  
+    backend.stdout.on('data', (data) => {
+      const messages = data.toString().split('\n').filter(Boolean);
       messages.forEach((message: string) => {
         try {
           const parsed = JSON.parse(message);
-
+  
           setHistory((prev) => {
             const nextId = prev.length;
             // console.log("=========================evento recebido=====================");
-              
-            // console.log(parsed.type)
+            // console.log(parsed.type);
+  
             // Handle connection status
-            if (parsed.type === "connection_status") {
+            if (parsed.type === 'connection_status') {
               setStatusMessage(parsed.message);
               return prev;
             }
-
+  
             // Handle MCP connection success
-            else if (
-              parsed.type === "status" &&
-              parsed.status === "mcp_connected"
-            ) {
+            else if (parsed.type === 'status' && parsed.status === 'mcp_connected') {
               setStatusMessage(null);
               setToolsCount(parsed.tools);
-              setMcpStatus("connected");
+              setMcpStatus('connected');
               const updatedHistory = [...prev];
               updatedHistory[1] = {
                 id: 1,
@@ -374,47 +369,46 @@ const App = React.memo(({ sessionId }: AppProps) => {
                   <SessionInfo
                     sessionId={sessionId}
                     toolsCount={parsed.tools}
-                    mcpStatus={"connected"}
+                    mcpStatus={'connected'}
                   />
                 ),
               };
               return updatedHistory;
             }
-
+  
             // Handle debug info
-            else if (parsed.type === "debug") {
+            else if (parsed.type === 'debug') {
               return [
                 ...prev,
-                { id: nextId, component: <Text color="gray">🔍 {parsed.message}</Text> }
+                { id: nextId, component: <Text color='gray'>🔍 {parsed.message}</Text> },
               ];
             }
-
+  
             // Handle completion
-            else if (parsed.type === "completion") {
+            else if (parsed.type === 'completion') {
               // Reset processing state on completion
               setIsProcessing(false);
               setStatusMessage(null);
-
+  
               return [
                 ...prev,
                 {
                   id: nextId,
-                  component: <Text color="green">🎯 {parsed.message}</Text>,
+                  component: <Text color='green'>🎯 {parsed.message}</Text>,
                 },
               ];
             }
-           
+  
             // Handle feedback
-            else if (parsed.type === "feedback") {
+            else if (parsed.type === 'feedback') {
               const colorMap = {
-                error: "red",
-                excellent: "green",
-                good: "blue",
-                warning: "yellow",
+                error: 'red',
+                excellent: 'green',
+                good: 'blue',
+                warning: 'yellow',
               };
-              const color =
-                colorMap[parsed.level as keyof typeof colorMap] || "white";
-
+              const color = colorMap[parsed.level as keyof typeof colorMap] || 'white';
+  
               return [
                 ...prev,
                 {
@@ -422,13 +416,13 @@ const App = React.memo(({ sessionId }: AppProps) => {
                   component: (
                     <Box marginBottom={1}>
                       <Text color={color}>
-                        {parsed.level === "excellent"
-                          ? "🏆"
-                          : parsed.level === "error"
-                          ? "❌"
-                          : parsed.level === "good"
-                          ? "✅"
-                          : "⚠️"}{" "}
+                        {parsed.level === 'excellent'
+                          ? '🏆'
+                          : parsed.level === 'error'
+                          ? '❌'
+                          : parsed.level === 'good'
+                          ? '✅'
+                          : '⚠️'}{' '}
                         {parsed.message}
                       </Text>
                     </Box>
@@ -436,94 +430,90 @@ const App = React.memo(({ sessionId }: AppProps) => {
                 },
               ];
             }
-
+  
             // Handle protocol violation
-            else if (parsed.type === "protocol_violation") {
+            else if (parsed.type === 'protocol_violation') {
               return [
                 ...prev,
                 {
                   id: nextId,
                   component: (
                     <Box
-                      borderStyle="round"
-                      borderColor="yellow"
-                      flexDirection="column"
+                      borderStyle='round'
+                      borderColor='yellow'
+                      flexDirection='column'
                       marginBottom={1}
                       paddingX={1}
                     >
-                      <Text color="yellow" bold>
+                      <Text color='yellow' bold>
                         ⚠️ Protocol Violation
                       </Text>
-                      <Text color="gray">{parsed.content}</Text>
-                      <Text color="yellow">{parsed.message}</Text>
+                      <Text color='gray'>{parsed.content}</Text>
+                      <Text color='yellow'>{parsed.message}</Text>
                     </Box>
                   ),
                 },
               ];
             }
-
+  
             // Handle warnings
-            else if (parsed.type === "warning") {
+            else if (parsed.type === 'warning') {
               return [
                 ...prev,
                 {
                   id: nextId,
-                  component: <Text color="yellow">⚠️ {parsed.message}</Text>,
+                  component: <Text color='yellow'>⚠️ {parsed.message}</Text>,
                 },
               ];
             }
-
+  
             // Handle task completion
-            else if (parsed.type === "done") {
-              // console.log("Terminou..");
-              
-              // IMPORTANT: Reset processing state immediately
+            else if (parsed.type === 'done') {
+              // console.log('Terminou..');
+              // Reset processing state immediately
               setIsProcessing(false);
               setStatusMessage(null);
-              
               return prev;
             }
-
-            
-
+  
             // Legacy event handling for backward compatibility
-            else if (parsed.type === "agent_response") {
+            else if (parsed.type === 'agent_response') {
               return [
                 ...prev,
                 {
                   id: nextId,
                   component: (
                     <Box>
-                      <Text color="magenta">bluma:</Text>
+                      <Text color='magenta'>bluma:</Text>
                       <Text> {parsed.content}</Text>
                     </Box>
                   ),
                 },
               ];
             }
-
+  
             // Handle errors
-            else if (parsed.type === "error") {
+            else if (parsed.type === 'error') {
               setStatusMessage(null);
               setIsProcessing(false);
               return [
                 ...prev,
                 {
                   id: nextId,
-                  component: <Text color="red">❌ {parsed.message}</Text>,
+                  component: <Text color='red'>❌ {parsed.message}</Text>,
                 },
               ];
             }
-
+  
             // Handle tool calls
-            else if (parsed.type === "tool_call") {
+            else if (parsed.type === 'tool_call') {
               // Verifica se é um agent_end_task
-              if (parsed.tool_name.includes("agent_end_task")) {
+              if (parsed.tool_name.includes('agent_end_task')) {
                 setIsProcessing(false);
                 setStatusMessage(null);
                 return prev;
               }
-
+  
               return [
                 ...prev,
                 {
@@ -537,16 +527,16 @@ const App = React.memo(({ sessionId }: AppProps) => {
                 },
               ];
             }
-
+  
             // Handle tool results
-            else if (parsed.type === "tool_result") {         
+            else if (parsed.type === 'tool_result') {
               // Verifica se é um agent_end_task
-              if (parsed.tool_name.includes("agent_end_task")) {
+              if (parsed.tool_name.includes('agent_end_task')) {
                 setIsProcessing(false);
                 setStatusMessage(null);
                 return prev;
               }
-
+  
               return [
                 ...prev,
                 {
@@ -560,7 +550,7 @@ const App = React.memo(({ sessionId }: AppProps) => {
                 },
               ];
             }
-
+  
             return prev; // Retorna o estado anterior se o tipo de mensagem não for reconhecido
           });
         } catch (error) {
@@ -568,7 +558,7 @@ const App = React.memo(({ sessionId }: AppProps) => {
         }
       });
     });
-
+  
     return () => {
       if (backendProcess.current) {
         backendProcess.current.kill();

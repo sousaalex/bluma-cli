@@ -48,8 +48,8 @@ if project_root not in sys.path:
 
 
 # Configuration of prompt_core
-from cli.prompt_core.prompt.prompt import get_system_prompt
-from cli.prompt_core.description.description import get_description
+from cli.backend.prompt_core.prompt.prompt import get_system_prompt
+from cli.backend.prompt_core.description.description import get_description
 # from cli.prompt_core.output.output import get_output
 
 # Import the enhanced Agent
@@ -83,14 +83,14 @@ class MCPClient:
         # =========================================================================================
         if getattr(sys, 'frozen', False):
             # MODO PRODUÇÃO (.exe):
-            # O SCRIPT_DIR é a raiz da pasta temporária (_MEIPASS).
-            # O nosso ficheiro .spec copiou a pasta 'cli/config' para DENTRO desta raiz.
-            # Portanto, o caminho é relativo a SCRIPT_DIR.
-            config_dir = SCRIPT_DIR / 'cli' / 'config'
+            # SCRIPT_DIR é a raiz da pasta temporária (_MEIPASS).
+            # O .spec copiou 'cli/backend/config' para 'config' na raiz.
+            # Portanto, o caminho é direto a partir de SCRIPT_DIR.
+            config_dir = SCRIPT_DIR / 'config'  # <-- CORREÇÃO AQUI
         else:
             # MODO DESENVOLVIMENTO (.py):
-            # O SCRIPT_DIR é .../bluma-engineer/cli/backend.
-            # Precisamos de subir um nível para .../cli e depois entrar em /config.
+            # SCRIPT_DIR é .../bluma-engineer/cli/backend.
+            # Precisamos subir um nível para .../cli e depois entrar em /config.
             config_dir = SCRIPT_DIR.parent / 'config'
 
         mcp_config_path = config_dir / 'mcp_server_config.json'

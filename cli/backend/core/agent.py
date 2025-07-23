@@ -5,19 +5,15 @@ from .feedback import AdvancedFeedbackSystem, log_feedback
 from .metrics import AgentMetricsTracker
 from .notebook import log_notebook_entry
 from .tools import ToolInvoker
-from cli.protocols.documentation import DocumentationProtocol
-from cli.protocols.notification import NotificationProtocol
+# from cli.protocols.documentation import DocumentationProtocol
+# from cli.protocols.notification import NotificationProtocol
 
 class BluMaConfig:
-    """
-    🎯 BLUMA GPT-4.1 CONFIGURATION
-    Optimized parameters specifically for BluMa with GPT-4.1
-    """
-    
+
     @staticmethod
     def get_optimal_params(session_id: str = None) -> dict:
         """
-        Returns optimized parameters for GPT-4.1 with BluMa feedback system
+        Returns optimized parameters for LLM with BluMa feedback system
         """
         return {
             "temperature": 0.3,        # 🎯 Deterministic for protocol adherence
@@ -43,9 +39,9 @@ class Agent:
         self.feedback_system = AdvancedFeedbackSystem(self.metrics_tracker)
         self.tool_invoker = ToolInvoker(mcp_client, self.metrics_tracker)
         
-        # Initialize protocols
-        self.documentation_protocol = DocumentationProtocol()
-        self.notification_protocol = NotificationProtocol()
+        # # Initialize protocols
+        # self.documentation_protocol = DocumentationProtocol()
+        # self.notification_protocol = NotificationProtocol()
         
         # Performance tracking
         self.current_cycle_start = time.time()

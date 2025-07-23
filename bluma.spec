@@ -1,33 +1,45 @@
+# bluma.spec (VERSÃO FINAL - Mapeamento de 'cli/backend/...' para a raiz do .exe)
+
 # -*- mode: python ; coding: utf-8 -*-
 
-# CORREÇÃO 1: Aumentar o limite de recursão para evitar crashes
 import sys
 sys.setrecursionlimit(5000)
 
+all_datas = [
+    # Mapeamento: ('origem no seu projeto', 'destino na raiz do .exe')
+    
+    # Pega em C:\...\bluma-engineer\cli\backend\config
+    # e coloca como 'config' dentro do bluma.exe
+    ('cli/backend/config', 'config'),
+    
+    # Pega em C:\...\bluma-engineer\cli\backend\core
+    # e coloca como 'core' dentro do bluma.exe
+    ('cli/backend/core', 'core'),
+    
+    # Pega em C:\...\bluma-engineer\cli\backend\prompt_core
+    # e coloca como 'prompt_core' dentro do bluma.exe
+    ('cli/backend/prompt_core', 'prompt_core'),
+    
+    # Pega em C:\...\bluma-engineer\cli\backend\custom_tools
+    # e coloca como 'custom_tools' dentro do bluma.exe
+    ('cli/backend/custom_tools', 'custom_tools'),
+    
+    # Pega em C:\...\bluma-engineer\cli\backend\mcp
+    # e coloca como 'mcp' dentro do bluma.exe
+    ('cli/backend/mcp', 'mcp'),
+]
+
+
 a = Analysis(
-    ['cli/backend/bluma.py'], # O seu ficheiro principal
+    ['cli/backend/bluma.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        # CORREÇÃO 2: A MAIS IMPORTANTE
-        # Diz ao PyInstaller para copiar a pasta 'cli/config' para dentro do .exe.
-        # Isto resolve o seu erro 'FileNotFoundError'.
-        ('cli/config', 'cli/config')
-    ],
+    datas=all_datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[
-        # CORREÇÃO 3: Excluir módulos desnecessários para uma compilação mais estável
-        'SQLAlchemy', 'sqlalchemy',
-        'pygame',
-        'Tkinter', 'tkinter',
-        'scipy',
-        'pandas',
-        'torch',
-        'matplotlib'
-    ],
+    excludes=[ 'SQLAlchemy', 'pygame', 'Tkinter', 'scipy', 'pandas', 'torch', 'matplotlib' ],
     noarchive=False,
     optimize=0,
 )

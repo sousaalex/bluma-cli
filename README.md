@@ -9,6 +9,7 @@
 
 * Interface CLI interativa baseada em Ink/React (TypeScript)
 * Automação de tarefas: análise/manipulação/refatoração de código, geração de documentação e manipulação de arquivos via MCP tools (Python)
+* Sistema básico de métricas/logs via arquivos JSONL em logs/metrics/
 * Arquitetura modular: backend Python para lógica/automações; frontend TypeScript/React para UI CLI
 * Protocolos operacionais: idle, notificações e documentação via Python modules em cli/protocols/
 * Foco em qualidade e resiliência seguindo padrões profissionais
@@ -47,6 +48,8 @@ bluma-engineer/
 │   │   ├── idle.py             
 │   │   └── notification.py     
 │   └── index.tsx               
+├── logs/
+│   └── metrics/                
 ├── sessions/                   
 ├── package.json                
 ├── pyproject.toml              
@@ -58,13 +61,12 @@ bluma-engineer/
 
 ---
 
-## ⚙️ Instalação, Build e Execução (CLI Híbrido)
+## ⚙️ Instalação e Execução
 
 ### Requisitos:
 * Python 3.10+
 * Node.js 18+
 * npm (ou yarn)
-* PyInstaller (`pip install pyinstaller`)
 * (Opcional) Ambiente virtual Python:
   - `python -m venv .venv && source .venv/bin/activate` (Linux/Mac)
   - `.venv\Scripts\activate` (Windows)
@@ -74,14 +76,6 @@ bluma-engineer/
 pip install -r requirements.txt
 npm install
 ```
-
-### Build do backend Python (BluMa engine):
-```bash
-npm run build:backend
-# Isso roda: pyinstaller --onefile cli/backend/bluma.py --distpath dist --name bluma
-```
-O binário será gerado em `dist/bluma.exe` (Windows) ou `dist/bluma` (Linux/Mac).
-
 ### Execução da interface CLI:
 ```bash
 npm start
@@ -90,7 +84,6 @@ Ou diretamente:
 ```bash
 npx tsx cli/index.tsx
 ```
-O frontend detecta a plataforma e chama o binário correto automaticamente.
 
 ---
 
@@ -107,6 +100,7 @@ O frontend detecta a plataforma e chama o binário correto automaticamente.
 * `cli/backend/core/` — Lógica central do agente (Python)
 * `cli/components/` — Componentes da interface (Ink/React)
 * `cli/mcp/` — Ferramentas MCP Python
+* `logs/metrics/` — Logs/métricas em JSONL
 * `sessions/` — Sessões/contextos salvos em JSON
 * Documentos de refatoração: `cli/backend/REFATORACAO_BACKEND.md`, `cli/components/REFATORACAO_FRONTEND.md`
 * Arquivos de lock/configuração: `uv.lock`, `pyproject.toml`, `tsconfig.json`, além de dependências em `requirements.txt`, `package.json`
@@ -134,39 +128,3 @@ Este projeto ainda não possui um arquivo de licença explícito. Recomenda-se d
 Para dúvidas ou sugestões, utilize as issues do repositório.
 
 ---
-
-# Aula de Inteligência Artificial - PDF Profissional
-
-Este projeto gera um PDF profissional de uma aula sobre Inteligência Artificial utilizando Python e a biblioteca fpdf2, seguindo o padrão BluMa | NomadEngenuity.
-
-## Como usar
-
-1. Crie um ambiente virtual:
-   ```sh
-   python -m venv .venv
-   source .venv/bin/activate  # Linux/macOS
-   .venv\Scripts\activate    # Windows
-   ```
-2. Instale as dependências:
-   ```sh
-   pip install -r requirements.txt
-   ```
-3. Execute o script para gerar o PDF:
-   ```sh
-   python aula_ia_pdf.py
-   ```
-4. O arquivo `aula_inteligencia_artificial.pdf` será gerado na pasta atual.
-
-## Dependências
-- fpdf2 >= 2.7.8
-- Python 3.8+
-
-## Estrutura do PDF
-- Header e footer personalizados com branding BluMa
-- Seções didáticas avançadas sobre IA
-- Tabela comparativa de áreas de IA
-- Cores institucionais (azul/cinza)
-- Compatibilidade total com Unicode (função remove_unicode)
-
-## Suporte
-Dúvidas ou melhorias? Fale com o instrutor ou equipe BluMa.
