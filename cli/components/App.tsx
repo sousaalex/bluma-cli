@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Box, Text, Static, useStdout } from "ink";
+import { Box, Text, Static } from "ink";
 import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
-import { Header, SessionInfo } from "./UI";
-import { spawn } from "child_process";
+import { Header, SessionInfo } from "./ui/UI";
+import { spawn, ChildProcess } from "child_process"; // Mude a importação para ser mais genérica
 import { ChildProcessWithoutNullStreams } from "child_process";
 import path from "path";
-import { fileURLToPath } from 'url';
-
-
+import { fileURLToPath } from "url";
+import { InputPrompt } from '../components/ui/InputPrompt'
 
 interface HistoryItem {
   id: number;
@@ -31,8 +30,6 @@ const ToolCall = ({ toolName, args }: ToolCallProps) => {
   ) {
     return null;
   }
-
-  
 
   if (toolName.includes("notebook_sequentialthinking_tools")) {
     try {
@@ -154,7 +151,6 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
   const visibleLines = isTruncated ? lines.slice(0, MAX_LINES) : lines;
   const remainingCount = lines.length - MAX_LINES;
   if (toolName.includes("agent_end_task")) {
-    
     return null; // não renderiza nada
   }
 
@@ -163,14 +159,12 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
     return null; // não renderiza resultado pois já foi renderizado na call
   }
 
-  
-
   // Regra especial para a ferramenta message_notify_dev para uma UI mais limpa.
   if (toolName.includes("message_notify_dev")) {
     try {
       const parsed = JSON.parse(result);
       // console.log("JSON PARCED:", parsed);
-      
+
       // Se o resultado for um JSON válido com a mensagem do agente, renderiza de forma especial.
       if (parsed.content && parsed.content.body) {
         return (
@@ -209,38 +203,20 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
 const App = React.memo(({ sessionId }: AppProps) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [query, setQuery] = useState("");
-  const [isTextLimited, setIsTextLimited] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>("Starting...");
+  const [statusMessage, setStatusMessage] = useState<string | null>(
+    "Starting..."
+  );
   const [toolsCount, setToolsCount] = useState<number | null>(null);
-  const [mcpStatus, setMcpStatus] = useState<"connecting" | "connected">("connecting");
+  const [mcpStatus, setMcpStatus] = useState<"connecting" | "connected">(
+    "connecting"
+  );
   const [isProcessing, setIsProcessing] = useState(false);
   const backendProcess = useRef<ChildProcessWithoutNullStreams | null>(null);
   const [position, setPosition] = useState(0);
 
-  const { stdout } = useStdout();
-
-
   const workdir = process.cwd();
 
   const maxPosition = 3; // controla quantas "colunas" dentro dos parênteses
-
-
-  // Função memorizada para lidar com mudanças no input
-   const handleQueryChange = useCallback((text: string) => {
-    const maxInputLength = 5000;
-    const cleanText = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-    // IMPORTANTE: Remova a normalização de quebras de linha, pois o TextInput já lida com isso
-    // e queremos que o input seja uma única linha.
-    const singleLineText = cleanText.replace(/(\r\n|\n|\r)/gm, "");
-
-    const wasLimited = singleLineText.length > maxInputLength;
-    const limitedText = wasLimited
-      ? singleLineText.substring(0, maxInputLength)
-      : singleLineText;
-
-    setQuery(limitedText);
-    setIsTextLimited(wasLimited);
-  }, []);
 
 
   useEffect(() => {
@@ -253,207 +229,235 @@ const App = React.memo(({ sessionId }: AppProps) => {
     return () => clearInterval(interval); // limpa intervalo ao desmontar/parar
   }, [isProcessing]);
 
+  useEffect(() => {
+    // 1. O histórico agora começa vazio. O Header e o SessionInfo são renderizados fora dele.
+    setHistory([
+      { id: 0, component: <Header /> },
+      // {
+      //   id: 1,
+      //   component: (
+      //     <SessionInfo
+      //       sessionId={sessionId}
+      //       toolsCount={toolsCount}
+      //       mcpStatus={mcpStatus}
+      //       workdir={workdir} // <-- ADICIONE A PROP AQUI
+      //     />
+      //   ),
+      // },
+    ]);
 
-useEffect(() => {
-  // 1. O histórico agora começa vazio. O Header e o SessionInfo são renderizados fora dele.
-  setHistory([
-    { id: 0, component: <Header /> },
-    // {
-    //   id: 1,
-    //   component: (
-    //     <SessionInfo
-    //       sessionId={sessionId}
-    //       toolsCount={toolsCount}
-    //       mcpStatus={mcpStatus}
-    //       workdir={workdir} // <-- ADICIONE A PROP AQUI
-    //     />
-    //   ),
-    // },
-  ]);
+    // 2. A lógica para encontrar o backend permanece a mesma.
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const isWin = process.platform === "win32";
+    const backendExecutableName = isWin ? "bluma.exe" : "bluma";
+    const backendPath = path.resolve(__dirname, backendExecutableName);
 
-  // 2. A lógica para encontrar o backend permanece a mesma.
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const isWin = process.platform === 'win32';
-  const backendExecutableName = isWin ? 'bluma.exe' : 'bluma';
-  const backendPath = path.resolve(__dirname, backendExecutableName);
+    // Depuração (pode ser removida em produção)
+    // console.log('Caminho final do backend:', backendPath);
+    // console.log('Diretório de trabalho atual:', process.cwd());
 
-  // Depuração (pode ser removida em produção)
-  // console.log('Caminho final do backend:', backendPath);
-  // console.log('Diretório de trabalho atual:', process.cwd());
+    const backend = spawn(backendPath, [sessionId], {
+      stdio: ["pipe", "pipe", "pipe"],
+      
+    });
+    backendProcess.current = backend;
 
-  const backend = spawn(backendPath, [sessionId], {
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
-  backendProcess.current = backend;
+    // 3. Os listeners de eventos do processo (error, exit) permanecem os mesmos.
+    backend.on("error", (error) => {
+      console.error("Erro no processo backend:", error);
+      console.error("Caminho tentado:", backendPath);
+    });
 
-  // 3. Os listeners de eventos do processo (error, exit) permanecem os mesmos.
-  backend.on('error', (error) => {
-    console.error('Erro no processo backend:', error);
-    console.error('Caminho tentado:', backendPath);
-  });
-
-  backend.on('exit', (code, signal) => {
-    if (code !== 0) {
-      setHistory((prev) => [
-        ...prev,
-        {
-          id: prev.length,
-          component: (
-            <Box borderStyle="round" borderColor="red" marginBottom={1} paddingX={1}>
-              <Text color="red" bold>❌ Backend Error</Text>
-              {/* <Text color="gray">O processo backend terminou inesperadamente (código: {code})</Text> */}
-              <Text color="gray">We will repeat the initialization</Text>
-            </Box>
-          ),
-        },
-      ]);
-      setStatusMessage(null);
-      setIsProcessing(false);
-    }
-  });
-
-  // 4. O listener principal de 'data' é onde a mágica acontece.
-  backend.stdout.on('data', (data) => {
-    const messages = data.toString().split('\n').filter(Boolean);
-    messages.forEach((message: string) => {
-      try {
-        const parsed = JSON.parse(message);
-
-        // --- INÍCIO DA LÓGICA DE ATUALIZAÇÃO CORRIGIDA ---
-
-        // Lógica que atualiza estados, mas NÃO o histórico.
-        if (parsed.type === 'connection_status') {
-          setStatusMessage(parsed.message);
-          return; // Sai da função forEach para esta mensagem
-        }
-
-        if (parsed.type === 'status' && parsed.status === 'mcp_connected') {
-          setStatusMessage(null);
-          setToolsCount(parsed.tools);
-          setMcpStatus('connected');
-          setHistory(prev => {
-            
-            const newHistory = [...prev];
-            
-            // Substitui o item 1 (SessionInfo) por uma nova versão com os dados atualizados
-            newHistory[1] = {
-              
-              id: 1,
-              component: (
-                <SessionInfo
-                  sessionId={sessionId}
-                  toolsCount={parsed.tools} // Usa o dado recebido
-                  mcpStatus={'connected'}   // Usa o dado recebido
-                  workdir={workdir}
-                />
-              )
-            };
-            return newHistory;
-          });
-          return; // Importante
-        }
-
-
-
-
-        if (parsed.type === 'done' || (parsed.type === 'tool_call' && parsed.tool_name.includes('agent_end_task')) || (parsed.type === 'tool_result' && parsed.tool_name.includes('agent_end_task'))) {
-          setIsProcessing(false);
-          setStatusMessage(null);
-          // Se for um 'done', não precisa adicionar nada ao histórico.
-          // Se for um 'agent_end_task', o componente já retorna null, então não há problema.
-          if (parsed.type === 'done') return;
-        }
-
-        if (parsed.type === 'error') {
-          setStatusMessage(null);
-          setIsProcessing(false);
-          // O erro será adicionado ao histórico abaixo.
-        }
-
-        // Lógica que SEMPRE adiciona um componente ao histórico.
-        // Se nenhum dos 'if' abaixo for satisfeito, nada é adicionado.
-        let newComponent: React.ReactElement | null = null;
-
-        if (parsed.type === 'debug') {
-          newComponent = <Text color='gray'>🔍 {parsed.message}</Text>;
-        } else if (parsed.type === 'completion') {
-          setIsProcessing(false);
-          setStatusMessage(null);
-          newComponent = <Text color='green'>🎯 {parsed.message}</Text>;
-        } else if (parsed.type === 'feedback') {
-          const colorMap = { error: 'red', excellent: 'green', good: 'blue', warning: 'yellow' };
-          const color = colorMap[parsed.level as keyof typeof colorMap] || 'white';
-          newComponent = (
-            <Box marginBottom={1}>
-              <Text color={color}>
-                {parsed.level === 'excellent' ? '🏆' : parsed.level === 'error' ? '❌' : parsed.level === 'good' ? '✅' : '⚠️'}{' '}
-                {parsed.message}
-              </Text>
-            </Box>
-          );
-        } else if (parsed.type === 'protocol_violation') {
-          newComponent = (
-            <Box borderStyle='round' borderColor='yellow' flexDirection='column' marginBottom={1} paddingX={1}>
-              <Text color='yellow' bold>⚠️ Protocol Violation</Text>
-              <Text color='gray'>{parsed.content}</Text>
-              <Text color='yellow'>{parsed.message}</Text>
-            </Box>
-          );
-        } else if (parsed.type === 'warning') {
-          newComponent = <Text color='yellow'>⚠️ {parsed.message}</Text>;
-        } else if (parsed.type === 'agent_response') {
-          newComponent = (
-            <Box>
-              <Text color='magenta'>bluma:</Text>
-              <Text> {parsed.content}</Text>
-            </Box>
-          );
-        } else if (parsed.type === 'error') {
-          newComponent = <Text color='red'>❌ {parsed.message}</Text>;
-        } else if (parsed.type === 'tool_call') {
-          newComponent = <ToolCall toolName={parsed.tool_name} args={parsed.arguments} />;
-        } else if (parsed.type === 'tool_result') {
-          newComponent = <ToolResult toolName={parsed.tool_name} result={parsed.result} />;
-        }
-
-        // Adiciona o novo componente ao histórico, se ele foi criado.
-        if (newComponent) {
-          setHistory((prev) => [
-            ...prev,
-            { id: prev.length, component: newComponent },
-          ]);
-        }
-
-        // --- FIM DA LÓGICA DE ATUALIZAÇÃO CORRIGIDA ---
-
-      } catch (error) {
-        // Ignora erros de parsing de JSON
+    backend.on("exit", (code, signal) => {
+      if (code !== 0) {
+        setHistory((prev) => [
+          ...prev,
+          {
+            id: prev.length,
+            component: (
+              <Box
+                borderStyle="round"
+                borderColor="red"
+                marginBottom={1}
+                paddingX={1}
+              >
+                <Text color="red" bold>
+                  ❌ Backend Error
+                </Text>
+                {/* <Text color="gray">O processo backend terminou inesperadamente (código: {code})</Text> */}
+                <Text color="gray">We will repeat the initialization</Text>
+              </Box>
+            ),
+          },
+        ]);
+        setStatusMessage(null);
+        setIsProcessing(false);
       }
     });
-  });
 
-  // 5. A função de cleanup permanece a mesma.
-  return () => {
-    if (backendProcess.current) {
-      backendProcess.current.kill();
-    }
-  };
-}, [sessionId]); 
+    // 4. O listener principal de 'data' é onde a mágica acontece.
+    backend.stdout.on("data", (data) => {
+      const messages = data.toString().split("\n").filter(Boolean);
+      messages.forEach((message: string) => {
+        try {
+          const parsed = JSON.parse(message);
 
+          // --- INÍCIO DA LÓGICA DE ATUALIZAÇÃO CORRIGIDA ---
+
+          // Lógica que atualiza estados, mas NÃO o histórico.
+          if (parsed.type === "connection_status") {
+            setStatusMessage(parsed.message);
+            return; // Sai da função forEach para esta mensagem
+          }
+
+          if (parsed.type === "status" && parsed.status === "mcp_connected") {
+            setStatusMessage(null);
+            setToolsCount(parsed.tools);
+            setMcpStatus("connected");
+            setHistory((prev) => {
+              const newHistory = [...prev];
+
+              // Substitui o item 1 (SessionInfo) por uma nova versão com os dados atualizados
+              newHistory[1] = {
+                id: 1,
+                component: (
+                  <SessionInfo
+                    sessionId={sessionId}
+                    toolsCount={parsed.tools} // Usa o dado recebido
+                    mcpStatus={"connected"} // Usa o dado recebido
+                    workdir={workdir}
+                  />
+                ),
+              };
+              return newHistory;
+            });
+            return; // Importante
+          }
+
+          if (
+            parsed.type === "done" ||
+            (parsed.type === "tool_call" &&
+              parsed.tool_name.includes("agent_end_task")) ||
+            (parsed.type === "tool_result" &&
+              parsed.tool_name.includes("agent_end_task"))
+          ) {
+            setIsProcessing(false);
+            setStatusMessage(null);
+            // Se for um 'done', não precisa adicionar nada ao histórico.
+            // Se for um 'agent_end_task', o componente já retorna null, então não há problema.
+            if (parsed.type === "done") return;
+          }
+
+          if (parsed.type === "error") {
+            setStatusMessage(null);
+            setIsProcessing(false);
+            // O erro será adicionado ao histórico abaixo.
+          }
+
+          // Lógica que SEMPRE adiciona um componente ao histórico.
+          // Se nenhum dos 'if' abaixo for satisfeito, nada é adicionado.
+          let newComponent: React.ReactElement | null = null;
+
+          if (parsed.type === "debug") {
+            newComponent = <Text color="gray">🔍 {parsed.message}</Text>;
+          } else if (parsed.type === "completion") {
+            setIsProcessing(false);
+            setStatusMessage(null);
+            newComponent = <Text color="green">🎯 {parsed.message}</Text>;
+          } else if (parsed.type === "feedback") {
+            const colorMap = {
+              error: "red",
+              excellent: "green",
+              good: "blue",
+              warning: "yellow",
+            };
+            const color =
+              colorMap[parsed.level as keyof typeof colorMap] || "white";
+            newComponent = (
+              <Box marginBottom={1}>
+                <Text color={color}>
+                  {parsed.level === "excellent"
+                    ? "🏆"
+                    : parsed.level === "error"
+                    ? "❌"
+                    : parsed.level === "good"
+                    ? "✅"
+                    : "⚠️"}{" "}
+                  {parsed.message}
+                </Text>
+              </Box>
+            );
+          } else if (parsed.type === "protocol_violation") {
+            newComponent = (
+              <Box
+                borderStyle="round"
+                borderColor="yellow"
+                flexDirection="column"
+                marginBottom={1}
+                paddingX={1}
+              >
+                <Text color="yellow" bold>
+                  ⚠️ Protocol Violation
+                </Text>
+                <Text color="gray">{parsed.content}</Text>
+                <Text color="yellow">{parsed.message}</Text>
+              </Box>
+            );
+          } else if (parsed.type === "warning") {
+            newComponent = <Text color="yellow">⚠️ {parsed.message}</Text>;
+          } else if (parsed.type === "agent_response") {
+            newComponent = (
+              <Box>
+                <Text color="magenta">bluma:</Text>
+                <Text> {parsed.content}</Text>
+              </Box>
+            );
+          } else if (parsed.type === "error") {
+            newComponent = <Text color="red">❌ {parsed.message}</Text>;
+          } else if (parsed.type === "tool_call") {
+            newComponent = (
+              <ToolCall toolName={parsed.tool_name} args={parsed.arguments} />
+            );
+          } else if (parsed.type === "tool_result") {
+            newComponent = (
+              <ToolResult toolName={parsed.tool_name} result={parsed.result} />
+            );
+          }
+
+          // Adiciona o novo componente ao histórico, se ele foi criado.
+          if (newComponent) {
+            setHistory((prev) => [
+              ...prev,
+              { id: prev.length, component: newComponent },
+            ]);
+          }
+
+          // --- FIM DA LÓGICA DE ATUALIZAÇÃO CORRIGIDA ---
+        } catch (error) {
+          // Ignora erros de parsing de JSON
+        }
+      });
+    });
+
+    // 5. A função de cleanup permanece a mesma.
+    return () => {
+      if (backendProcess.current) {
+        backendProcess.current.kill();
+      }
+    };
+  }, [sessionId]);
 
   const handleSubmit = useCallback(
-    (text: string) => {
+    (text: string) => { // 'text' agora vem diretamente do InputPrompt
       if (!text || !backendProcess.current || isProcessing) return;
 
       setIsProcessing(true);
 
-      // Limita o texto para evitar problemas de interface
-      const maxLength = 10000; // Limite máximo
+      const maxLength = 10000;
       const displayText =
         text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
 
-      // Adiciona a mensagem do user à UI
       setHistory((prev) => {
         const nextId = prev.length;
         return [
@@ -476,9 +480,6 @@ useEffect(() => {
         ];
       });
 
-      
-
-      // Envia para o backend (sem limite - envia o texto completo)
       const message = JSON.stringify({ type: "user_message", content: text });
 
       try {
@@ -487,10 +488,9 @@ useEffect(() => {
         console.error("Erro ao enviar mensagem:", error);
       }
 
-      setQuery("");
-      setIsTextLimited(false);
+      // REMOVA: setQuery("");
     },
-    [isProcessing]
+    [isProcessing] // Remova 'query' das dependências se estiver lá
   );
 
   // Lógica da animação
@@ -499,68 +499,41 @@ useEffect(() => {
 
   return (
     <Box flexDirection="column">
-       {/* 1. Renderize os componentes "estáticos" do cabeçalho diretamente. */}
-      
+      {/* 1. Renderize os componentes "estáticos" do cabeçalho diretamente. */}
+
       <Static items={history}>
-        
         {(item) => <Box key={item.id}>{item.component}</Box>}
       </Static>
 
-      {statusMessage && mcpStatus !== 'connected' && (
-  <Box
-    borderStyle="round"
-    borderColor="white"
-    flexDirection="row"
-  >
-    <Text color="yellow">
-      <Spinner type="dots" /> {statusMessage}
-    </Text>
-  </Box>
-)}
-
-{isProcessing ? (
-  <Box borderStyle="round" borderColor="white">
-    <Text color="magenta">
-      ({spacesBeforeDot}●{spacesAfterDot}) Working...
-    </Text>
-  </Box>
-) : (
-  mcpStatus === 'connected' && (
-    <Box
-      borderStyle="round"
-      borderColor="white"
-      flexDirection="row"
-      alignItems="center"
-    >
-      <Text bold>{">"} </Text>
-      <Box flexGrow={1}>
-        <TextInput
-          value={query}
-          onChange={handleQueryChange}
-          onSubmit={handleSubmit}
-        />
-      </Box>
-    </Box>
-  )
-)}
-
-
-      {isTextLimited && (
-        <Box marginTop={1}>
+      {statusMessage && mcpStatus !== "connected" && (
+        <Box borderStyle="round" borderColor="white" flexDirection="row">
           <Text color="yellow">
-            ⚠️ Texto limitado a 5000 caracteres para melhor performance
+            <Spinner type="dots" /> {statusMessage}
           </Text>
         </Box>
       )}
-       {mcpStatus ===  "connected" && (
-      <Box flexDirection="column" justifyContent="center" alignItems="center">
-        <Text color="gray" dimColor>
-          BluMa Senior Full Stack Developer
-        </Text>
-      </Box>
-        )}
+
+      {isProcessing ? (
+        <Box borderStyle="round" borderColor="white">
+          <Text color="magenta">
+            ({spacesBeforeDot}●{spacesAfterDot}) Working...
+          </Text>
+        </Box>
+      ) : (
+        mcpStatus === 'connected' && (
+          // SUBSTITUA o bloco do TextInput por isto:
+          <InputPrompt onSubmit={handleSubmit} />
+        )
+      )}
+
+      {mcpStatus === "connected" && (
+        <Box flexDirection="column" justifyContent="center" alignItems="center">
+          <Text color="gray" dimColor>
+            BluMa Senior Full Stack Developer
+          </Text>
+        </Box>
+      )}
     </Box>
-       
   );
 });
 

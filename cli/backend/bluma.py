@@ -287,6 +287,7 @@ def get_unified_system_prompt() -> str:
     system = get_system_prompt()
     return dedent(f"{description}\n\n{system}").strip()
 
+
 def create_api_context_window(full_history: List[Dict[str, Any]], max_messages: int) -> List[Dict[str, Any]]:
     if len(full_history) <= max_messages:
         return full_history

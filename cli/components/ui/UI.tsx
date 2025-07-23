@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import { blumaAscii } from './ui/AsciiArt'; // Supondo que este caminho está correto
+import { blumaAscii } from './AsciiArt'; // Supondo que este caminho está correto
 
 //Section Header for chat
 export const Header = () => (

@@ -1,7 +1,7 @@
 
 # BluMa CLI
 
-**BluMa CLI** é um assistente autônomo para engenharia de software. Ele acelera o desenvolvimento, refatoração e análise de projetos complexos usando automação e padrões avançados. O projeto combina protocolos de engenharia, automação de tarefas e uma interface interativa via terminal.
+**BluMa CLI** é um agente de IA autônomo para engenharia de software. Ele acelera o desenvolvimento, refatoração e análise de projetos complexos usando automação e padrões avançados. O projeto combina protocolos de engenharia, automação de tarefas e uma interface interativa via terminal.
 
 ---
 
