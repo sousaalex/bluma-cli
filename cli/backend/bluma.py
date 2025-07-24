@@ -187,14 +187,35 @@ class MCPClient:
                 send_message({"type": "error", "message": f"Falha ao conectar ao servidor SSE '{server_name}': {e}"})
 
         # Connect to stdio servers
+        is_windows = sys.platform == "win32" # Definimos uma vez, fora do loop
+
         for server_name, server_conf in stdio_servers.items():
             send_message({"type": "connection_status", "message": f"Conectando ao servidor Stdio: {server_name}..."})
             try:
+                # Pega na configuração original do JSON
+                command = server_conf["command"]
+                args = server_conf.get("args", []) # Usar .get() para segurança
+                
+                # --- Bloco de Tradução Multi-Plataforma ---
+                # Se não for Windows E o comando for "cmd", adaptamos.
+                if not is_windows and command.lower() == "cmd":
+                    # Assume que o formato é ["/c", "npx", ...]
+                    if len(args) >= 2 and args[0].lower() == "/c":
+                        command = args[1]  # O comando real é 'npx'
+                        args = args[2:]    # Os argumentos reais vêm depois
+                    else:
+                        # Se o formato não for o esperado, avisa e pula
+                        send_message({"type": "warning", "message": f"Formato de comando inesperado para '{server_name}' em sistema não-Windows. A saltar."})
+                        continue
+                
+                # A partir daqui, as variáveis 'command' e 'args' estão corretas para qualquer SO
                 server_params = StdioServerParameters(
-                    command=server_conf["command"],
-                    args=server_conf["args"],
+                    command=command,
+                    args=args,
                     env=server_conf.get("env", {})
                 )
+                
+                # O resto da sua lógica de conexão original
                 stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
                 stdio, write = stdio_transport
                 session = await self.exit_stack.enter_async_context(ClientSession(stdio, write))
@@ -219,15 +240,14 @@ class MCPClient:
                     }
                 connected_any = True
             except Exception as e:
-                send_message({"type": "error", "message": f"Falha ao conectar ao servidor Stdio '{server_name}': {e}"})
+                # Adicionamos o nome do comando ao erro para facilitar a depuração
+                send_message({"type": "error", "message": f"Falha ao conectar ao servidor Stdio '{server_name}' (comando: '{command}'): {e}"})
         
         if connected_any:
             return True
         return False
 
     async def call_mcp_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> Any:
-        if "message_ask_user" in tool_name:
-            return {"error": "A ferramenta 'ask_user' não é suportada no modo não-interativo."}
         if tool_name not in self.tool_to_server_map:
             return {"error": f"Ferramenta '{tool_name}' não encontrada"}
         tool_info = self.tool_to_server_map[tool_name]

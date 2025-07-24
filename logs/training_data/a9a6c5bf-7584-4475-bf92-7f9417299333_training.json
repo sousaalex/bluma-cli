@@ -1,0 +1,33 @@
+{
+  "session_id": "a9a6c5bf-7584-4475-bf92-7f9417299333",
+  "session_summary": {
+    "session_id": "a9a6c5bf-7584-4475-bf92-7f9417299333",
+    "start_time": 1753380604.780733,
+    "tasks": [],
+    "total_tool_calls": 0,
+    "total_errors": 0,
+    "avg_response_time": 0.0,
+    "success_rate": 0.0,
+    "overall_efficiency": 0.0
+  },
+  "task_data": [],
+  "performance_metrics": {
+    "status": "no_data"
+  },
+  "learning_insights": {
+    "insights": [
+      "Success rate needs improvement. Focus on thorough analysis and planning.",
+      "Tool usage could be more thoughtful. Plan your approach before executing.",
+      "Code quality needs attention. Follow engineering best practices."
+    ],
+    "recommendations": [
+      "Plan your tool usage more carefully - think before acting",
+      "Focus on thorough task completion - verify all requirements",
+      "Improve code quality - follow engineering best practices and documentation"
+    ],
+    "next_focus_areas": [
+      "tool_efficiency"
+    ]
+  },
+  "exported_at": "2025-07-24T19:10:04.781431"
+}
