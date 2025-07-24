@@ -410,6 +410,10 @@ const App = React.memo(({ sessionId }: AppProps) => {
           <Text color="magenta">({spacesBeforeDot}●{spacesAfterDot}) Working...</Text>
         </Box>
       ) : pendingConfirmation ? (
+        // ESTA É A PARTE IMPORTANTE
+        // Quando `pendingConfirmation` tiver dados, este componente será renderizado.
+        // Quando o usuário decidir, `handleConfirmation` será chamado,
+        // `pendingConfirmation` se tornará `null`, e este componente desaparecerá.
         <ConfirmationPrompt
           toolCalls={pendingConfirmation}
           onDecision={(decision) => handleConfirmation(decision, pendingConfirmation)}

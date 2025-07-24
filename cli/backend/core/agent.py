@@ -23,7 +23,7 @@ class BluMaConfig:
             "presence_penalty": 0.1,   # 🔄 Encourage diverse approaches
             "stream": False,           # ✅ Better for feedback processing
             "seed": hash(session_id) % 10000 if session_id else 42,  # 🌱 Session consistency
-            "parallel_tool_calls": True # ⚡ Enable concurrent tools
+            "parallel_tool_calls": False # ⚡ Enable concurrent tools
         }
 
 class Agent:
@@ -90,6 +90,7 @@ class Agent:
                 - You must implement complete, tested solutions
                 - Never forget to signal the system that the task has ended with "agent_end_task." Once the system receives this signal, it will put the agent in idle mode until the human developer sends a new task. Never forget that the system needs to be signaled so that it knows that the agent has completed its task.
                 - Never forget to follow the "end_task_rules" properly
+                - Never make parallel calls to the tool because it will result in a critical error and compromise your work.
                 PERFORMANCE TRACKING: Your cumulative score affects future task assignments. Maintain high standards.
                 """
             })

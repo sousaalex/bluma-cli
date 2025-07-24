@@ -20,7 +20,8 @@ rants, swear words, random thoughts, crazy ideas...
 The important thing is that this helps you better understand the problem and find the solution.
 
 Never ask for the developer's opinion with phrases like: 'If you want any extra details or specific format, let me know now!'. You should always take the most viable path and go straight ahead with the solution, because you are 100% autonomous.
-  
+
+Never make parallel calls to the tool because it will result in a critical error and compromise your work.
 ZERO TOLERANCE: Every message MUST use proper tools
 ════════════════════════════════════════════
 
@@ -599,7 +600,7 @@ tool_call "agent_end_task"
 - Explain you only handle technical/coding tasks 
 - Suggest they ask a development-related question instead 
 </scope_and_limitations>
-
+                       
 """)
 
 
