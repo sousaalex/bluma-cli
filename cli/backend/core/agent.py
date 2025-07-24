@@ -16,7 +16,7 @@ class BluMaConfig:
         Returns optimized parameters for LLM with BluMa feedback system
         """
         return {
-            "temperature": 0.0,        # 🎯 Deterministic for protocol adherence
+            "temperature": 0.2,        # 🎯 Deterministic for protocol adherence
             "max_tokens": 4096,        # ✅ Adequate for complex responses
             "top_p": 1,                # 🎯 Focused token selection
             "frequency_penalty": 0.15, # 🚫 Reduce repetitive patterns
@@ -64,7 +64,9 @@ class Agent:
 
     async def process_turn(self, current_history):
         """
-        Enhanced async generator that yields events for frontend communication
+        Enhanced async generator that yields events for frontend communication.
+        - Immediately executes 'safe' tools like 'agent_end_task' and 'message_notify_dev'.
+        - Asks for user confirmation for all other tools.
         """
         cycle_start_time = time.time()
         self.current_cycle_start = cycle_start_time
@@ -111,14 +113,12 @@ class Agent:
                     return
 
                 try:
-                    # NOVO FLUXO: Usa janela de contexto por turnos completos
                     from cli.backend.core.context_utils import create_api_context_window
                     context_window = create_api_context_window(current_history, max_turns=300)
 
                     optimal_params = BluMaConfig.get_optimal_params(self.session_id)
                     api_call_params = {
                         "model": self.deployment_name,
-                        # Troca o histórico completo pela janela de contexto otimizada
                         "messages": context_window,
                         "tools": all_tools,
                         "tool_choice": "auto",
@@ -129,17 +129,6 @@ class Agent:
 
                     response = await self.client.chat.completions.create(**api_call_params)
 
-                    # ---
-                    # LÓGICA ANTERIOR (caso queira reverter para histórico completo):
-                    # api_call_params = {
-                    #     "model": self.deployment_name,
-                    #     "messages": current_history,
-                    #     "tools": all_tools,
-                    #     "tool_choice": "auto",
-                    #     **optimal_params
-                    # }
-                    # response = await self.client.chat.completions.create(**api_call_params)
-
                 except Exception as api_error:
                     yield {"type": "error", "message": f"🚨 API Error: {str(api_error)}"}
                     yield {"type": "debug", "message": f"🔍 API Params: {json.dumps(api_call_params, indent=2)}"}
@@ -149,102 +138,69 @@ class Agent:
                 response_message = response.choices[0].message
 
                 if response_message.tool_calls:
-                    # Adiciona a mensagem do assistente ao histórico ANTES de executar as ferramentas
-                    current_history.append(response_message.model_dump())
+                    # Define a lista de ferramentas que não precisam de permissão.
+                    auto_approved_tools = ["agent_end_task", "message_notify_dev", "notebook_sequentialthinking_tools"]
 
-                    # --- CORREÇÃO INICIADA ---
-                    # Lógica refatorada para garantir a execução de todas as ferramentas antes de decidir o término.
+                    # Verifica se TODAS as ferramentas pedidas estão na lista de aprovação automática.
+                    all_tools_are_safe = all(
+                        any(approved_tool in tc.function.name for approved_tool in auto_approved_tools)
+                        for tc in response_message.tool_calls
+                    )
 
-                    # 1. PREPARAÇÃO: Flags e listas para coletar resultados.
-                    tool_responses = []
-                    task_should_end = False  # Flag para controlar o fim da tarefa.
-
-                    # 2. EXECUÇÃO: Este loop executa TODAS as ferramentas solicitadas pelo LLM.
-                    for tool_call in response_message.tool_calls:
-                        tool_name = tool_call.function.name
-                        tool_args_str = tool_call.function.arguments
+                    if all_tools_are_safe:
+                        # --- CASO 1: EXECUÇÃO IMEDIATA (TODAS AS FERRAMENTAS SÃO SEGURAS) ---
                         
-                        try:
-                            tool_args = json.loads(tool_args_str)
-                        except json.JSONDecodeError:
-                            yield {"type": "error", "message": f"❌ Failed to decode JSON for {tool_name}: {tool_args_str}"}
-                            tool_args = {"error": "Invalid JSON arguments"}
+                        current_history.append(response_message.model_dump())
+                        
+                        tool_responses = []
+                        task_should_end = False
 
-                        # Apenas sinaliza se a tarefa deve terminar. NÃO sai do loop aqui.
-                        if tool_name == "agent_end_task":
-                            task_should_end = True
+                        for tool_call in response_message.tool_calls:
+                            tool_name = tool_call.function.name
+                            
+                            if "agent_end_task" in tool_name:
+                                task_should_end = True
+
+                            try:
+                                tool_args = json.loads(tool_call.function.arguments)
+                                result = await self.tool_invoker.invoke(tool_name, tool_args)
+                            except Exception as e:
+                                result = {"error": f"Failed to execute auto-approved tool {tool_name}: {e}"}
+
+                            yield {"type": "tool_result", "tool_name": tool_name, "result": str(result)}
+                            
+                            tool_responses.append({
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "name": tool_name,
+                                "content": str(result)
+                            })
+                        
+                        current_history.extend(tool_responses)
+
+                        if task_should_end:
+                            yield {"type": "done", "status": "completed", "history": current_history}
+                            return
+                        else:
+                            continue
+
+                    else:
+                        # --- CASO 2: PEDIR PERMISSÃO (PELO MENOS UMA FERRAMENTA NÃO É SEGURA) ---
+                        
+                        current_history.append(response_message.model_dump())
 
                         yield {
-                            "type": "tool_call",
-                            "tool_name": tool_name,
-                            "arguments": tool_args,
-                            "message": f"🔧 Executing: {tool_name}"
+                            "type": "confirmation_request",
+                            "tool_calls": [tc.model_dump() for tc in response_message.tool_calls]
                         }
                         
-                        tool_start_time = time.time()
-                        try:
-                            result = await self.tool_invoker.invoke(tool_name, tool_args)
-                            tool_execution_time = time.time() - tool_start_time
-                            
-                            yield {
-                                "type": "tool_result",
-                                "tool_name": tool_name,
-                                "result": str(result),
-                                "execution_time": tool_execution_time,
-                                "message": f"✅ {tool_name} executed in {tool_execution_time:.1f}s"
-                            }
-                        except Exception as tool_error:
-                            tool_execution_time = time.time() - tool_start_time
-                            error_result = f"Tool execution failed: {str(tool_error)}"
-                            
-                            yield {
-                                "type": "tool_result",
-                                "tool_name": tool_name,
-                                "result": error_result,
-                                "execution_time": tool_execution_time,
-                                "message": f"❌ {tool_name} failed in {tool_execution_time:.1f}s"
-                            }
-                            result = error_result
-                        
-                        # Coleta o resultado da ferramenta para adicionar ao histórico mais tarde.
-                        tool_responses.append({
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "name": tool_name,
-                            "content": str(result)
-                        })
-
-                    # 3. ATUALIZAÇÃO DO HISTÓRICO: Adiciona os resultados de TODAS as ferramentas.
-                    current_history.extend(tool_responses)
-
-                    # 4. CONTROLE DE FLUXO: Agora, e somente agora, verifica se a tarefa deve terminar.
-                    if task_should_end:
-                        self.metrics_tracker.end_task(success=True, quality_score=1.0)
-                        # Envia o evento final 'done' com o histórico totalmente atualizado.
-                     
-                        performance = self.metrics_tracker.get_performance_summary()
-                        if performance.get("status") != "no_data":
-                            yield {
+                        yield {
                             "type": "done",
-                            "status": "completed",
+                            "status": "awaiting_confirmation",
                             "history": current_history
-                            }
-                            yield {
-                                "type": "performance_summary",
-                                "data": performance,
-                                "message": f"Cycles completed: {self.cycles_completed + 1}"
-                            }
-                        self.cycles_completed += 1
-                        log_notebook_entry("Agent task completed via agent_end_task", {
-                            "cycles_completed": self.cycles_completed,
-                        })
+                        }
                         
-                        
-                        
-                        # Encerra a função geradora de forma limpa.
                         return
-                    
-                    # --- FIM DA CORREÇÃO ---
 
                 elif response_message.content:
                     # Lida com violação de protocolo (resposta direta de texto)
@@ -277,14 +233,11 @@ class Agent:
                     })
                     
                     self.metrics_tracker.record_context_switch()
-                    continue  # Dá ao agente outra chance de seguir o protocolo.
+                    continue
 
-                # Se chegamos aqui, significa que o LLM não fez nada (nem tool_call, nem content).
-                # Isso pode indicar um estado de confusão. Damos uma chance para ele continuar.
                 else:
                     yield {"type": "info", "message": "🤔 Agent is thinking... continuing reasoning cycle."}
                     continue
-
 
         except Exception as e:
             error_msg = str(e)

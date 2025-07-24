@@ -8,6 +8,8 @@ import { ChildProcessWithoutNullStreams } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 import { InputPrompt } from '../components/ui/InputPrompt'
+import { ConfirmationPrompt } from '../components/ui/ConfirmationPrompt';
+
 
 interface HistoryItem {
   id: number;
@@ -214,6 +216,9 @@ const App = React.memo(({ sessionId }: AppProps) => {
   const backendProcess = useRef<ChildProcessWithoutNullStreams | null>(null);
   const [position, setPosition] = useState(0);
 
+   const [pendingConfirmation, setPendingConfirmation] = useState<any[] | null>(null);
+   const [alwaysAcceptList, setAlwaysAcceptList] = useState<string[]>([]);
+
   const workdir = process.cwd();
 
   const maxPosition = 3; // controla quantas "colunas" dentro dos parênteses
@@ -302,6 +307,30 @@ const App = React.memo(({ sessionId }: AppProps) => {
       messages.forEach((message: string) => {
         try {
           const parsed = JSON.parse(message);
+
+          if (parsed.type === "confirmation_request") {
+            const toolToConfirm = parsed.tool_calls[0].function.name;
+            
+            // Se a ferramenta estiver na lista de "aceitar sempre", aceita automaticamente
+            if (alwaysAcceptList.includes(toolToConfirm)) {
+                handleConfirmation('accept', parsed.tool_calls);
+                return;
+            }
+
+            setPendingConfirmation(parsed.tool_calls);
+             setIsProcessing(false); // Para de mostrar "Working..." para mostrar o prompt
+            return;
+          }
+
+           // ATUALIZADO: Lida com o evento 'done'
+           if (parsed.type === "done") {
+            // Só para o processamento se NÃO estivermos à espera de confirmação
+            if (parsed.status !== 'awaiting_confirmation') {
+                // setIsProcessing(false);
+                setStatusMessage(null);
+            }
+            return;
+          }
 
           // --- INÍCIO DA LÓGICA DE ATUALIZAÇÃO CORRIGIDA ---
 
@@ -446,7 +475,7 @@ const App = React.memo(({ sessionId }: AppProps) => {
         backendProcess.current.kill();
       }
     };
-  }, [sessionId]);
+  }, [sessionId, alwaysAcceptList]);
 
   const handleSubmit = useCallback(
     (text: string) => { // 'text' agora vem diretamente do InputPrompt
@@ -493,45 +522,67 @@ const App = React.memo(({ sessionId }: AppProps) => {
     [isProcessing] // Remova 'query' das dependências se estiver lá
   );
 
+  // --- 4. ADICIONAR A FUNÇÃO PARA LIDAR COM A DECISÃO DO UTILIZADOR ---
+  const handleConfirmation = useCallback((decision: 'accept' | 'decline' | 'accept_always', toolCalls: any[]) => {
+    setPendingConfirmation(null); // Esconde o prompt de confirmação
+    setIsProcessing(true);       // Mostra "Working..." novamente
+
+    let finalDecision = decision;
+    if (decision === 'accept_always') {
+      // Adiciona a primeira ferramenta da lista à "lista branca"
+      const toolNameToWhitelist = toolCalls[0].function.name;
+      setAlwaysAcceptList(prev => [...new Set([...prev, toolNameToWhitelist])]);
+      finalDecision = 'accept'; // Trata como uma aceitação normal para esta vez
+    }
+
+    const messageType = finalDecision === 'accept' ? 'user_decision_execute' : 'user_decision_decline';
+    
+    // Os argumentos já são um objeto, não precisamos de JSON.parse/stringify aqui
+    const message = JSON.stringify({ type: messageType, tool_calls: toolCalls });
+
+    try {
+      backendProcess.current?.stdin.write(message + "\n");
+    } catch (error) {
+      console.error("Erro ao enviar decisão:", error);
+      setIsProcessing(false);
+    }
+  }, []);
+
   // Lógica da animação
   const spacesBeforeDot = " ".repeat(position);
   const spacesAfterDot = " ".repeat(maxPosition - position);
 
   return (
     <Box flexDirection="column">
-      {/* 1. Renderize os componentes "estáticos" do cabeçalho diretamente. */}
-
       <Static items={history}>
         {(item) => <Box key={item.id}>{item.component}</Box>}
       </Static>
 
       {statusMessage && mcpStatus !== "connected" && (
-        <Box borderStyle="round" borderColor="white" flexDirection="row">
-          <Text color="yellow">
-            <Spinner type="dots" /> {statusMessage}
-          </Text>
+        <Box>
+          <Text color="yellow"><Spinner type="dots" /> {statusMessage}</Text>
         </Box>
       )}
 
+      {/* --- 5. ATUALIZAR A LÓGICA DE RENDERIZAÇÃO DO INPUT --- */}
       {isProcessing ? (
         <Box borderStyle="round" borderColor="white">
-          <Text color="magenta">
-            ({spacesBeforeDot}●{spacesAfterDot}) Working...
-          </Text>
+          <Text color="magenta">({spacesBeforeDot}●{spacesAfterDot}) Working...</Text>
         </Box>
+      ) : pendingConfirmation ? (
+        <ConfirmationPrompt 
+            toolCalls={pendingConfirmation}
+            onDecision={(decision) => handleConfirmation(decision, pendingConfirmation)}
+        />
       ) : (
-        mcpStatus === 'connected' && (
-          // SUBSTITUA o bloco do TextInput por isto:
-          <InputPrompt onSubmit={handleSubmit} />
-        )
+        mcpStatus === 'connected' && <InputPrompt onSubmit={handleSubmit} />
       )}
 
       {mcpStatus === "connected" && (
-        <Box flexDirection="column" justifyContent="center" alignItems="center">
-          <Text color="gray" dimColor>
-            BluMa Senior Full Stack Developer
-          </Text>
-        </Box>
+        <Box justifyContent="center" width="100%">
+        <Text color="gray" dimColor>BluMa Senior Full Stack Developer</Text>
+      </Box>
+      
       )}
     </Box>
   );

@@ -1,4 +1,4 @@
-# --- INÍCIO DO FICHEIRO COMPLETO: cli/backend/bluma_core.py ---
+# --- INÍCIO DO FICHEIRO COMPLETO: cli/backend/bluma.py ---
 
 import asyncio
 import os
@@ -325,28 +325,16 @@ async def main():
         sys.path.insert(0, project_root)
     
     dotenv_path = os.path.join(project_root, '.env')
-    # Carrega .env se existir, mas não aborta se não existir
     if os.path.exists(dotenv_path):
         load_dotenv(dotenv_path=dotenv_path)
-    # Se não existir, segue normalmente (confia nas variáveis do ambiente)
 
     endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
     api_version = os.getenv("AZURE_OPENAI_API_VERSION")
     deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
 
-    # Checagem de obrigatoriedade
-    if not endpoint:
-        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_ENDPOINT não foi encontrada."})
-        return
-    if not api_version:
-        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_API_VERSION não foi encontrada."})
-        return
-    if not deployment_name:
-        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_DEPLOYMENT não foi encontrada."})
-        return
-    if not api_key:
-        send_message({"type": "error", "message": "A variável de ambiente AZURE_OPENAI_API_KEY não foi encontrada."})
+    if not all([endpoint, api_version, deployment_name, api_key]):
+        send_message({"type": "error", "message": "Uma ou mais variáveis de ambiente Azure OpenAI não foram encontradas."})
         return
 
     mcp_client = MCPClient()
@@ -389,17 +377,76 @@ async def main():
             try:
                 user_input = json.loads(line)
                 
-                if user_input.get("type") == "user_message":   
-                    history.append({"role": "user", "content": user_input["content"]})
+                if user_input.get("type") == "user_decision_execute":
+                    tool_calls_to_execute = user_input["tool_calls"]
+                    tool_responses = []
+
+                    for tool_call in tool_calls_to_execute:
+                        tool_name = tool_call["function"]["name"]
+                        tool_args = json.loads(tool_call["function"]["arguments"])
+                        
+                        # ==========================================================
+                        # INÍCIO DA CORREÇÃO: Notificar o frontend sobre a chamada
+                        # ==========================================================
+                        
+                        # Envia o evento 'tool_call' para que a UI possa renderizar o componente.
+                        send_message({
+                            "type": "tool_call",
+                            "tool_name": tool_name,
+                            "arguments": tool_args 
+                        })
+
+                        # ==========================================================
+                        # FIM DA CORREÇÃO
+                        # ==========================================================
+                        
+                        result = await agent.tool_invoker.invoke(tool_name, tool_args)
+                        
+                        tool_responses.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call["id"],
+                            "name": tool_name,
+                            "content": str(result)
+                        })
+                        
+                        # A notificação do resultado já estava correta e permanece.
+                        send_message({
+                            "type": "tool_result",
+                            "tool_name": tool_name,
+                            "result": str(result)
+                        })
+
+                    history.extend(tool_responses)
                     
-                    # --- CORREÇÃO APLICADA AQUI ---
-                    # O loop agora irá até o gerador 'agent.process_turn' se esgotar naturalmente.
-                    # Ele vai processar TODOS os eventos que o agente enviar, incluindo o 'done'.
                     async for event in agent.process_turn(history):
                         send_message(event)
                         if event.get("type") == "done":
-                            # Apenas salvamos o histórico quando o evento 'done' é recebido.
-                            # NÃO usamos 'break' para garantir que o loop termine corretamente.
+                            history = event["history"]
+                            save_session_history(session_file, history)
+
+                elif user_input.get("type") == "user_decision_decline":
+                    # ... (esta parte já está correta e permanece inalterada) ...
+                    tool_calls_declined = user_input["tool_calls"]
+                    tool_responses = []
+                    for tool_call in tool_calls_declined:
+                        tool_responses.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call["id"],
+                            "name": tool_call["function"]["name"],
+                            "content": "The human developer refused to run this tool. The proposed action **was not authorized**. Send a notification and then try again but with a **different approach** to achieve the intended goal. If refused, send a notification and then call the `agent_end_task` tool."
+                        })
+                    history.extend(tool_responses)
+                    async for event in agent.process_turn(history):
+                        send_message(event)
+                        if event.get("type") == "done":
+                            history = event["history"]
+                            save_session_history(session_file, history)
+
+                elif user_input.get("type") == "user_message":   
+                    history.append({"role": "user", "content": user_input["content"]})
+                    async for event in agent.process_turn(history):
+                        send_message(event)
+                        if event.get("type") == "done":
                             history = event["history"]
                             save_session_history(session_file, history)
                     
@@ -414,10 +461,11 @@ async def main():
         except Exception:
             pass
 
+
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, EOFError):
         pass
 
-# --- FIM DO FICHEIRO COMPLETO: cli/backend/bluma_core.py ---
+# --- FIM DO FICHEIRO COMPLETO: cli/backend/bluma.py ---
