@@ -1,6 +1,6 @@
 {
   "name": "bluma-cli",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "description": "BluMa independent agent for automation and advanced software engineering.",
   "author": "Alex Fonseca",
   "license": "MIT",
@@ -47,9 +47,7 @@
     "uuid": "^11.1.0"
   },
   "files": [
-    "dist/bluma.exe",
-    "dist/bluma",
-    "dist/index.js"
+    "dist/"
   ],
   "publishConfig": {
     "access": "public"
