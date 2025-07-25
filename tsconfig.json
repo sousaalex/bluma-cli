@@ -1,13 +1,25 @@
 {
+  // "compilerOptions" define as opções de compilação do TypeScript
   "compilerOptions": {
+    // Especifica a versão alvo de ECMAScript para saída do JS (última versão estável)
     "target": "esnext",
+    // Define o sistema de módulos para saída (moderno, usado em bundlers e ESM)
     "module": "esnext",
+    // Pasta de destino para os arquivos compilados
     "outDir": "dist",
+    // Ativa suporte a JSX no estilo do React 17+
     "jsx": "react-jsx",
+    // Permite importar/exportar módulos que usam CommonJS/ESM de forma transparente
     "esModuleInterop": true,
+    // Habilita todas as opções de checagem estrita (tipagem, inicializadores, etc)
     "strict": true,
+    // Pula checagem de tipagem das dependências de node_modules (ganho de performance)
     "skipLibCheck": true,
+    // Resolve módulos como em bundlers (útil para projetos modernos, ESM first)
     "moduleResolution": "bundler"
   },
-  "include": ["cli/**/*.ts", "cli/**/*.tsx"]
-} 
+  // "include" indica os arquivos a serem considerados pelo compilador TS
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  // "exclude" define arquivos/pastas que devem ser ignorados
+  "exclude": ["node_modules", "dist"]
+}

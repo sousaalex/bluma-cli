@@ -1,0 +1,62 @@
+{
+  "mcpServers": {
+    "notebook": {
+      "type": "stdio", 
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "mcp-sequentialthinking-tools"
+      ]
+    },
+    "github": {
+      "type": "stdio", 
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "notion": {
+      "type": "stdio", 
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@suekou/mcp-notion-server"
+      ],
+      "env": {
+        "NOTION_API_TOKEN": "${NOTION_API_TOKEN}"
+      }
+    },
+    "upstash_context7-mcp": {
+      "type": "stdio", 
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    },
+    "file_manager": {
+      "type": "stdio", 
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@sousaalex1605/file_manager_mcp_server"
+      ]
+    }
+  }
+}
