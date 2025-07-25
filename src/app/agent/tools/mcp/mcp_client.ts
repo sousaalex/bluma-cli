@@ -113,7 +113,7 @@ interface McpServerConfig {
         try {
           const fileContent = await fs.readFile(configPath, 'utf-8');
           const processedContent = this.replaceEnvPlaceholders(fileContent);
-          console.log(`[MCPClient] ${configType} MCP config loaded from: ${configPath}`);
+        //   console.log(`[MCPClient] ${configType} MCP config loaded from: ${configPath}`);
           return JSON.parse(processedContent);
         } catch (error: any) {
           if (error.code === 'ENOENT') {
