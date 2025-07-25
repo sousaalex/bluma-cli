@@ -29,7 +29,8 @@ const ToolCall = ({ toolName, args }: ToolCallProps) => {
   // ...código inalterado...
   if (
     toolName.includes("message_notify_dev") ||
-    toolName.includes("agent_end_task")
+    toolName.includes("agent_end_task") ||
+    toolName.includes("notebook_sequentialthinking_tools")
   ) {
     return null;
   }
@@ -78,7 +79,7 @@ const ToolCall = ({ toolName, args }: ToolCallProps) => {
           paddingX={1}
         >
           <Text color="blue" bold>
-            Thinking Process (Raw)
+            Thinking
           </Text>
           <Text color="gray">{JSON.stringify(args, null, 2)}</Text>
         </Box>
@@ -112,10 +113,12 @@ interface ToolResultProps {
 }
 
 const ToolResult = ({ toolName, result }: ToolResultProps) => {
-  // ...código inalterado...
   const MAX_LINES = 3;
 
-  if (toolName.includes("agent_end_task") || toolName.includes("notebook_sequentialthinking_tools")) {
+  if (
+    toolName.includes("agent_end_task") ||
+    toolName.includes("notebook_sequentialthinking_tools")
+  ) {
     return null;
   }
 
@@ -171,12 +174,18 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
 const App = React.memo(({ eventBus, sessionId }: AppProps) => {
   const agentInstance = useRef<Agent | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [statusMessage, setStatusMessage] = useState<string | null>("Initializing agent...");
+  const [statusMessage, setStatusMessage] = useState<string | null>(
+    "Initializing agent..."
+  );
   const [toolsCount, setToolsCount] = useState<number | null>(null);
-  const [mcpStatus, setMcpStatus] = useState<"connecting" | "connected">("connecting");
+  const [mcpStatus, setMcpStatus] = useState<"connecting" | "connected">(
+    "connecting"
+  );
   const [isProcessing, setIsProcessing] = useState(true);
   const [position, setPosition] = useState(0);
-  const [pendingConfirmation, setPendingConfirmation] = useState<any[] | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState<any[] | null>(
+    null
+  );
   const alwaysAcceptList = useRef<string[]>([]);
   const workdir = process.cwd();
   const maxPosition = 3;
@@ -186,13 +195,26 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
       if (!text || isProcessing || !agentInstance.current) return;
       setIsProcessing(true);
 
-      const displayText = text.length > 10000 ? text.substring(0, 10000) + "..." : text;
-      setHistory((prev) => [...prev, { id: prev.length, component: (
-        <Box flexDirection="column">
-          <Box><Text color="cyan" bold>you</Text></Box>
-          <Box flexDirection="column" marginBottom={1}><Text>{displayText}</Text></Box>
-        </Box>
-      )}]);
+      const displayText =
+        text.length > 10000 ? text.substring(0, 10000) + "..." : text;
+      setHistory((prev) => [
+        ...prev,
+        {
+          id: prev.length,
+          component: (
+            <Box flexDirection="column">
+              <Box>
+                <Text color="cyan" bold>
+                  you
+                </Text>
+              </Box>
+              <Box flexDirection="column" marginBottom={1}>
+                <Text>{displayText}</Text>
+              </Box>
+            </Box>
+          ),
+        },
+      ]);
 
       agentInstance.current.processTurn({ content: text });
     },
@@ -214,8 +236,14 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
         finalDecision = "accept";
       }
 
-      const messageType = finalDecision === "accept" ? "user_decision_execute" : "user_decision_decline";
-      agentInstance.current.handleToolResponse({ type: messageType, tool_calls: toolCalls });
+      const messageType =
+        finalDecision === "accept"
+          ? "user_decision_execute"
+          : "user_decision_decline";
+      agentInstance.current.handleToolResponse({
+        type: messageType,
+        tool_calls: toolCalls,
+      });
     },
     []
   );
@@ -241,8 +269,14 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
           tools: agentInstance.current.getAvailableTools().length,
         });
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error during Agent initialization.";
-        eventBus.emit("backend_message", { type: "error", message: errorMessage });
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Unknown error during Agent initialization.";
+        eventBus.emit("backend_message", {
+          type: "error",
+          message: errorMessage,
+        });
       }
     };
 
@@ -277,9 +311,17 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
           setHistory((prev) => {
             const newHistory = [...prev];
             if (prev.length < 2) {
-              newHistory.push({ id: 1, component: (
-                <SessionInfo sessionId={sessionId} toolsCount={parsed.tools} mcpStatus={"connected"} workdir={workdir} />
-              )});
+              newHistory.push({
+                id: 1,
+                component: (
+                  <SessionInfo
+                    sessionId={sessionId}
+                    toolsCount={parsed.tools}
+                    mcpStatus={"connected"}
+                    workdir={workdir}
+                  />
+                ),
+              });
             }
             return newHistory;
           });
@@ -290,14 +332,49 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
           setIsProcessing(false);
         }
         let newComponent: React.ReactElement | null = null;
-        if (parsed.type === "debug") { newComponent = <Text color="gray">🔍 {parsed.message}</Text>; }
-        else if (parsed.type === "protocol_violation") { newComponent = ( <Box borderStyle="round" borderColor="yellow" flexDirection="column" marginBottom={1} paddingX={1}> <Text color="yellow" bold> ⚠️ Protocol Violation </Text> <Text color="gray">{parsed.content}</Text> <Text color="yellow">{parsed.message}</Text> </Box> ); }
-        else if (parsed.type === "agent_response") { newComponent = ( <Box> <Text color="magenta">bluma:</Text> <Text> {parsed.content}</Text> </Box> ); }
-        else if (parsed.type === "error") { newComponent = <Text color="red">❌ {parsed.message}</Text>; }
-        else if (parsed.type === "tool_call") { newComponent = ( <ToolCall toolName={parsed.tool_name} args={parsed.arguments} /> ); }
-        else if (parsed.type === "tool_result") { newComponent = ( <ToolResult toolName={parsed.tool_name} result={parsed.result} /> ); }
+        if (parsed.type === "debug") {
+          newComponent = <Text color="gray">{parsed.message}</Text>;
+        } else if (parsed.type === "protocol_violation") {
+          newComponent = (
+            <Box
+              borderStyle="round"
+              borderColor="yellow"
+              flexDirection="column"
+              marginBottom={1}
+              paddingX={1}
+            >
+              {" "}
+              <Text color="yellow" bold>
+                {" "}
+                Protocol Violation{" "}
+              </Text>{" "}
+              <Text color="gray">{parsed.content}</Text>{" "}
+              <Text color="yellow">{parsed.message}</Text>{" "}
+            </Box>
+          );
+        } else if (parsed.type === "agent_response") {
+          newComponent = (
+            <Box>
+              {" "}
+              <Text color="magenta">bluma:</Text> <Text> {parsed.content}</Text>{" "}
+            </Box>
+          );
+        } else if (parsed.type === "error") {
+          newComponent = <Text color="red">❌ {parsed.message}</Text>;
+        } else if (parsed.type === "tool_call") {
+          newComponent = (
+            <ToolCall toolName={parsed.tool_name} args={parsed.arguments} />
+          );
+        } else if (parsed.type === "tool_result") {
+          newComponent = (
+            <ToolResult toolName={parsed.tool_name} result={parsed.result} />
+          );
+        }
         if (newComponent) {
-          setHistory((prev) => [...prev, { id: prev.length, component: newComponent }]);
+          setHistory((prev) => [
+            ...prev,
+            { id: prev.length, component: newComponent },
+          ]);
         }
       } catch (error) {
         // Ignora erros
@@ -323,7 +400,7 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
       return (
         <Box>
           <Text color="yellow">
-            <Spinner type="dots" /> {statusMessage || 'Connecting...'}
+            <Spinner type="dots" /> {statusMessage || "Connecting..."}
           </Text>
         </Box>
       );
@@ -333,7 +410,9 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
     if (isProcessing) {
       return (
         <Box borderStyle="round" borderColor="white">
-          <Text color="magenta">({spacesBeforeDot}●{spacesAfterDot}) Working...</Text>
+          <Text color="magenta">
+            ({spacesBeforeDot}●{spacesAfterDot}) Working...
+          </Text>
         </Box>
       );
     }
@@ -341,7 +420,9 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
       return (
         <ConfirmationPrompt
           toolCalls={pendingConfirmation}
-          onDecision={(decision) => handleConfirmation(decision, pendingConfirmation)}
+          onDecision={(decision) =>
+            handleConfirmation(decision, pendingConfirmation)
+          }
         />
       );
     }
@@ -360,7 +441,9 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
       {/* O rodapé só aparece quando estamos totalmente conectados */}
       {mcpStatus === "connected" && (
         <Box justifyContent="center" width="100%">
-          <Text color="gray" dimColor>BluMa Senior Full Stack Developer</Text>
+          <Text color="gray" dimColor>
+            BluMa Senior Full Stack Developer
+          </Text>
         </Box>
       )}
     </Box>

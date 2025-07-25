@@ -6,6 +6,9 @@ import { fileURLToPath } from 'url'; // <<< ADICIONE ESTA IMPORTAÇÃO
 import { shellCommand } from './tools/natives/shell_command.js';
 import { editTool } from './tools/natives/edit.js';
 import { messageNotifyDev } from './tools/natives/message.js';
+import { ls } from './tools/natives/ls.js';
+import { readLines } from './tools/natives/readLines.js'
+import { countLines } from './tools/natives/count_lines.js';
 import type { ChatCompletionTool } from 'openai/resources/chat/completions';
 
 
@@ -83,6 +86,9 @@ export class ToolInvoker {
     this.toolImplementations.set('shell_command', shellCommand);
     this.toolImplementations.set('edit_tool', editTool);
     this.toolImplementations.set('message_notify_dev', messageNotifyDev);
+    this.toolImplementations.set('ls_tool', ls);
+    this.toolImplementations.set('count_file_lines', countLines);
+    this.toolImplementations.set('read_file_lines', countLines)
     
     // A ferramenta 'agent_end_task' é especial. Ela não faz nada, mas precisa ser registrada
     // para que o invoker não retorne um erro de "ferramenta não encontrada".

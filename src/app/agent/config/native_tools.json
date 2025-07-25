@@ -97,6 +97,103 @@
                     ]
                 }
             }
-        }
+        },
+        {
+            "type": "function",
+            "function": {
+              "name": "ls_tool",
+              "description": "Lists files and subdirectories with advanced support for pagination and filtering. Automatically ignores common unnecessary files/directories like '.venv', 'node_modules', etc.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "directory_path": {
+                    "type": "string",
+                    "description": "Path of the directory to list. Defaults to '.' (current directory).",
+                    "default": "."
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "If True, lists recursively all subdirectories.",
+                    "default": false
+                  },
+                  "ignore_patterns": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Additional patterns to ignore (beyond defaults). E.g., ['test_*', '*.tmp']"
+                  },
+                  "start_index": {
+                    "type": "integer",
+                    "description": "Starting index for pagination (0-based).",
+                    "default": 0
+                  },
+                  "end_index": {
+                    "type": "integer",
+                    "description": "Ending index for pagination (exclusive). If not provided, lists everything from start_index."
+                  },
+                  "show_hidden": {
+                    "type": "boolean",
+                    "description": "If True, shows files/directories starting with '.'.",
+                    "default": false
+                  },
+                  "file_extensions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of extensions to filter (e.g., ['.ts', '.js', '.md']). If not provided, shows all file types."
+                  },
+                  "max_depth": {
+                    "type": "integer",
+                    "description": "Maximum depth for recursive listing. If not provided, there is no limit."
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "count_file_lines",
+              "description": "Counts and returns the total number of lines in a text file. Useful for quickly determining file size or checking if a file is empty before reading it.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "filepath": {
+                    "type": "string",
+                    "description": "Path to the file to count lines from. Can be relative or absolute."
+                  }
+                },
+                "required": ["filepath"]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file_lines",
+              "description": "Reads and returns content between specific line numbers from a text file. Ideal for efficiently reading portions of large files.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "filepath": {
+                    "type": "string",
+                    "description": "Path to the file to read from."
+                  },
+                  "start_line": {
+                    "type": "integer",
+                    "description": "Starting line number (1-based index). Must be >= 1."
+                  },
+                  "end_line": {
+                    "type": "integer",
+                    "description": "Ending line number (1-based index, inclusive). Must be >= start_line."
+                  }
+                },
+                "required": ["filepath", "start_line", "end_line"]
+              }
+            }
+          }
     ]
 }
