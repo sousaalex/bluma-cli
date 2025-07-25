@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url'; // <<< ADICIONE ESTA IMPORTAÇÃO
 
 // Importa as implementações das ferramentas de seus respectivos arquivos
 import { shellCommand } from './tools/natives/shell_command.js';
@@ -51,7 +52,16 @@ export class ToolInvoker {
   public async initialize(): Promise<void> {
     try {
       // Constrói o caminho para o arquivo de configuração de forma segura.
-      const configPath = path.resolve(process.cwd(), 'src/app/agent/config/native_tools.json');
+      const __filename = fileURLToPath(import.meta.url);
+      
+      // 2. Obtém o diretório do arquivo atual.
+      //    Quando executado a partir de `dist`, este será `.../bluma/dist/app/agent/`.
+      const __dirname = path.dirname(__filename);
+
+      // 3. Constrói o caminho para a pasta de configuração RELATIVO ao local do script.
+      //    Nós subimos dois níveis (`../..`) para chegar em `dist/` e então entramos em `config/`.
+      const configPath = path.resolve(__dirname, 'config', 'native_tools.json');
+
       const fileContent = await fs.readFile(configPath, 'utf-8');
       const config: NativeToolsConfig = JSON.parse(fileContent);
       

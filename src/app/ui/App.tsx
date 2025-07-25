@@ -26,6 +26,7 @@ interface ToolCallProps {
 }
 
 const ToolCall = ({ toolName, args }: ToolCallProps) => {
+  // ...código inalterado...
   if (
     toolName.includes("message_notify_dev") ||
     toolName.includes("agent_end_task")
@@ -111,16 +112,13 @@ interface ToolResultProps {
 }
 
 const ToolResult = ({ toolName, result }: ToolResultProps) => {
-  const MAX_LINES = 4; // Um valor razoável para exibir a prévia de um JSON
+  // ...código inalterado...
+  const MAX_LINES = 3;
 
-  // --- Lógica de Exclusão (inalterada) ---
-  // Ferramentas que não devem exibir um resultado visual.
   if (toolName.includes("agent_end_task") || toolName.includes("notebook_sequentialthinking_tools")) {
     return null;
   }
 
-  // --- Lógica de Renderização Especial para `message_notify_dev` (inalterada) ---
-  // Esta ferramenta tem uma UI customizada.
   if (toolName.includes("message_notify_dev")) {
     try {
       const parsed = JSON.parse(result);
@@ -139,34 +137,23 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
         );
       }
     } catch (e) {
-      // Se o parse falhar, ele usará a lógica de fallback abaixo.
+      // Fallback
     }
   }
 
-  // --- Lógica Principal de Formatação e Truncamento (ATUALIZADA) ---
-
   let formattedResult = result;
   try {
-    // 1. Tenta fazer o parse da string de resultado como se fosse JSON.
     const parsedJson = JSON.parse(result);
-    // 2. Se for bem-sucedido, formata o objeto JSON de volta para uma string,
-    //    mas com indentação de 2 espaços. Isso cria as quebras de linha (`\n`)
-    //    necessárias para o truncamento funcionar.
     formattedResult = JSON.stringify(parsedJson, null, 2);
   } catch (e) {
-    // 3. Se a string não for um JSON válido (ex: uma saída de texto simples do shell_command),
-    //    não faz nada e usa a string original.
     formattedResult = result;
   }
 
-  // 4. A lógica de truncamento agora opera sobre a string formatada.
   const lines = formattedResult.split("\n");
   const isTruncated = lines.length > MAX_LINES;
   const visibleLines = isTruncated ? lines.slice(0, MAX_LINES) : lines;
   const remainingCount = lines.length - MAX_LINES;
 
-  // --- Renderização de Fallback ---
-  // Exibe o resultado (formatado e truncado) para todas as outras ferramentas.
   return (
     <Box flexDirection="column" marginBottom={1}>
       {visibleLines.map((line, idx) => (
@@ -184,18 +171,12 @@ const ToolResult = ({ toolName, result }: ToolResultProps) => {
 const App = React.memo(({ eventBus, sessionId }: AppProps) => {
   const agentInstance = useRef<Agent | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [statusMessage, setStatusMessage] = useState<string | null>(
-    "Initializing agent..."
-  );
+  const [statusMessage, setStatusMessage] = useState<string | null>("Initializing agent...");
   const [toolsCount, setToolsCount] = useState<number | null>(null);
-  const [mcpStatus, setMcpStatus] = useState<"connecting" | "connected">(
-    "connecting"
-  );
+  const [mcpStatus, setMcpStatus] = useState<"connecting" | "connected">("connecting");
   const [isProcessing, setIsProcessing] = useState(true);
   const [position, setPosition] = useState(0);
-  const [pendingConfirmation, setPendingConfirmation] = useState<any[] | null>(
-    null
-  );
+  const [pendingConfirmation, setPendingConfirmation] = useState<any[] | null>(null);
   const alwaysAcceptList = useRef<string[]>([]);
   const workdir = process.cwd();
   const maxPosition = 3;
@@ -205,26 +186,13 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
       if (!text || isProcessing || !agentInstance.current) return;
       setIsProcessing(true);
 
-      const displayText =
-        text.length > 10000 ? text.substring(0, 10000) + "..." : text;
-      setHistory((prev) => [
-        ...prev,
-        {
-          id: prev.length,
-          component: (
-            <Box flexDirection="column">
-              <Box>
-                <Text color="cyan" bold>
-                  you
-                </Text>
-              </Box>
-              <Box flexDirection="column" marginBottom={1}>
-                <Text>{displayText}</Text>
-              </Box>
-            </Box>
-          ),
-        },
-      ]);
+      const displayText = text.length > 10000 ? text.substring(0, 10000) + "..." : text;
+      setHistory((prev) => [...prev, { id: prev.length, component: (
+        <Box flexDirection="column">
+          <Box><Text color="cyan" bold>you</Text></Box>
+          <Box flexDirection="column" marginBottom={1}><Text>{displayText}</Text></Box>
+        </Box>
+      )}]);
 
       agentInstance.current.processTurn({ content: text });
     },
@@ -246,14 +214,8 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
         finalDecision = "accept";
       }
 
-      const messageType =
-        finalDecision === "accept"
-          ? "user_decision_execute"
-          : "user_decision_decline";
-      agentInstance.current.handleToolResponse({
-        type: messageType,
-        tool_calls: toolCalls,
-      });
+      const messageType = finalDecision === "accept" ? "user_decision_execute" : "user_decision_decline";
+      agentInstance.current.handleToolResponse({ type: messageType, tool_calls: toolCalls });
     },
     []
   );
@@ -266,38 +228,30 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
     return () => clearInterval(interval);
   }, [isProcessing]);
 
-  // <<< MUDANÇA: useEffect principal agora vai direto para a inicialização do agente >>>
   useEffect(() => {
     setHistory([{ id: 0, component: <Header /> }]);
 
     const initializeAgent = async () => {
       try {
-        // 1. Cria e inicializa o agente (carrega ferramentas, histórico, etc.)
         agentInstance.current = new Agent(sessionId, eventBus);
         await agentInstance.current.initialize();
-
-        // 2. Se a inicialização for bem-sucedida, emite o status de "conectado".
-        // A conexão com o LLM será testada implicitamente na primeira chamada de `processTurn`.
         eventBus.emit("backend_message", {
           type: "status",
           status: "mcp_connected",
           tools: agentInstance.current.getAvailableTools().length,
         });
       } catch (error) {
-        // Se a inicialização falhar (ex: não encontrar chaves de API), emite um erro.
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Unknown error during Agent initialization.";
-        eventBus.emit("backend_message", {
-          type: "error",
-          message: errorMessage,
-        });
+        const errorMessage = error instanceof Error ? error.message : "Unknown error during Agent initialization.";
+        eventBus.emit("backend_message", { type: "error", message: errorMessage });
       }
     };
 
     const handleBackendMessage = (parsed: any) => {
       try {
+        if (parsed.type === "connection_status") {
+          setStatusMessage(parsed.message);
+          return;
+        }
         if (parsed.type === "confirmation_request") {
           const toolToConfirm = parsed.tool_calls[0].function.name;
           if (alwaysAcceptList.current.includes(toolToConfirm)) {
@@ -308,7 +262,6 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
           setIsProcessing(false);
           return;
         }
-
         if (parsed.type === "done") {
           if (parsed.status !== "awaiting_confirmation") {
             setStatusMessage(null);
@@ -316,7 +269,6 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
           setIsProcessing(false);
           return;
         }
-
         if (parsed.type === "status" && parsed.status === "mcp_connected") {
           setStatusMessage(null);
           setToolsCount(parsed.tools);
@@ -325,73 +277,27 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
           setHistory((prev) => {
             const newHistory = [...prev];
             if (prev.length < 2) {
-              newHistory.push({
-                id: 1,
-                component: (
-                  <SessionInfo
-                    sessionId={sessionId}
-                    toolsCount={parsed.tools}
-                    mcpStatus={"connected"}
-                    workdir={workdir}
-                  />
-                ),
-              });
+              newHistory.push({ id: 1, component: (
+                <SessionInfo sessionId={sessionId} toolsCount={parsed.tools} mcpStatus={"connected"} workdir={workdir} />
+              )});
             }
             return newHistory;
           });
           return;
         }
-
         if (parsed.type === "error") {
           setStatusMessage(null);
           setIsProcessing(false);
         }
-
         let newComponent: React.ReactElement | null = null;
-        if (parsed.type === "debug") {
-          newComponent = <Text color="gray">🔍 {parsed.message}</Text>;
-        } else if (parsed.type === "protocol_violation") {
-          newComponent = (
-            <Box
-              borderStyle="round"
-              borderColor="yellow"
-              flexDirection="column"
-              marginBottom={1}
-              paddingX={1}
-            >
-              {" "}
-              <Text color="yellow" bold>
-                {" "}
-                ⚠️ Protocol Violation{" "}
-              </Text>{" "}
-              <Text color="gray">{parsed.content}</Text>{" "}
-              <Text color="yellow">{parsed.message}</Text>{" "}
-            </Box>
-          );
-        } else if (parsed.type === "agent_response") {
-          newComponent = (
-            <Box>
-              {" "}
-              <Text color="magenta">bluma:</Text> <Text> {parsed.content}</Text>{" "}
-            </Box>
-          );
-        } else if (parsed.type === "error") {
-          newComponent = <Text color="red">❌ {parsed.message}</Text>;
-        } else if (parsed.type === "tool_call") {
-          newComponent = (
-            <ToolCall toolName={parsed.tool_name} args={parsed.arguments} />
-          );
-        } else if (parsed.type === "tool_result") {
-          newComponent = (
-            <ToolResult toolName={parsed.tool_name} result={parsed.result} />
-          );
-        }
-
+        if (parsed.type === "debug") { newComponent = <Text color="gray">🔍 {parsed.message}</Text>; }
+        else if (parsed.type === "protocol_violation") { newComponent = ( <Box borderStyle="round" borderColor="yellow" flexDirection="column" marginBottom={1} paddingX={1}> <Text color="yellow" bold> ⚠️ Protocol Violation </Text> <Text color="gray">{parsed.content}</Text> <Text color="yellow">{parsed.message}</Text> </Box> ); }
+        else if (parsed.type === "agent_response") { newComponent = ( <Box> <Text color="magenta">bluma:</Text> <Text> {parsed.content}</Text> </Box> ); }
+        else if (parsed.type === "error") { newComponent = <Text color="red">❌ {parsed.message}</Text>; }
+        else if (parsed.type === "tool_call") { newComponent = ( <ToolCall toolName={parsed.tool_name} args={parsed.arguments} /> ); }
+        else if (parsed.type === "tool_result") { newComponent = ( <ToolResult toolName={parsed.tool_name} result={parsed.result} /> ); }
         if (newComponent) {
-          setHistory((prev) => [
-            ...prev,
-            { id: prev.length, component: newComponent },
-          ]);
+          setHistory((prev) => [...prev, { id: prev.length, component: newComponent }]);
         }
       } catch (error) {
         // Ignora erros
@@ -409,42 +315,52 @@ const App = React.memo(({ eventBus, sessionId }: AppProps) => {
   const spacesBeforeDot = " ".repeat(position);
   const spacesAfterDot = " ".repeat(maxPosition - position);
 
+  // --- Lógica de Renderização Unificada ---
+
+  const renderInteractiveComponent = () => {
+    // Fase 1: Conectando
+    if (mcpStatus !== "connected") {
+      return (
+        <Box>
+          <Text color="yellow">
+            <Spinner type="dots" /> {statusMessage || 'Connecting...'}
+          </Text>
+        </Box>
+      );
+    }
+
+    // Fase 2: Conectado e Operando
+    if (isProcessing) {
+      return (
+        <Box borderStyle="round" borderColor="white">
+          <Text color="magenta">({spacesBeforeDot}●{spacesAfterDot}) Working...</Text>
+        </Box>
+      );
+    }
+    if (pendingConfirmation) {
+      return (
+        <ConfirmationPrompt
+          toolCalls={pendingConfirmation}
+          onDecision={(decision) => handleConfirmation(decision, pendingConfirmation)}
+        />
+      );
+    }
+    return <InputPrompt onSubmit={handleSubmit} />;
+  };
+
   return (
     <Box flexDirection="column">
       <Static items={history}>
         {(item) => <Box key={item.id}>{item.component}</Box>}
       </Static>
 
-      {statusMessage && mcpStatus !== "connected" && (
-        <Box>
-          <Text color="yellow">
-            <Spinner type="dots" /> {statusMessage}
-          </Text>
-        </Box>
-      )}
+      {/* Renderiza o componente interativo determinado pela nossa máquina de estados */}
+      {renderInteractiveComponent()}
 
-      {isProcessing ? (
-        <Box borderStyle="round" borderColor="white">
-          <Text color="magenta">
-            ({spacesBeforeDot}●{spacesAfterDot}) Working...
-          </Text>
-        </Box>
-      ) : pendingConfirmation ? (
-        <ConfirmationPrompt
-          toolCalls={pendingConfirmation}
-          onDecision={(decision) =>
-            handleConfirmation(decision, pendingConfirmation)
-          }
-        />
-      ) : (
-        mcpStatus === "connected" && <InputPrompt onSubmit={handleSubmit} />
-      )}
-
+      {/* O rodapé só aparece quando estamos totalmente conectados */}
       {mcpStatus === "connected" && (
         <Box justifyContent="center" width="100%">
-          <Text color="gray" dimColor>
-            BluMa Senior Full Stack Developer
-          </Text>
+          <Text color="gray" dimColor>BluMa Senior Full Stack Developer</Text>
         </Box>
       )}
     </Box>

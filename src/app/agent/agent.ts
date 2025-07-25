@@ -28,13 +28,15 @@ export class Agent {
   private eventBus: EventEmitter;
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
+    private isInitialized: boolean = false; // <-- ADICIONE ESTA LINHA
+
 
   constructor(sessionId: string, eventBus: EventEmitter) {
     this.sessionId = sessionId;
     this.eventBus = eventBus;
 
     const nativeToolInvoker = new ToolInvoker();
-    this.mcpClient = new MCPClient(nativeToolInvoker);
+    this.mcpClient = new MCPClient(nativeToolInvoker, eventBus);
     this.feedbackSystem = new AdvancedFeedbackSystem();
 
     const endpoint = process.env.AZURE_OPENAI_ENDPOINT;

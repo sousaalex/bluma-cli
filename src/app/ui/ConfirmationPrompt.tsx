@@ -67,40 +67,40 @@ export const ConfirmationPrompt = ({ toolCalls, onDecision }: ConfirmationPrompt
   }
 
   return (
-    <Box
-    borderStyle="round"
-    borderColor="white"
-    flexDirection="column"
-    padding={1}
-    marginBottom={1}
-  >
-    {/* Cabeçalho com o nome da função */}
-    <Box flexDirection="row" alignItems="center" marginBottom={1}>
-      <Text>
-        <Text bold color="magenta">
-          {toolCall.function.name}
-        </Text>
+   <Box
+  borderStyle="round"
+  borderColor="white"
+  flexDirection="column"
+  padding={1}
+  marginBottom={1}
+>
+  {/* Cabeçalho com o nome da função */}
+  <Box flexDirection="row" alignItems="center" marginBottom={1}>
+    <Text>
+      <Text bold color="magenta">
+        {toolCall.function.name}
       </Text>
-    </Box>
-  
-    {/* Argumentos formatados */}
-    <Text color="gray">
-      {formatArguments(toolCall.function.arguments)}
     </Text>
-  
-    {/* Bloco de decisões */}
-    <Box marginTop={1} flexDirection="column">
-      <Text bold>Allow command?</Text>
-      {options.map((option, index) => (
-        <Box key={option} paddingLeft={2}>
-          <Text color={selectedOption === index ? 'magenta' : 'white'}>
-            {selectedOption === index ? '→ ' : '  '}
-            {option}
-          </Text>
-        </Box>
-      ))}
-    </Box>
   </Box>
-  
+
+  {/* Argumentos formatados */}
+  <Text color="gray">
+    {formatArguments(toolCall.function.arguments)}
+  </Text>
+
+  {/* Bloco de decisões */}
+  <Box marginTop={1} flexDirection="column">
+    <Text bold>Allow command?</Text>
+    {options.map((option, index) => (
+      <Box key={option} paddingLeft={2}>
+        <Text color={selectedOption === index ? 'magenta' : 'white'}>
+          {selectedOption === index ? '→ ' : '  '}
+          {option}
+        </Text>
+      </Box>
+    ))}
+  </Box>
+</Box>
+
   );
 };

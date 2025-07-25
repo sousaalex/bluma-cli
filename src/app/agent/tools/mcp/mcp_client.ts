@@ -1,9 +1,12 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
+import { fileURLToPath } from 'url'; // <<< ADICIONE ESTA IMPORTAÇÃO
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { ToolInvoker, ToolDefinition } from '../../tool_invoker.js';
+import { EventEmitter } from 'events'; // <<< ADICIONA A IMPORTAÇÃO
+
 
 // --- Tipos e Interfaces (inalterados) ---
 
@@ -28,9 +31,11 @@ interface McpServerConfig {
     private toolToServerMap: Map<string, ToolRoute> = new Map();
     private globalToolsForLlm: ToolDefinition[] = [];
     public nativeToolInvoker: ToolInvoker;
-  
-    constructor(nativeToolInvoker: ToolInvoker) {
+    private eventBus: EventEmitter; // <<< ADICIONA A PROPRIEDADE
+
+    constructor(nativeToolInvoker: ToolInvoker, eventBus: EventEmitter) { 
       this.nativeToolInvoker = nativeToolInvoker;
+      this.eventBus = eventBus;
     }
   
     // ... (método initialize inalterado) ...
@@ -48,18 +53,28 @@ interface McpServerConfig {
       }
     //   console.log(`[MCPClient] ${nativeTools.length} ferramentas nativas registradas.`);
   
-      const localConfigPath = path.resolve(process.cwd(), 'src/app/agent/config/bluma-mcp.json');
-      const globalConfigPath = path.join(os.homedir(), '.bluma-cli', 'bluma-mcp.json');
-  
-      const localConfig = await this.loadMcpConfig(localConfigPath);
-      const globalConfig = await this.loadMcpConfig(globalConfigPath);
-  
-      const mergedConfig: McpConfig = {
+          // 1. Configuração LOCAL (relativa ao diretório de trabalho do usuário)
+    //    Esta permanece como estava, usando process.cwd().
+// 1. Define o caminho para a configuração PADRÃO (que vem com a instalação).
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const defaultConfigPath = path.resolve(__dirname, 'config', 'bluma-mcp.json');
+
+        // 2. Define o caminho para a configuração GLOBAL do USUÁRIO.
+        const userConfigPath = path.join(os.homedir(), '.bluma-cli', 'bluma-mcp.json');
+
+        // 3. Carrega as configurações de ambos os locais.
+        const defaultConfig = await this.loadMcpConfig(defaultConfigPath, 'Default');
+        const userConfig = await this.loadMcpConfig(userConfigPath, 'User');
+
+        // 4. Mescla as configurações. A configuração do usuário (userConfig)
+        //    sobrescreve a padrão (defaultConfig).
+        const mergedConfig: McpConfig = {
         mcpServers: {
-          ...(globalConfig.mcpServers || {}),
-          ...(localConfig.mcpServers || {}),
+            ...(defaultConfig.mcpServers || {}),
+            ...(userConfig.mcpServers || {}),
         },
-      };
+        };
 
     //   console.log('[MCPClient] Conteúdo da configuração MCP carregada:', JSON.stringify(localConfig, null, 2));
 
@@ -73,31 +88,45 @@ interface McpServerConfig {
       const serverEntries = Object.entries(mergedConfig.mcpServers);
       for (const [serverName, serverConf] of serverEntries) {
         try {
+
+            this.eventBus.emit('backend_message', {
+                type: 'connection_status',
+                message: `Connecting to MCP server: ${serverName}...`
+              });
+
           if (serverConf.type === 'stdio') {
             await this.connectToStdioServer(serverName, serverConf);
           } else if (serverConf.type === 'sse') {
             console.warn(`[MCPClient] Conexão com servidores SSE (como '${serverName}') ainda não implementada.`);
           }
         } catch (error) {
-          console.error(`[MCPClient] Falha ao conectar ao servidor '${serverName}':`, error);
+          this.eventBus.emit('backend_message', {
+          type: 'error',
+          message: `Failed to connect to server '${serverName}'.`
+        });
         }
       }
     //   console.log(`[MCPClient] Inicialização concluída. Total de ferramentas disponíveis: ${this.globalToolsForLlm.length}`);
     }
   
-    private async loadMcpConfig(configPath: string): Promise<Partial<McpConfig>> {
-      try {
-        const fileContent = await fs.readFile(configPath, 'utf-8');
-        const processedContent = this.replaceEnvPlaceholders(fileContent);
-        // console.log(`[MCPClient] Configuração de servidores MCP carregada de: ${configPath}`);
-        return JSON.parse(processedContent);
-      } catch (error: any) {
-        if (error.code !== 'ENOENT') {
-          console.warn(`[MCPClient] Aviso: Erro ao ler o arquivo de configuração ${configPath}.`, error);
+    private async loadMcpConfig(configPath: string, configType: string): Promise<Partial<McpConfig>> {
+        try {
+          const fileContent = await fs.readFile(configPath, 'utf-8');
+          const processedContent = this.replaceEnvPlaceholders(fileContent);
+          console.log(`[MCPClient] ${configType} MCP config loaded from: ${configPath}`);
+          return JSON.parse(processedContent);
+        } catch (error: any) {
+          if (error.code === 'ENOENT') {
+            // É normal não encontrar o arquivo de configuração do usuário, não loga como aviso.
+            if (configType === 'User') {
+              // console.log(`[MCPClient] Info: No user config found at ${configPath}.`);
+            }
+          } else {
+            console.warn(`[MCPClient] Warning: Error reading ${configType} config file ${configPath}.`, error);
+          }
+          return {};
         }
-        return {};
       }
-    }
   
     /**
      * Conecta-se a um servidor MCP baseado em Stdio, adaptando o comando para o SO atual.
