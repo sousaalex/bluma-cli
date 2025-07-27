@@ -19,8 +19,9 @@ export interface EditToolArgs {
 
 /**
  * Representa o resultado calculado de uma operação de edição, antes de ser aplicada.
+ * EXPORTADO para que o Agente possa usar o tipo de retorno de calculateEdit.
  */
-interface CalculatedEdit {
+export interface CalculatedEdit {
   currentContent: string | null;
   newContent: string;
   occurrences: number;
@@ -30,8 +31,9 @@ interface CalculatedEdit {
 
 /**
  * O objeto de resposta final que a ferramenta retorna, formatado para o LLM.
+ * EXPORTADO por boa prática.
  */
-interface ToolResult {
+export interface ToolResult {
   success: boolean;
   file_path: string;
   error?: string;
@@ -112,9 +114,10 @@ function ensureCorrectEdit(
 
 /**
  * Calcula o resultado potencial de uma operação de edição sem modificar o arquivo.
+ * EXPORTADO para que o Agente possa usar esta função para gerar um preview.
  * @returns Um objeto `CalculatedEdit` com o resultado.
  */
-async function calculateEdit(
+export async function calculateEdit(
   filePath: string,
   oldString: string,
   newString: string,
@@ -124,39 +127,35 @@ async function calculateEdit(
   let isNewFile = false;
   let error: { display: string; raw: string } | null = null;
 
-  // Pré-processa a new_string para corrigir problemas comuns de formatação do LLM.
-  let finalNewString = unescapeLlmString(newString);
-  let finalOldString = oldString;
+  // Pré-processa e NORMALIZA as strings de entrada para usar quebras de linha LF (\n).
+  let finalNewString = unescapeLlmString(newString).replace(/\r\n/g, '\n');
+  let finalOldString = oldString.replace(/\r\n/g, '\n');
   let occurrences = 0;
 
   try {
     currentContent = await fs.readFile(filePath, 'utf-8');
-    // Normaliza as quebras de linha para LF (\n), tornando as substituições mais confiáveis.
+    // Normaliza também as quebras de linha do conteúdo do arquivo para LF (\n).
     currentContent = currentContent.replace(/\r\n/g, '\n');
   } catch (e: any) {
-    if (e.code !== 'ENOENT') { // ENOENT = File Not Found, o que é esperado.
+    if (e.code !== 'ENOENT') {
       error = { display: `Error reading file: ${e.message}`, raw: `Error reading file ${filePath}: ${e.message}` };
       return { currentContent, newContent: "", occurrences: 0, error, isNewFile };
     }
-    // O arquivo não existe, o que é ok se a intenção for criá-lo.
   }
 
-  if (currentContent === null) { // O arquivo não existe
+  if (currentContent === null) {
     if (oldString === "") {
-      // Cenário: Criar um novo arquivo.
       isNewFile = true;
       occurrences = 1;
     } else {
-      // Cenário: Tentar editar um arquivo que não existe.
       error = { display: "File not found. Cannot apply edit. Use an empty old_string to create a new file.", raw: `File not found: ${filePath}` };
     }
-  } else { // O arquivo existe
+  } else {
     if (oldString === "") {
-      // Cenário: Tentar criar um arquivo que já existe.
       error = { display: "Failed to edit. Attempted to create a file that already exists.", raw: `File already exists, cannot create: ${filePath}` };
     } else {
-      // Cenário: Editar um arquivo existente.
-      [finalOldString, finalNewString, occurrences] = ensureCorrectEdit(currentContent, oldString, newString, expectedReplacements);
+      // Passa as strings já normalizadas para ensureCorrectEdit
+      [finalOldString, finalNewString, occurrences] = ensureCorrectEdit(currentContent, finalOldString, finalNewString, expectedReplacements);
 
       if (occurrences === 0) {
         error = { display: "Failed to edit, could not find the string to replace.", raw: `0 occurrences found for old_string in ${filePath}. Check whitespace, indentation, and context.` };
@@ -166,13 +165,11 @@ async function calculateEdit(
     }
   }
 
-  // Calcula o novo conteúdo com base nos resultados.
   let newContentResult = "";
   if (!error) {
     if (isNewFile) {
       newContentResult = finalNewString;
     } else if (currentContent !== null) {
-      // `replaceAll` é a forma moderna e segura de substituir todas as ocorrências.
       newContentResult = currentContent.replaceAll(finalOldString, finalNewString);
     }
   }
@@ -182,9 +179,10 @@ async function calculateEdit(
 
 /**
  * Cria um diff unificado entre o conteúdo antigo e o novo.
+ * EXPORTADO para que o Agente possa usar esta função para formatar o preview para o usuário.
  * @returns Uma string formatada como um diff.
  */
-function createDiff(filename: string, oldContent: string, newContent: string): string {
+export function createDiff(filename: string, oldContent: string, newContent: string): string {
   const diff = diffLines(oldContent, newContent, {
     // `unified: 3` é o padrão para diffs, mostrando 3 linhas de contexto.
     // `newlineIsToken: true` lida melhor com mudanças de quebra de linha.
@@ -204,9 +202,8 @@ function createDiff(filename: string, oldContent: string, newContent: string): s
 // --- Função Principal da Ferramenta (Exportada) ---
 
 /**
- * Substitui texto dentro de um arquivo de forma precisa e segura.
- * Requer contexto significativo para garantir a precisão da substituição.
- * Valida os parâmetros e lida com a criação de novos arquivos.
+ * [EXECUÇÃO] Substitui texto dentro de um arquivo de forma precisa e segura.
+ * Esta função é o ponto de entrada para o ToolInvoker e deve ser chamada APÓS a confirmação do usuário.
  *
  * @param args Os argumentos da ferramenta, validados pelo ToolInvoker.
  * @returns Um objeto `ToolResult` com o resultado da operação.
@@ -214,25 +211,24 @@ function createDiff(filename: string, oldContent: string, newContent: string): s
 export async function editTool(args: EditToolArgs): Promise<ToolResult> {
   const { file_path, old_string, new_string, expected_replacements = 1 } = args;
 
-  // --- Validação de Parâmetros ---
-  // Adiciona uma camada de segurança para garantir que o caminho é absoluto.
+  // Validação de Parâmetros
   if (!path.isAbsolute(file_path)) {
     return { success: false, error: `Invalid parameters: file_path must be absolute.`, file_path };
   }
-  // Verificação de segurança básica para evitar "directory traversal" (ex: ../../etc/passwd)
   if (file_path.includes('..')) {
     return { success: false, error: `Invalid parameters: file_path cannot contain '..'.`, file_path };
   }
 
   try {
-    // 1. Calcula a edição sem modificar o disco.
+    // 1. Calcula a edição. Isso funciona como uma validação final para garantir
+    // que o estado do arquivo não mudou desde a geração do preview.
     const editData = await calculateEdit(file_path, old_string, new_string, expected_replacements);
 
     // 2. Se o cálculo resultou em um erro, retorna-o imediatamente.
     if (editData.error) {
       return {
         success: false,
-        error: editData.error.display,
+        error: `Execution failed: ${editData.error.display}`,
         details: editData.error.raw,
         file_path,
       };
@@ -258,12 +254,12 @@ export async function editTool(args: EditToolArgs): Promise<ToolResult> {
         relative_path: relativePath,
       };
     } else {
-      const diff = createDiff(filename, editData.currentContent || "", editData.newContent);
+      const finalDiff = createDiff(filename, editData.currentContent || "", editData.newContent);
       return {
         success: true,
         file_path,
         description: `Modified ${relativePath} (${editData.occurrences} replacement(s)).`,
-        message: `Successfully modified file: ${file_path}. Diff of changes:\n${diff}`,
+        message: `Successfully modified file: ${file_path}. Diff of changes:\n${finalDiff}`,
         is_new_file: false,
         occurrences: editData.occurrences,
         relative_path: relativePath,

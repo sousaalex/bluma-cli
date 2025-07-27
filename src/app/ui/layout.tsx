@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import { blumaAscii } from './Asci/AsciiArt'; // Supondo que este caminho está correto
+import { colaAsciiLogo } from './Asci/AsciiArt'; // Supondo que este caminho está correto
 
 //Section Header for chat
 export const Header = () => (
     <Box>
-	    <Text color="magenta">{blumaAscii}</Text>
+	    <Text color="magenta">{colaAsciiLogo}</Text>
     </Box>
 );
 

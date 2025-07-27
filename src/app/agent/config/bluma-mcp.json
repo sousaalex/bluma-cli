@@ -1,13 +1,13 @@
 {
   "mcpServers": {
-    "notebook": {
+    "bluma": {
       "type": "stdio", 
       "command": "cmd",
       "args": [
         "/c",
         "npx",
         "-y",
-        "mcp-sequentialthinking-tools"
+        "@sousaalex1605/bluma-nootebook"
       ]
     },
     "github": {

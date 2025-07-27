@@ -1,3 +1,4 @@
+//agent.ts
 import OpenAI from 'openai';
 import * as dotenv from 'dotenv';
 import path from 'path';
@@ -10,6 +11,10 @@ import { getUnifiedSystemPrompt } from './core/prompt/prompt_builder.js';
 import { ToolInvoker } from './tool_invoker.js';
 import { MCPClient } from './tools/mcp/mcp_client.js';
 import { AdvancedFeedbackSystem } from './feedback/feedback_system.js';
+
+import { createApiContextWindow } from './core/context-api/context_manager.js';
+import { calculateEdit, createDiff } from './tools/natives/edit.js';
+
 
 // --- Carregamento de Configuração Global ---
 const globalEnvPath = path.join(os.homedir(), '.bluma-cli', '.env');
@@ -28,7 +33,9 @@ export class Agent {
   private eventBus: EventEmitter;
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
-    private isInitialized: boolean = false; // <-- ADICIONE ESTA LINHA
+  private isInitialized: boolean = false;
+  private readonly maxContextTurns: number = 300; 
+
 
 
   constructor(sessionId: string, eventBus: EventEmitter) {
@@ -104,10 +111,20 @@ export class Agent {
     let shouldContinueConversation = true;
   
     if (decisionData.type === 'user_decision_execute') {
-      const toolName = toolCall.function.name;
-      const toolArgs = JSON.parse(toolCall.function.arguments);
-  
-      this.eventBus.emit('backend_message', { type: 'tool_call', tool_name: toolName, arguments: toolArgs });
+        const toolName = toolCall.function.name;
+        const toolArgs = JSON.parse(toolCall.function.arguments);
+        
+        let previewContent: string | undefined;
+        if (toolName === 'edit_tool') {
+            previewContent = await this._generateEditPreview(toolArgs); // << USO DA FUNÇÃO AUXILIAR
+        }
+    
+        this.eventBus.emit('backend_message', {
+            type: 'tool_call',
+            tool_name: toolName,
+            arguments: toolArgs,
+            preview: previewContent,
+        });
   
       // <<< INÍCIO DA CORREÇÃO: Adiciona o bloco try...catch >>>
       try {
@@ -121,7 +138,7 @@ export class Agent {
   
       } catch (error: any) {
         // Se a invocação da ferramenta lançar uma exceção (como o McpError), nós a capturamos.
-        console.error(`[Agent] Erro ao invocar a ferramenta '${toolName}':`, error);
+        // console.error(`[Agent] Erro ao invocar a ferramenta '${toolName}':`, error);
         // Formata uma mensagem de erro clara para o LLM.
         toolResultContent = JSON.stringify({
           error: `Tool execution failed: ${error.message}`,
@@ -158,11 +175,28 @@ export class Agent {
    * Método central que chama a API do LLM e processa a resposta,
    * com lógica de feedback e auto-aprovação de ferramentas.
    */
+  // Adicione este método dentro da classe Agent
+private async _generateEditPreview(toolArgs: any): Promise<string | undefined> {
+    try {
+        const editData = await calculateEdit(toolArgs.file_path, toolArgs.old_string, toolArgs.new_string, toolArgs.expected_replacements || 1);
+        if (editData.error) {
+            // Retorna a mensagem de erro como o "preview"
+            return `Failed to generate diff:\n\n${editData.error.display}`;
+        }
+        const filename = path.basename(toolArgs.file_path);
+        return createDiff(filename, editData.currentContent || '', editData.newContent);
+    } catch (e: any) {
+        return `An unexpected error occurred while generating the edit preview: ${e.message}`;
+    }
+}
+
   private async _continueConversation(): Promise<void> {
     try {
+     const contextWindow = createApiContextWindow(this.history, this.maxContextTurns);
+
       const response = await this.client.chat.completions.create({
         model: this.deploymentName,
-        messages: this.history,
+        messages: contextWindow,
         tools: this.mcpClient.getAvailableTools(),
         tool_choice: 'auto',
         parallel_tool_calls: false,
@@ -175,19 +209,37 @@ export class Agent {
         const autoApprovedTools = [
           "agent_end_task",
           "message_notify_dev",
-          "notebook_sequentialthinking_tools"
+          "bluma_nootebook"
         ];
 
         const toolToCall = message.tool_calls[0];
         const isSafeTool = autoApprovedTools.some(safeTool => toolToCall.function.name.includes(safeTool));
 
         if (isSafeTool) {
-          // console.log(`[Agent] Ferramenta segura '${toolToCall.function.name}' detectada. Executando automaticamente...`);
-          await this.handleToolResponse({ type: 'user_decision_execute', tool_calls: message.tool_calls });
-        } else {
-          // console.log(`[Agent] Ferramenta '${toolToCall.function.name}' requer permissão. Solicitando ao usuário...`);
-          this.eventBus.emit('backend_message', { type: 'confirmation_request', tool_calls: message.tool_calls });
-        }
+            // Ferramentas seguras são executadas automaticamente (sem mudança aqui)
+            await this.handleToolResponse({ type: 'user_decision_execute', tool_calls: message.tool_calls });
+          } else {
+            // Ferramenta requer permissão. Vamos verificar se podemos gerar um preview.
+            const toolName = toolToCall.function.name;
+  
+            if (toolName === 'edit_tool') {
+                const args = JSON.parse(toolToCall.function.arguments);
+                const previewContent = await this._generateEditPreview(args); // << USO DA FUNÇÃO AUXILIAR
+            
+                this.eventBus.emit('backend_message', {
+                    type: 'confirmation_request',
+                    tool_calls: message.tool_calls,
+                    preview: previewContent,
+                });
+            } else {
+              // Para outras ferramentas não seguras, mantém o comportamento antigo.
+              this.eventBus.emit('backend_message', { 
+                type: 'confirmation_request', 
+                tool_calls: message.tool_calls 
+              });
+            }
+          }
+  
       
       } else if (message.content) {
         const feedback = this.feedbackSystem.generateFeedback({

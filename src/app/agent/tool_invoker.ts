@@ -1,3 +1,4 @@
+//tool_Invoker.ts
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url'; // <<< ADICIONE ESTA IMPORTAÇÃO
@@ -88,7 +89,7 @@ export class ToolInvoker {
     this.toolImplementations.set('message_notify_dev', messageNotifyDev);
     this.toolImplementations.set('ls_tool', ls);
     this.toolImplementations.set('count_file_lines', countLines);
-    this.toolImplementations.set('read_file_lines', countLines)
+    this.toolImplementations.set('read_file_lines', readLines)
     
     // A ferramenta 'agent_end_task' é especial. Ela não faz nada, mas precisa ser registrada
     // para que o invoker não retorne um erro de "ferramenta não encontrada".

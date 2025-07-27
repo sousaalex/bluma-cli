@@ -1,7 +1,7 @@
 // Ficheiro: InputPrompt.tsx (Solução IDEAL)
-import { Box, Text, useStdout } from 'ink'; // Adicione useStdout
-import { useSimpleInputBuffer } from './utils/useSimpleInputBuffer.js';
-import { useEffect, useState } from 'react'; // Adicione useEffect e useState
+import { Box, Text, useStdout } from "ink"; // Adicione useStdout
+import { useSimpleInputBuffer } from "./utils/useSimpleInputBuffer.js";
+import { useEffect, useState } from "react"; // Adicione useEffect e useState
 
 interface InputPromptProps {
   onSubmit: (value: string) => void;
@@ -10,18 +10,18 @@ interface InputPromptProps {
 export const InputPrompt = ({ onSubmit }: InputPromptProps) => {
   const { text, cursorPosition } = useSimpleInputBuffer({ onSubmit });
   const { stdout } = useStdout(); // Hook para obter dimensões
-  
+
   // Estado para guardar a largura disponível para o texto
   const [viewWidth, setViewWidth] = useState(stdout.columns - 6); // -6 para as bordas, prompt, etc.
 
   useEffect(() => {
     const onResize = () => {
       // Subtrai o espaço para "> ", bordas e padding
-      setViewWidth(stdout.columns - 6); 
+      setViewWidth(stdout.columns - 6);
     };
-    stdout.on('resize', onResize);
+    stdout.on("resize", onResize);
     return () => {
-      stdout.off('resize', onResize);
+      stdout.off("resize", onResize);
     };
   }, [stdout]);
 
@@ -41,26 +41,37 @@ export const InputPrompt = ({ onSubmit }: InputPromptProps) => {
       setViewStart(cursorPosition - viewWidth + 1);
     }
   }, [cursorPosition, viewWidth, viewStart]);
-  
+
   // Corta a fatia visível do texto
   const visibleText = text.slice(viewStart, viewStart + viewWidth);
   const visibleCursorPosition = cursorPosition - viewStart;
 
   // Separa o texto visível em três partes
   const textBeforeCursor = visibleText.slice(0, visibleCursorPosition);
-  const charAtCursor = visibleText.slice(visibleCursorPosition, visibleCursorPosition + 1);
+  const charAtCursor = visibleText.slice(
+    visibleCursorPosition,
+    visibleCursorPosition + 1
+  );
   const textAfterCursor = visibleText.slice(visibleCursorPosition + 1);
 
   return (
-    <Box borderStyle="round" borderColor="white">
-      <Box flexDirection="row" alignItems="center" paddingX={1}>
-        <Text bold>{'>'} </Text>
-        
-        {/* Renderiza a fatia visível do texto */}
-        <Text>
-          {textBeforeCursor}
-          <Text inverse>{charAtCursor || ' '}</Text>
-          {textAfterCursor}
+    <Box flexDirection="column">
+      <Box borderStyle="round" borderColor="gyay">
+        <Box flexDirection="row" alignItems="center" paddingX={1}>
+          <Text bold>{">"} </Text>
+
+          {/* Renderiza a fatia visível do texto */}
+          <Text>
+            {textBeforeCursor}
+            <Text inverse>{charAtCursor || " "}</Text>
+            {textAfterCursor}
+          </Text>
+        </Box>
+      </Box>
+
+      <Box justifyContent="center" width="100%">
+        <Text color="gray" dimColor>
+          BluMa Senior Full Stack Developer
         </Text>
       </Box>
     </Box>
