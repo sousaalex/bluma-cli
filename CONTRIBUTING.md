@@ -1,70 +1,70 @@
-# Contribuindo para BluMa CLI
+# Contributing to BluMa CLI
 
-Primeiro, obrigado por querer melhorar o BluMa CLI!
-Aqui estão algumas diretrizes para acelerar seu fluxo e manter o projeto saudável.
+First, thank you for wanting to improve BluMa CLI!
+Here are some guidelines to speed up your workflow and keep the project healthy.
 
-## Sumário
-- [Como contribuir](#como-contribuir)
-- [Como abrir um issue](#como-abrir-um-issue)
-- [Como abrir um Pull Request (PR)](#como-abrir-um-pull-request-pr)
+## Table of Contents
+- [How to contribute](#how-to-contribute)
+- [How to open an issue](#how-to-open-an-issue)
+- [How to open a Pull Request (PR)](#how-to-open-a-pull-request-pr)
 - [Style Guide](#style-guide)
-- [Dicas de setup local](#dicas-de-setup-local)
-- [Revisão de código e merges](#revisao-de-codigo-e-merges)
-- [Comunicação e Etiqueta](#comunicacao-e-etiqueta)
+- [Local Setup Tips](#local-setup-tips)
+- [Code Review and Merges](#code-review-and-merges)
+- [Communication and Etiquette](#communication-and-etiquette)
 
 ---
 
-## Como contribuir
+## How to contribute
 
-1. **Fork o repositório** e crie uma branch para sua feature/correção (`feature/nome-da-feature` ou `fix/descrição`)
-2. Configure e rode localmente (veja [Dicas de Setup Local](#dicas-de-setup-local))
-3. Teste suas alterações em ambientes e plataformas diferentes, se possível
-4. Escreva testes e documentação sempre que adicionar algo significativo
-5. Abra o PR contra o branch principal
+1. **Fork the repository** and create a branch for your feature/fix (`feature/feature-name` or `fix/short-desc`)
+2. Set up and run locally (see [Local Setup Tips](#local-setup-tips))
+3. Test your changes in different environments and platforms if possible
+4. Write tests and documentation for any significant additions
+5. Open the PR against the main branch
 
-## Como abrir um issue
-- Reporte bugs com o máximo de contexto, prints, passos para reproduzir e ambiente
-- Sugira features claras, com exemplos de uso
-- Perguntas e discussões abertas são bem-vindas; só evite SPAM
+## How to open an issue
+- Report bugs with as much context, screenshots, steps to reproduce, and your environment as possible
+- Suggest features clearly, with usage examples
+- Open questions and discussions are welcome; just avoid SPAM
 
-## Como abrir um Pull Request (PR)
-- Pré-requisito: código buildando e sem lint errors
-- Respeite a convenção de nomes e mensagens de commit limpas
-- Explique o que resolveu/criou, cite o issue se aplicável
-- Use PRs “pequenos” e objetivos; grandes batches são desencorajados
+## How to open a Pull Request (PR)
+- Pre-requisite: code builds cleanly and without lint errors
+- Follow naming conventions and use clean commit messages
+- Explain what you fixed/created, referencing issues if applicable
+- Prefer "small", focused PRs; avoid huge batches
 
 ## Style Guide
-- **Use inglês** para código, comentários técnicos e mensagens de commit
-- Respeite a tabulação do projeto (2 espaços)
-- Prefira TypeScript e React moderno (`react-jsx`), siga o padrão Ink para CLI
-- Não adicione libs sem discutir no issue/PR ou consenso
-- Comente partes complexas
-- Exporte funções e componentes via default/export {} quando faz sentido
+- **Use English** for code, technical comments, and commit messages
+- Use the project's indentation style (2 spaces)
+- Prefer TypeScript and modern React (`react-jsx`), follow the Ink CLI standard
+- Don't add new libraries without prior issue/PR discussion or consensus
+- Comment on complex sections
+- Export functions and components using default/export {} as appropriate
 
-## Dicas de setup local
+## Local Setup Tips
 ```bash
 npm install
-npm run build # ou npm start
-# Certifique-se de instalar dependências globais como descrito no README.md
+npm run build # or npm start
+# Be sure to install global dependencies as detailed in README
 ```
-Para colaboração:
-- Garanta uso de Node.js recomendado no README
-- Teste em sistemas Unix e Windows se sua alteração for de infraestrutura/caminhos
-- Veja os scripts em package.json e build.js para helpers e automações
+For collaboration:
+- Use the Node.js version recommended in the README
+- If your change involves infrastructure/paths, test on Unix and Windows
+- See package.json and build.js scripts for helpers and automations
 
-## Revisão de código e merges
-- Todos PRs precisam de revisão por pelo menos outro colaborador (ou owner)
-- PRs sem revisão >5 dias podem ser fechados (salvo exceção aberta)
-- Bugs críticos têm prioridade máxima
-- Nunca force-push na main/master - use pull requests!
+## Code Review and Merges
+- All PRs need review by at least one other collaborator (or owner)
+- PRs left unreviewed for >5 days may be closed (unless an exception is opened)
+- Critical bugs have highest priority
+- Never force-push to main/master—use pull requests!
 
-## Comunicação e Etiqueta
-- Seja respeitoso, direto, paciente
-- Use linguagem construtiva na discussão de PR/issue
-- Ao discordar, proponha alternativa técnica justificando
-- Todos são bem-vindos a opinar, contribua inclusive revisando!
+## Communication and Etiquette
+- Be respectful, direct, & patient
+- Use constructive language in PR/issue discussions
+- If disagreeing, propose an alternative with technical justification
+- Everyone is welcome to provide input; help review too!
 
 ---
 
-BluMa CLI agradece sua colaboração!
-Para dúvidas técnicas, crie um issue. Para bugs "graves" email/tags rápidas ao owner. Quebre código, evolua, hackeie - mas sempre pensando no coletivo.
+BluMa CLI thanks you for your contribution!
+For technical questions, open an issue. For critical bugs: email/fast-tag the owner. Break code, evolve, hack—but always thinking as a team!

@@ -8,210 +8,209 @@
   <img src="docs\assets\images\bluma.png" alt="Tela inicial BluMa CLI" width="1000"/>
 </p>
 
-BluMa CLI é um agente independente para automação e engenharia de software avançada. O projeto implementa um assistente conversacional que interage via terminal (CLI), baseado em React/Ink, com suporte a agentes inteligentes (LLM, OpenAI Azure), execução de ferramentas, histórico persistente, gestão de sessões e integração extensível via plugins/tools externos.
+BluMa CLI is an independent agent for automation and advanced software engineering. The project is a conversational assistant that interacts via terminal (CLI), built with React/Ink, supporting smart agents (LLM, OpenAI Azure), tool execution, persistent history, session management, and extensibility through external plugins/tools.
 
 ---
 
-## Sumário
-- [Visão Geral](#visao-geral)
-- [Características Principais](#caracteristicas-principais)
-- [Requisitos](#requisitos)
-- [Instalação](#instalacao)
-- [Como Executar](#como-executar)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Desenvolvimento e Build](#desenvolvimento-e-build)
-- [Extensibilidade: Ferramentas e Plugins](#extensibilidade-ferramentas-e-plugins)
-- [Testes](#testes)
-- [Configuração e Variáveis](#configuracao-e-variaveis)
-- [Licença](#licenca)
+## Table of Contents
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [How to Run](#how-to-run)
+- [Project Structure](#project-structure)
+- [Development and Build](#development-and-build)
+- [Extensibility: Tools and Plugins](#extensibility-tools-and-plugins)
+- [Tests](#tests)
+- [Configuration and Environment Variables](#configuration-and-environment-variables)
+- [License](#license)
 
 ---
 
-## <a name="visao-geral"></a>Visão Geral
-BluMa é uma CLI moderna voltada para automação, colaboração com LLMs, documentação, refatoração, execução de tarefas complexas e interação com ferramentas externas. Utiliza React (via Ink) para interfaces ricas em terminal e conta com um gestor de contexto/conversa, feedback inteligente e sistema de confirmação interativa.
+## <a name="overview"></a>Overview
+BluMa CLI is a modern CLI focused on automation, LLM collaboration, documentation, refactoring, running complex tasks, and integrating with external tools. It uses React (via Ink) for rich terminal interfaces and features context/conversation management, smart feedback, and interactive confirmation systems.
 
 ---
 
-## <a name="caracteristicas-principais"></a>Características Principais
-- **Interface CLI rica** construída em React/Ink 5, com prompts interativos e componentes customizados.
-- **Gestão de sessão:** persistência automática do histórico de conversas e ferramentas via arquivos.
-- **Agente central (LLM):** orquestrado por Azure OpenAI (ou compatível), permite automação orientada por linguagem natural.
-- **Invocação de Ferramentas:** integração nativa e via MCP SDK para executar comandos, manipular código, gerenciamento de arquivos e mais.
-- **Prompt dinâmico:** construção dinâmica de contexto conversacional, regras comportamentais e histórico técnico.
-- **Componente de feedback inteligente** com sugestões e checagens técnicas.
-- **ConfirmPrompt e Workflow Decision:** confirmações para execuções sensíveis, preview de alterações (ex: edit de código), whitelist de comandos sempre aceitos.
-- **Extensível:** fácil adicionar novas ferramentas ou integrar SDK/plugin externo.
+## <a name="key-features"></a>Key Features
+- **Rich CLI interface** using React/Ink 5, with interactive prompts and custom components.
+- **Session management:** automatic persistence of conversation and tool history via files.
+- **Central agent (LLM):** orchestrated by Azure OpenAI (or compatible), enabling natural language-driven automation.
+- **Tool invocation:** native and via MCP SDK for running commands, code manipulation, file management, and more.
+- **Dynamic prompts:** builds live conversational context, behavioral rules, and technical history.
+- **Smart feedback component** with technical suggestions and checks.
+- **ConfirmPrompt & Workflow Decision:** confirmations for sensitive operations, edit/code previews, always-accepted tool whitelists.
+- **Extensible:** easily add new tools or integrate external SDK/plugins.
 
 ---
 
-## <a name="requisitos"></a>Requisitos
+## <a name="requirements"></a>Requirements
 - Node.js >= 18
 - npm >= 9
-- Conta (com chave) do Azure OpenAI (ou variáveis equivalentes para os endpoints OpenAI/compatíveis)
+- Account (with key) for Azure OpenAI (or equivalent variables for OpenAI-compatible endpoints)
 
 ---
 
-## <a name="instalacao"></a>Instalação
+## <a name="installation"></a>Installation
 
-### Método Recomendado: Instalação Global
+### Recommended: Global Installation
 
-> **Importante:** recomenda-se instalar o BluMa globalmente no sistema para garantir acesso ao comando bluma em qualquer terminal.
+> **Important:** It is recommended to install BluMa globally so the `bluma` command works in any terminal.
 
 ```bash
 npm install -g bluma
 ```
 
-- Caso ocorram erros de permissão, EXEMPLO:
-    - **Linux:** rode como administrador usando `sudo`:
-      ```bash
-      sudo npm install -g bluma
-      ```
-    - **Windows:** execute o terminal/prompt como Administrador e depois repita o comando
+If you get permission errors, EXAMPLES:
+  - **Linux:** Run as administrator using `sudo`:
+    ```bash
+    sudo npm install -g bluma
+    ```
+  - **Windows:** Open Command Prompt/Terminal as Administrator and repeat the command
 
-> **macOS:** Após instalar globalmente, **sempre rode o comando `bluma` sem sudo**:
+> **macOS:** After global installation, **always run the `bluma` command without sudo**:
 >
 > ```bash
 > bluma
 > ```
-> Rodar com sudo pode causar problemas de permissão, variáveis de ambiente e ownership de ficheiros em cache npm. 
-> Só use sudo para instalar, nunca para rodar o CLI.
+> Running with sudo may cause permission problems, environment variable issues, and npm cache ownership problems.
+> Only use sudo to install, never to run the CLI.
 
+### Setting Up Environment Variables
+For BluMa CLI to operate with OpenAI/Azure, GitHub, and Notion, set the following environment variables globally in your system.
 
-### Configuração das Variáveis de Ambiente
-Para o BluMa operar com OpenAI/Azure, Github e Notion, defina as seguinters variáveis globais de ambiente no seu sistema.
-
-**Obrigatórias:**
+**Required:**
 - `AZURE_OPENAI_ENDPOINT`
 - `AZURE_OPENAI_API_KEY`
 - `AZURE_OPENAI_API_VERSION`
 - `AZURE_OPENAI_DEPLOYMENT`
-- `GITHUB_PERSONAL_ACCESS_TOKEN` (caso vá operar com o Github)
-- `NOTION_API_TOKEN` (caso vá operar com o Notion)
+- `GITHUB_PERSONAL_ACCESS_TOKEN` (if you'll use GitHub)
+- `NOTION_API_TOKEN` (if you'll use Notion)
 
-#### Como definir as variáveis globais:
+#### How to set environment variables globally:
 
 **Linux/macOS:**
-Adicione ao arquivo `~/.bashrc`, `~/.zshrc` ou equivalente:
+Add to your `~/.bashrc`, `~/.zshrc`, or equivalent:
 ```sh
 export AZURE_OPENAI_ENDPOINT="https://..."
-export AZURE_OPENAI_API_KEY="sua_chave"
+export AZURE_OPENAI_API_KEY="your_key"
 export AZURE_OPENAI_API_VERSION="2024-06-01"
 export AZURE_OPENAI_DEPLOYMENT="bluma-gpt"
 export GITHUB_PERSONAL_ACCESS_TOKEN="..."
 export NOTION_API_TOKEN="..."
 ```
-Depois rode:
+Then run:
 ```sh
-source ~/.bashrc # ou o arquivo que alterou
+source ~/.bashrc # or whichever file you edited
 ```
 
 **Windows (CMD):**
 ```cmd
 setx AZURE_OPENAI_ENDPOINT "https://..."
-setx AZURE_OPENAI_API_KEY "sua_chave"
+setx AZURE_OPENAI_API_KEY "your_key"
 setx AZURE_OPENAI_API_VERSION "2024-06-01"
 setx AZURE_OPENAI_DEPLOYMENT "bluma-gpt"
 setx GITHUB_PERSONAL_ACCESS_TOKEN "..."
 setx NOTION_API_TOKEN "..."
 ```
-(Só precisa rodar 1 vez para cada variável. Depois, reinicie o terminal.)
+(Only needs to be run once per variable. Restart the terminal after.)
 
 **Windows (PowerShell):**
 ```powershell
 [Environment]::SetEnvironmentVariable("AZURE_OPENAI_ENDPOINT", "https://...", "Machine")
-[Environment]::SetEnvironmentVariable("AZURE_OPENAI_API_KEY", "sua_chave", "Machine")
+[Environment]::SetEnvironmentVariable("AZURE_OPENAI_API_KEY", "your_key", "Machine")
 [Environment]::SetEnvironmentVariable("AZURE_OPENAI_API_VERSION", "2024-06-01", "Machine")
 [Environment]::SetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT", "bluma-gpt", "Machine")
 [Environment]::SetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN", "...", "Machine")
 [Environment]::SetEnvironmentVariable("NOTION_API_TOKEN", "...", "Machine")
 ```
 
-### ℹ️ Instalação Global de Pacotes no PowerShell (Windows)
-Ao instalar o BluMa (ou qualquer pacote npm globalmente) no PowerShell, pode aparecer o prompt:
+### ℹ️ Global Installation of npm Packages in PowerShell (Windows)
+When installing BluMa (or any npm package globally) in PowerShell, you might see:
 ```
 Do you want to change the execution policy?
 [Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"):
 ```
-👉 **Escolha a opção `Y` (Yes) ou `A` (Yes to All)**, pressionando a tecla correspondente. Com isso, a política de execução será ajustada para **RemoteSigned** (só scripts baixados da Internet precisam de assinatura).
+👉 **Choose `Y` (Yes) or `A` (Yes to All)**. This will change the execution policy to **RemoteSigned** (only scripts from the internet need a digital signature).
 
-- Isso é seguro para devs: o Windows só exige assinatura digital para scripts vindos da web—scripts locais, do npm, funcionam normalmente.
-- Leia mais em: [Sobre Execution Policies (Microsoft Docs)](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/about/about_execution_policies)
+- This is safe for devs: Windows only requires digital signatures for web scripts—local scripts, from npm, work normally.
+- Read more: [About Execution Policies (Microsoft Docs)](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/about/about_execution_policies)
 
-**Dica:** Deseja restaurar a política padrão depois da instalação? Execute:
+**To restore the default policy after installation, run:**
 ```powershell
 Set-ExecutionPolicy Default
 ```
 
-> **Dica:** Reinicie o terminal para garantir que as variáveis já estão disponíveis globalmente.
+> **Tip:** Restart your terminal to ensure the variables are loaded globally.
 
 ---
 
-## <a name="como-executar"></a>Como Executar
+## <a name="how-to-run"></a>How to Run
 ```bash
 npm start
-# Ou direto pelo binário pós-build
+# Or directly using the built binary
 npx bluma
 ```
-==> O CLI abrirá uma interface interativa no terminal para dialogar, executar comandos e automatizar workflows de engenharia.
+==> The CLI will open an interactive terminal interface for dialogue, command execution, and engineering workflow automation.
 
 ---
 
-## <a name="estrutura-do-projeto"></a>Estrutura do Projeto
+## <a name="project-structure"></a>Project Structure
 ```
 bluma-engineer/
-├── package.json               # Configuração npm/project
-├── tsconfig.json              # Configuração TypeScript
-├── scripts/build.js           # Script de build com esbuild
+├── package.json               # npm/project config
+├── tsconfig.json              # TypeScript config
+├── scripts/build.js           # Build script using esbuild
 ├── src/
-│   ├── main.ts                # Ponto de entrada (renderizador Ink)
+│   ├── main.ts                # Entry point (Ink renderer)
 │   └── app/
-│        ├── agent/            # Núcleo do agente (gestão session, tools, MCP, prompt, feedback)
-│        ├── ui/               # Componentes de interface Ink/React CLI
-│        └── protocols/        # Protocolos & helpers
+│        ├── agent/            # Agent core (session mgmt, tools, MCP, prompt, feedback)
+│        ├── ui/               # Ink/React CLI interface components
+│        └── protocols/        # Protocols & helpers
 ```
 ---
 
-## <a name="desenvolvimento-e-build"></a>Desenvolvimento e Build
-- O build é feito via [esbuild](https://esbuild.github.io/) (ver scripts/build.js).
-- Fontes TS ficam em `src/` e vão para `dist/`.
-- Use `npm run build` para compilar e preparar binário CLI.
-- Os arquivos de configuração são copiados para `dist/config` automaticamente.
+## <a name="development-and-build"></a>Development and Build
+- Build is performed using [esbuild](https://esbuild.github.io/) (see scripts/build.js).
+- TS source files are in `src/` and compiled to `dist/`.
+- Use `npm run build` to compile and get the CLI binary ready.
+- Config files are automatically copied to `dist/config`.
 
-### Scripts principais:
+### Main scripts:
 ```bash
-npm run build    # Compila projeto para dist/
-npm start        # Roda CLI (após build)
-npm run dev      # (Se estiver configurado, hot-reload/TS watch)
+npm run build    # Compiles project to dist/
+npm start        # Runs CLI (after build)
+npm run dev      # (If configured, hot-reload/TS watch)
 ```
 
 ---
 
-## <a name="extensibilidade-ferramentas-e-plugins"></a>Extensibilidade: Ferramentas e Plugins
-- Adicione ferramentas nativas em `src/app/agent/tools/natives/`.
-- Use MCP SDK para plugins avançados integrando com APIs externos.
-- Crie componentes Ink customizados para expandir a interface.
+## <a name="extensibility-tools-and-plugins"></a>Extensibility: Tools and Plugins
+- Add native tools in `src/app/agent/tools/natives/`
+- Use the MCP SDK for advanced plugins integrating with external APIs
+- Create custom Ink components to expand the interface
 
 ---
 
-## <a name="testes"></a>Testes
-- Organize seus testes dentro da pasta `test/` conforme seu padrão local ou necessidade do projeto, se desejar ampliar a cobertura do BluMa CLI.
+## <a name="tests"></a>Tests
+- Organize your tests inside the `test/` folder in your preferred style or as your project's coverage grows
 
 ---
 
-## <a name="configuracao-e-variaveis"></a>Configuração e Variáveis
-É obrigatório criar um arquivo `.env` (copie, se necessário, de `.env.example`) com as seguintes variáveis:
+## <a name="configuration-and-environment-variables"></a>Configuration and Environment Variables
+You must create a `.env` file (copy if needed from `.env.example`) with the following variables:
 - `AZURE_OPENAI_ENDPOINT`
 - `AZURE_OPENAI_API_KEY`
 - `AZURE_OPENAI_API_VERSION`
 - `AZURE_OPENAI_DEPLOYMENT`
 
-E outras que forem requeridas no contexto do seu agente/contexto Azure.
+And others required by your agent/context or Azure setup.
 
-Os arquivos de configuração avançada estão em `src/app/agent/config/`.
+Advanced config files are located in `src/app/agent/config/`.
 
 ---
 
-## <a name="licenca"></a>Licença
-MIT. Feito por Alex Fonseca e colaboradores NomadEngenuity.
+## <a name="license"></a>License
+MIT. Made by Alex Fonseca and NomadEngenuity contributors.
 
-Desfrute, hackeie e, se possível, colabore!
+Enjoy, hack, and—if possible—contribute!
