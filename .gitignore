@@ -58,6 +58,9 @@ Thumbs.db
 htmlcov/
 .tox/
 .coverage
+
+# BluMa CLI
+backend-python/
 .coverage.*
 .cache
 nosetests.xml
