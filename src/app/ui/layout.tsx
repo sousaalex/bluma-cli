@@ -1,14 +1,29 @@
 
-import React from 'react';
 import { Box, Text } from 'ink';
-import { colaAsciiLogo } from './Asci/AsciiArt'; // Supondo que este caminho está correto
 
-//Section Header for chat
-export const Header = () => (
-    <Box>
-	    <Text color="magenta">{colaAsciiLogo}</Text>
-    </Box>
-);
+// Estilizado: Header ASCII animado universal
+import BigText from 'ink-big-text';
+;
+
+const BRAND_COLORS = {
+  main: 'cyan',
+  accent: 'magenta',
+  shadow: 'blue',
+  greydark: '#444',
+};
+
+export const Header = () => {
+    return (
+        <Box flexDirection="column" alignItems="center" justifyContent="center" height={20}>
+            <BigText
+                text="BluMa CLI"
+                font="block"
+                colors={[BRAND_COLORS.main, BRAND_COLORS.accent, BRAND_COLORS.shadow]}
+            />
+        </Box>
+    );
+};
+
 
 // --- SessionInfo --- //
 // Este componente exibe informações detalhadas da sessão do BluMa Engineer em tempo real.

@@ -9,22 +9,12 @@ export const blumaAscii = `
 `;
 
 export const diamoAsciiLogo = `
-BBBBBBBBBBBBBBBBB   lllllll                   MMMMMMMM               MMMMMMMM                  
-B::::::::::::::::B  l:::::l                   M:::::::M             M:::::::M                  
-B::::::BBBBBB:::::B l:::::l                   M::::::::M           M::::::::M                  
-BB:::::B     B:::::Bl:::::l                   M:::::::::M         M:::::::::M                  
-  B::::B     B:::::B l::::l uuuuuu    uuuuuu  M::::::::::M       M::::::::::M  aaaaaaaaaaaaa   
-  B::::B     B:::::B l::::l u::::u    u::::u  M:::::::::::M     M:::::::::::M  a::::::::::::a  
-  B::::BBBBBB:::::B  l::::l u::::u    u::::u  M:::::::M::::M   M::::M:::::::M  aaaaaaaaa:::::a 
-  B:::::::::::::BB   l::::l u::::u    u::::u  M::::::M M::::M M::::M M::::::M           a::::a 
-  B::::BBBBBB:::::B  l::::l u::::u    u::::u  M::::::M  M::::M::::M  M::::::M    aaaaaaa:::::a 
-  B::::B     B:::::B l::::l u::::u    u::::u  M::::::M   M:::::::M   M::::::M  aa::::::::::::a 
-  B::::B     B:::::B l::::l u::::u    u::::u  M::::::M    M:::::M    M::::::M a::::aaaa::::::a 
-  B::::B     B:::::B l::::l u:::::uuuu:::::u  M::::::M     MMMMM     M::::::Ma::::a    a:::::a 
-BB:::::BBBBBB::::::Bl::::::lu:::::::::::::::uuM::::::M               M::::::Ma::::a    a:::::a 
-B:::::::::::::::::B l::::::l u:::::::::::::::uM::::::M               M::::::Ma:::::aaaa::::::a 
-B::::::::::::::::B  l::::::l  uu::::::::uu:::uM::::::M               M::::::M a::::::::::aa:::a
-BBBBBBBBBBBBBBBBB   llllllll    uuuuuuuu  uuuuMMMMMMMM               MMMMMMMM  aaaaaaaaaa  aaaa
+██████╗  ██╗      ██╗   ██╗ ███╗   ███╗  █████╗       ██████╗ ██╗      ██╗
+██╔══██╗ ██║      ██║   ██║ ████╗ ████║ ██╔══██╗     ██╔════╝ ██║      ██║
+██████╔╝ ██║      ██║   ██║ ██╔████╔██║ ███████║     ██║      ██║      ██║
+██╔══██╗ ██║      ██║   ██║ ██║╚██╔╝██║ ██╔══██║     ██║      ██║      ██║
+██████╔╝ ███████╗ ╚██████╔╝ ██║ ╚═╝ ██║ ██║  ██║     ╚██████╗ ███████╗ ██║
+╚═════╝  ╚══════╝  ╚═════╝  ╚═╝     ╚═╝ ╚═╝  ╚═╝      ╚═════╝ ╚══════╝ ╚═╝
 `
 
 
