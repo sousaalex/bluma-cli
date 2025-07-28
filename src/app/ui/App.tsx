@@ -57,14 +57,14 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
         {
           id: prev.length,
           component: (
-            <Box flexDirection="column">
-              <Box>
-                <Text color="cyan" bold>
-                  you
+            <Box >
+              <Box flexDirection="row" alignItems="center">
+                <Text color="white" dimColor>
+                  {">"} {""}
                 </Text>
               </Box>
               <Box flexDirection="column" marginBottom={1}>
-                <Text>{displayText}</Text>
+                <Text color="white" dimColor>{displayText}</Text>
               </Box>
             </Box>
           ),
@@ -203,13 +203,6 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               </Text>{" "}
               <Text color="gray">{parsed.content}</Text>{" "}
               <Text color="yellow">{parsed.message}</Text>{" "}
-            </Box>
-          );
-        } else if (parsed.type === "agent_response") {
-          newComponent = (
-            <Box>
-              {" "}
-              <Text color="magenta">bluma:</Text> <Text> {parsed.content}</Text>{" "}
             </Box>
           );
         } else if (parsed.type === "error") {

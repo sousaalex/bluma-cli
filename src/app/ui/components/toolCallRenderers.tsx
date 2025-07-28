@@ -28,17 +28,15 @@ const formatArgumentsForDisplay = (args: any): string => {
 export const renderShellCommand = ({ args }: RenderProps): React.ReactElement => {
   const command = args.command || '[command not found]';
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="gray">
+    <Box flexDirection="column">
       <Box>
         <Text bold>
-          <Text color="green">✓ </Text>
+          <Text color="green">● </Text>
           Shell Command
         </Text>
       </Box>
-      <Box marginTop={1}>
-        <Text dimColor>Command executed:</Text>
-      </Box>
-      <Box marginLeft={2}>
+      
+      <Box marginLeft={2} paddingX={1}>
         <Text>
           <Text color="gray">↳ </Text>
           <Text color="cyan">{command}</Text>
@@ -65,17 +63,15 @@ export const renderLsTool = ({ args }: RenderProps): React.ReactElement => {
     const finalDirectoryName = path.basename(directoryPath);
   
     return (
-      <Box flexDirection="column" borderStyle="round" borderColor="gray">
+      <Box flexDirection="column">
         <Box>
           <Text bold>
-            <Text color="green">✓ </Text>
+            <Text color="green">● </Text>
             ls Tool
           </Text>
         </Box>
-        <Box marginTop={1}>
-          <Text dimColor>Listed contents of:</Text>
-        </Box>
-        <Box marginLeft={2}>
+        
+        <Box marginLeft={2} paddingX={1}>
           <Text>
             <Text color="gray">↳ </Text>
             <Text color="cyan">{finalDirectoryName}</Text>
@@ -101,17 +97,15 @@ export const renderCountFilesLines = ({ args }: RenderProps): React.ReactElement
     const finalDirectoryName = path.basename(directoryPath);
   
     return (
-      <Box flexDirection="column" borderStyle="round" borderColor="gray">
+      <Box flexDirection="column">
         <Box>
           <Text bold>
-            <Text color="green">✓ </Text>
+            <Text color="green">● </Text>
             Count File Lines
           </Text>
         </Box>
-        <Box marginTop={1}>
-          <Text dimColor>Listed contents of:</Text>
-        </Box>
-        <Box marginLeft={2}>
+       
+        <Box marginLeft={2} paddingX={1}>
           <Text>
             <Text color="gray">↳ </Text>
             <Text color="cyan">{finalDirectoryName}</Text>
@@ -139,29 +133,25 @@ export const renderCountFilesLines = ({ args }: RenderProps): React.ReactElement
   
     return (
       // A caixa externa com a borda, seguindo o template
-      <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1}>
+      <Box flexDirection="column">
         {/* Título com o 'check' verde */}
         <Box>
           <Text bold>
-            <Text color="green">✓ </Text>
+            <Text color="green">● </Text>
             Read File Lines Tool
           </Text>
-        </Box>
-        {/* Descrição da ação */}
-        <Box marginTop={1}>
-          <Text dimColor>Read lines from file:</Text>
         </Box>
         {/* Detalhes indentados */}
         <Box marginLeft={2} flexDirection="column">
           {/* Detalhe do nome do ficheiro */}
-          <Box>
+          <Box marginLeft={2} paddingX={1}>
             <Text>
               <Text color="gray">↳ </Text>
               <Text color="cyan">{finalFileName}</Text>
             </Text>
           </Box>
           {/* Detalhe das linhas */}
-          <Box>
+          <Box marginLeft={2} paddingX={4}>
             <Text>
               <Text color="gray">↳ </Text>
               <Text dimColor>lines </Text>
@@ -229,7 +219,7 @@ export const renderBlumaNotebook = ({ args }: RenderProps): React.ReactElement =
                 <Box key={index} marginLeft={2}>
                   <Text>
                     <Text color="gray">↳ </Text>
-                    {/* Damos uma cor diferente para tarefas concluídas (✓) vs. pendentes ([ ]) */}
+                    {/* Damos uma cor diferente para tarefas concluídas (●) vs. pendentes ([ ]) */}
                     <Text color={task.startsWith('🗸') ? 'green' : 'yellow'}>{task}</Text>
                   </Text>
                 </Box>
@@ -261,18 +251,15 @@ export const renderEditToolCall = ({ args, preview }: RenderProps): React.ReactE
     const finalFileName = path.basename(filepath);
 
     return (
-        <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1}>
+        <Box flexDirection="column" paddingX={1}>
             {/* Cabeçalho com o 'check' verde */}
             <Box>
                 <Text bold>
-                    <Text color="green">✓ </Text>
+                    <Text color="green">● </Text>
                     Edit File
                 </Text>
             </Box>
-            <Box marginTop={1}>
-                <Text dimColor>File modified:</Text>
-            </Box>
-            <Box marginLeft={2}>
+            <Box marginLeft={2} paddingX={1}>
                 <Text>
                     <Text color="gray">↳ </Text>
                     <Text color="cyan">{finalFileName}</Text>
@@ -302,7 +289,7 @@ export const renderGenericToolCall = ({ toolName, args }: RenderProps): React.Re
         {/* Cabeçalho com o 'check' verde */}
         <Box>
           <Text bold>
-            <Text color="green">✓ </Text>
+            <Text color="green">● </Text>
             {toolName}
           </Text>
         </Box>

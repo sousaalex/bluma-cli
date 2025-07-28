@@ -29,15 +29,15 @@ const ToolResultDisplayComponent = ({ toolName, result }: ToolResultDisplayProps
     try {
       const parsed = JSON.parse(result);
       if (parsed.content && parsed.content.body) {
+        const bodyText = parsed.content.body.trim();
         return (
-          <Box flexDirection="column" marginBottom={1}>
-            <Box>
-              <Text color="magenta" bold>bluma</Text>
-            </Box>
-            <Box>
-              <Text>{parsed.content.body}</Text>
-            </Box>
-          </Box>
+         <Box marginBottom={1}>
+      <Text>
+        <Text color="white">● </Text>
+        {bodyText}
+      </Text>
+    </Box>
+
         );
       }
     } catch (e) {

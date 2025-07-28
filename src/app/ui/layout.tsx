@@ -14,7 +14,7 @@ const BRAND_COLORS = {
 
 export const Header = () => {
     return (
-        <Box flexDirection="column" alignItems="center" justifyContent="center" height={20}>
+        <Box flexDirection="column" alignItems="center" justifyContent="center" height={8}>
             <BigText
                 text="BluMa CLI"
                 font="block"
