@@ -35,12 +35,18 @@ export class Agent {
   private feedbackSystem: AdvancedFeedbackSystem;
   private isInitialized: boolean = false;
   private readonly maxContextTurns: number = 300; 
+   private isInterrupted: boolean = false; // <-- NOVO: Flag de interrupção
 
 
 
   constructor(sessionId: string, eventBus: EventEmitter) {
     this.sessionId = sessionId;
     this.eventBus = eventBus;
+
+    // NOVO: Ouve o evento de interrupção da UI
+    this.eventBus.on('user_interrupt', () => {
+        this.isInterrupted = true;
+    });
 
     const nativeToolInvoker = new ToolInvoker();
     this.mcpClient = new MCPClient(nativeToolInvoker, eventBus);
@@ -56,14 +62,14 @@ export class Agent {
       throw new Error(errorMessage);
     } 
 
-     /*   const apiKey = "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";
-      const modelName = "moonshotai/kimi-k2";
+      //   const apiKey = "";
+      // const modelName = "moonshotai/kimi-k2";
 
-      if (!apiKey || !modelName) {
-          throw new Error("Chave de API ou nome do modelo do OpenRouter não encontrados.");
-      } 
+      // if (!apiKey || !modelName) {
+      //     throw new Error("Chave de API ou nome do modelo do OpenRouter não encontrados.");
+      // } 
 
-      this.deploymentName = modelName; */
+      // this.deploymentName = modelName; 
 
      this.client = new OpenAI({
       // Configuração do cliente OpenAI hospedado no Azure
@@ -131,6 +137,7 @@ export class Agent {
   }
 
   public async processTurn(userInput: { content: string }): Promise<void> {
+    this.isInterrupted = false; 
     this.history.push({ role: 'user', content: userInput.content });
     await this._continueConversation();
   }
@@ -162,6 +169,13 @@ export class Agent {
   
       // <<< INÍCIO DA CORREÇÃO: Adiciona o bloco try...catch >>>
       try {
+
+        // NOVO: Verifica se foi interrompido antes de invocar a ferramenta
+        if (this.isInterrupted) {
+            this.eventBus.emit('backend_message', { type: 'info', message: 'Agent task cancelled before tool execution.' });
+            return;
+        }
+
         const result = await this.mcpClient.invoke(toolName, toolArgs);
         
         let finalResult = result;
@@ -200,7 +214,7 @@ export class Agent {
   
     await saveSessionHistory(this.sessionFile, this.history);
   
-    if (shouldContinueConversation) {
+    if (shouldContinueConversation && !this.isInterrupted) {
       await this._continueConversation();
     }
   }
@@ -227,6 +241,12 @@ private async _generateEditPreview(toolArgs: any): Promise<string | undefined> {
   private async _continueConversation(): Promise<void> {
     try {
       
+      // NOVO: Verifica se foi interrompido antes de chamar a API
+      if (this.isInterrupted) {
+          this.eventBus.emit('backend_message', { type: 'info', message: 'Agent task cancelled by user.' });
+          return; // Para a execução aqui
+      }
+
      const contextWindow = createApiContextWindow(this.history, this.maxContextTurns);
 
       const response = await this.client.chat.completions.create({
@@ -236,6 +256,12 @@ private async _generateEditPreview(toolArgs: any): Promise<string | undefined> {
         tool_choice: 'auto',
         parallel_tool_calls: false,
       });
+
+      // NOVO: Verifica novamente após a chamada de API, que pode ser longa
+      if (this.isInterrupted) {
+        this.eventBus.emit('backend_message', { type: 'info', message: 'Agent task cancelled by user.' });
+        return;
+      }
 
       const message = response.choices[0].message;
       this.history.push(message);
@@ -277,6 +303,11 @@ private async _generateEditPreview(toolArgs: any): Promise<string | undefined> {
   
       
       } else if (message.content) {
+        this.eventBus.emit('backend_message', {
+          type: 'assistant_message',
+          content: message.content,
+        });
+
         const feedback = this.feedbackSystem.generateFeedback({
           event: 'protocol_violation_direct_text',
           details: { violationContent: message.content },

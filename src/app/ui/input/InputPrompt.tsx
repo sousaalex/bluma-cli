@@ -1,13 +1,15 @@
-// Ficheiro: InputPrompt.tsx (UI RADICALMENTE SIMPLIFICADA)
-import { Box, Text, useStdout} from "ink"; // Adicione o Cursor
-import { useCustomInput } from "./utils/useSimpleInputBuffer.js"; // Importe o novo hook
+// Ficheiro: InputPrompt.tsx (Versão com cursor sempre visível)
+import { Box, Text, useStdout} from "ink";
+import { useCustomInput } from "./utils/useSimpleInputBuffer.js";
 import { useEffect, useState } from "react";
 
 interface InputPromptProps {
   onSubmit: (value: string) => void;
+  isReadOnly: boolean;
+  onInterrupt: () => void;
 }
 
-export const InputPrompt = ({ onSubmit }: InputPromptProps) => {
+export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptProps) => {
   const { stdout } = useStdout();
   
   const [viewWidth, setViewWidth] = useState(() => stdout.columns - 6);
@@ -23,6 +25,8 @@ export const InputPrompt = ({ onSubmit }: InputPromptProps) => {
   const { text, cursorPosition, viewStart } = useCustomInput({
     onSubmit,
     viewWidth,
+    isReadOnly,
+    onInterrupt,
   });
 
   const visibleText = text.slice(viewStart, viewStart + viewWidth);
@@ -35,30 +39,45 @@ export const InputPrompt = ({ onSubmit }: InputPromptProps) => {
   );
   const textAfterCursor = visibleText.slice(visibleCursorPosition + 1);
 
+  // ALTERADO: A cor da borda agora reflete o estado de "read-only"
+  const borderColor = isReadOnly ? "gray" : "gray";
+
+  // Define o texto do placeholder. Só será mostrado quando o agente estiver a trabalhar.
+  const placeholder = isReadOnly ? "Agente a trabalhar... (Pressione ESC para cancelar)" : "";
+
+  // Determina se o placeholder deve ser mostrado
+  const showPlaceholder = text.length === 0 && isReadOnly;
+
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" borderColor="gray" borderDimColor>
-        {/* A caixa de input com a estrutura correta */}
+      <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly}>
         <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
           <Text color="white" dimColor>{">"} </Text>
           
-          {/*
-            A MUDANÇA FUNDAMENTAL ESTÁ AQUI:
-            - Os 3 componentes de texto são agora "irmãos" diretos no Box, não aninhados.
-            - Isto resolve o bug de quebra de linha de uma vez por todas.
-          */}
+          {/* --- LÓGICA DE RENDERIZAÇÃO UNIFICADA --- */}
+          {/* Esta estrutura agora funciona para todos os casos. */}
+          
+          {/* 1. Renderiza o texto antes do cursor (vazio se o input estiver vazio) */}
           <Text>{textBeforeCursor}</Text>
-          <Text inverse>{charAtCursor || " "}</Text>
-          <Text>{textAfterCursor}</Text>
-
+          
+          {/* 2. Renderiza o cursor. Se não houver caractere, usa um espaço. Fica sempre visível. */}
+          <Text inverse={!isReadOnly}>{charAtCursor || " "}</Text>
+          
+          {/* 3. Renderiza o texto depois do cursor (ou o placeholder) */}
+          {showPlaceholder ? (
+            <Text dimColor>{placeholder}</Text>
+          ) : (
+            <Text>{textAfterCursor}</Text>
+          )}
         </Box>
       </Box>
 
-      <Box justifyContent="center" width="100%">
-        <Text color="gray" dimColor>
-          BluMa Senior Full Stack Developer
-        </Text>
-      </Box>
+      {/* Exibe o rodapé com a informação do desenvolvedor */}
+      <Box paddingX={1}>
+          <Text color="gray" dimColor>
+            ctrl+c to exit | esc to interrupt | {isReadOnly ? "Read-only mode" : "Editable mode"}
+          </Text>
+        </Box>
     </Box>
   );
 };

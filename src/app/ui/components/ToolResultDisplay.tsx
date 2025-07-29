@@ -31,7 +31,7 @@ const ToolResultDisplayComponent = ({ toolName, result }: ToolResultDisplayProps
       if (parsed.content && parsed.content.body) {
         const bodyText = parsed.content.body.trim();
         return (
-         <Box marginBottom={1}>
+         <Box marginBottom={1} paddingX={1}>
       <Text>
        {/*  <Text color="white">● </Text> */}
         {bodyText}

@@ -1,3 +1,5 @@
+//App.tsx
+// Ficheiro: src/app/ui/App.tsx
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react'; // Adicionado 'memo'
 import { Box, Text, Static } from "ink";
 import Spinner from "ink-spinner";
@@ -8,7 +10,7 @@ import { InputPrompt } from "./input/InputPrompt";
 import { ConfirmationPrompt } from "./ConfirmationPrompt";
 import { Agent } from "../agent/agent.js";
 
-import { WorkingSpinner } from './WorkingSpinner.js'; // Importe o novo spinner
+import { WorkingTimer } from './WorkingTimer.js'; 
 
 import { ToolCallDisplay } from './components/ToolCallDisplay.js';
 import { ToolResultDisplay } from './components/ToolResultDisplay.js'; 
@@ -44,6 +46,23 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
 
   const alwaysAcceptList = useRef<string[]>([]);
   const workdir = process.cwd();
+
+   const handleInterrupt = useCallback(() => {
+        if (!isProcessing) return; // Só interrompe se estiver a processar
+
+        // Emite um evento para o agente parar o que está a fazer
+        eventBus.emit('user_interrupt');
+
+        // Atualiza a UI imediatamente
+        setIsProcessing(false);
+        setHistory(prev => [
+            ...prev,
+            {
+                id: prev.length,
+                component: <Text color="yellow">-- Task cancelled by dev. --</Text>
+            }
+        ]);
+    }, [isProcessing, eventBus]);
 
   const handleSubmit = useCallback(
     (text: string) => {
@@ -220,7 +239,13 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               result={parsed.result}
             />
           );
-        }
+        } else if (parsed.type === 'assistant_message' && parsed.content) {
+        newComponent = (
+            <Box paddingX={1} marginBottom={1}>
+                <Text color="blue">{parsed.content}</Text>
+            </Box>
+        );
+    }
         if (newComponent) {
           setHistory((prev) => [
             ...prev,
@@ -243,56 +268,52 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
   // --- Lógica de Renderização Unificada ---
 
   const renderInteractiveComponent = () => {
-    if (mcpStatus !== 'connected') {
-      return (
-        <Box borderStyle="round" borderColor="black">
-          <Text color="yellow">
-            <Spinner type="dots" /> {statusMessage || 'Connecting...'}
-          </Text>
-        </Box>
-      );
-    }
+        if (mcpStatus !== 'connected') {
+          return (
+            <Box borderStyle="round" borderColor="black">
+              <Text color="yellow">
+                <Spinner type="dots" /> {statusMessage || 'Connecting...'}
+              </Text>
+            </Box>
+          );
+        }
     
-    // OTIMIZAÇÃO 2: Use o componente de spinner isolado
-    if (isProcessing) {
-      return <WorkingSpinner />;
-    }
+        if (pendingConfirmation) {
+          return (
+            <ConfirmationPrompt
+              toolCalls={pendingConfirmation}
+              preview={confirmationPreview} 
+              onDecision={(decision) => {
+                setConfirmationPreview(null);
+                handleConfirmation(decision, pendingConfirmation)
+              }}
+            />
+          );
+        }
 
-    if (pendingConfirmation) {
-      return (
-        <ConfirmationPrompt
-          toolCalls={pendingConfirmation}
-          // V--- PASSE O PREVIEW PARA O COMPONENTE ---V
-          preview={confirmationPreview} 
-          onDecision={(decision) => {
-            // Limpa o preview quando a decisão é tomada
-            setConfirmationPreview(null);
-            handleConfirmation(decision, pendingConfirmation)
-          }}
-        />
-      );
-    }
-    return <InputPrompt onSubmit={handleSubmit} />;
-  };
+        // O InputPrompt é agora renderizado aqui, juntamente com o spinner se necessário
+        return (
+            <Box flexDirection="column">
+                {/* O spinner só aparece quando está a processar E não há confirmação pendente */}
+                 {isProcessing && !pendingConfirmation && <WorkingTimer />}
+                <InputPrompt 
+                    onSubmit={handleSubmit}
+                    isReadOnly={isProcessing} // O input fica "read-only" enquanto processa
+                    onInterrupt={handleInterrupt} // Passa a função de interrupção
+                />
+            </Box>
+        );
+    };
 
-  return (
-    <Box flexDirection="column">
-      <Static items={history}>
-        {(item) => <Box key={item.id}>{item.component}</Box>}
-      </Static>
-
-      {renderInteractiveComponent()}
-
-      {/* {mcpStatus === 'connected' && (
-        <Box justifyContent="center" width="100%">
-          <Text color="gray" dimColor>BluMa Senior Full Stack Developer</Text>
+    return (
+        <Box flexDirection="column">
+            <Static items={history}>
+                {(item) => <Box key={item.id}>{item.component}</Box>}
+            </Static>
+            {renderInteractiveComponent()}
         </Box>
-      )} */}
-    </Box>
-  );
+    );
 };
 
-// --- Exportação Otimizada ---
-// Memorize o App inteiro também, como uma boa prática final.
 export const App = memo(AppComponent);
 export default App;

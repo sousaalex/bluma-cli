@@ -1,22 +1,22 @@
-// Ficheiro: utils/useCustomInput.ts (LÓGICA FINAL E CORRETA)
+// Ficheiro: utils/useCustomInput.ts
 import { useReducer } from 'react';
 import { useInput, type Key } from 'ink';
 
-// O Estado
+// O Estado (inalterado)
 interface InputState {
   text: string;
   cursorPosition: number;
   viewStart: number;
 }
 
-// As Ações
+// As Ações (inalterado)
 type InputAction =
   | { type: 'INPUT'; payload: string }
   | { type: 'MOVE_CURSOR'; direction: 'left' | 'right' }
   | { type: 'BACKSPACE' }
   | { type: 'SUBMIT' };
 
-// O Reducer (Calcula o próximo estado)
+// O Reducer (inalterado)
 function inputReducer(state: InputState, action: InputAction, viewWidth: number): InputState {
   const adjustView = (newCursorPos: number, currentViewStart: number): number => {
     if (newCursorPos < currentViewStart) {
@@ -69,9 +69,11 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
 interface UseCustomInputProps {
   onSubmit: (value: string) => void;
   viewWidth: number;
+  isReadOnly: boolean;
+  onInterrupt: () => void;
 }
 
-export const useCustomInput = ({ onSubmit, viewWidth }: UseCustomInputProps) => {
+export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }: UseCustomInputProps) => {
   const [state, dispatch] = useReducer(
     (s: InputState, a: InputAction) => inputReducer(s, a, viewWidth),
     { text: '', cursorPosition: 0, viewStart: 0 }
@@ -79,6 +81,18 @@ export const useCustomInput = ({ onSubmit, viewWidth }: UseCustomInputProps) => 
 
   useInput(
     (input, key: Key) => {
+      // SEMPRE permite que ESC interrompa, independentemente de isReadOnly
+      if (key.escape) {
+        onInterrupt();
+        return; // Não processa mais nada se ESC for pressionado
+      }
+
+      // Se estiver em modo read-only, ignora todas as outras teclas
+      if (isReadOnly) {
+        return;
+      }
+
+      // Lógica existente para outras teclas (só é executada se !isReadOnly)
       if (key.return) {
         if (state.text.trim().length > 0) {
           onSubmit(state.text);
@@ -93,10 +107,10 @@ export const useCustomInput = ({ onSubmit, viewWidth }: UseCustomInputProps) => 
       
       dispatch({ type: 'INPUT', payload: input });
     },
-    { isActive: true }
+    // ALTERADO: useInput está SEMPRE ativo para capturar todas as teclas
+    { isActive: true } 
   );
 
-  // Expõe apenas os dados necessários para a renderização
   return {
     text: state.text,
     cursorPosition: state.cursorPosition,
