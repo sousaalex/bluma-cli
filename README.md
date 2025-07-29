@@ -58,13 +58,13 @@ BluMa CLI is a modern CLI focused on automation, LLM collaboration, documentatio
 > **Important:** It is recommended to install BluMa globally so the `bluma` command works in any terminal.
 
 ```bash
-npm install -g bluma
+npm install -g @nomad-e/bluma-cli
 ```
 
 If you get permission errors, EXAMPLES:
   - **Linux:** Run as administrator using `sudo`:
     ```bash
-    sudo npm install -g bluma
+    sudo npm install -g @nomad-e/bluma-cli
     ```
   - **Windows:** Open Command Prompt/Terminal as Administrator and repeat the command
 
