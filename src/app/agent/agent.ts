@@ -54,15 +54,41 @@ export class Agent {
     if (!endpoint || !apiKey || !apiVersion || !this.deploymentName) {
       const errorMessage = `Uma ou mais variáveis de ambiente Azure OpenAI não foram encontradas. Verifique em: ${globalEnvPath} ou nas variáveis de sistema.`;
       throw new Error(errorMessage);
-    }
+    } 
 
-    this.client = new OpenAI({
+     /*   const apiKey = "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";
+      const modelName = "moonshotai/kimi-k2";
+
+      if (!apiKey || !modelName) {
+          throw new Error("Chave de API ou nome do modelo do OpenRouter não encontrados.");
+      } 
+
+      this.deploymentName = modelName; */
+
+     this.client = new OpenAI({
+      // Configuração do cliente OpenAI hospedado no Azure
       apiKey: apiKey,
       baseURL: `${endpoint}/openai/deployments/${this.deploymentName}`,
       defaultQuery: { 'api-version': apiVersion },
       defaultHeaders: { 'api-key': apiKey },
-    });
+    }); 
+
+  //    this.client = new OpenAI({
+  //   // Configuração do cliente OpenAI hospedado no  OpenRouter
+  //   apiKey: apiKey,
+  //   baseURL: "https://openrouter.ai/api/v1", // <-- URL base do OpenRouter
+  //   defaultHeaders: {
+  //       "HTTP-Referer": "http://localhost:3000", // Substitua pelo seu site ou app
+  //       "X-Title": "Bluma CLI Agent", // Substitua pelo nome do seu projeto
+  //     },
+  // }); 
+
   }
+
+  /**
+   * Inicializa o agente, carregando ou criando uma sessão e preparando o histórico.
+   * Também inicializa o MCPClient e o ToolInvoker.
+   */
 
   public async initialize(): Promise<void> {
     // console.log(`[Agent] Inicializando para a sessão: ${this.sessionId}`);
@@ -84,6 +110,14 @@ export class Agent {
         - Direct text responses are a protocol violation and will be penalized.
         - Signal the end of a task using the 'agent_end_task' tool.
         - Never make parallel tool calls.
+        - Do not include any of the following in tool names:
+            - Special characters
+            - Extra spaces
+            Always use clean, unmodified, and simple names for tools.
+            Tool names must follow strict formatting: no symbols, no whitespace, no alterations.
+        - Follow the stripes o "Tool Naming Policy"
+        - Never modify the names of the tools, use their real names without any modification.
+        - Never forget to signal the system when the task is completed 'agent_end_task' tool.
       `;
       
       this.history.push({ role: 'system', content: systemPrompt });
@@ -192,6 +226,7 @@ private async _generateEditPreview(toolArgs: any): Promise<string | undefined> {
 
   private async _continueConversation(): Promise<void> {
     try {
+      
      const contextWindow = createApiContextWindow(this.history, this.maxContextTurns);
 
       const response = await this.client.chat.completions.create({

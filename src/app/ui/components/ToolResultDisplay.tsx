@@ -33,7 +33,7 @@ const ToolResultDisplayComponent = ({ toolName, result }: ToolResultDisplayProps
         return (
          <Box marginBottom={1}>
       <Text>
-        <Text color="white">● </Text>
+       {/*  <Text color="white">● </Text> */}
         {bodyText}
       </Text>
     </Box>

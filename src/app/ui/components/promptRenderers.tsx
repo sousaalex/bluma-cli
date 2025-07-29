@@ -1,6 +1,6 @@
 // Ficheiro: src/components/promptRenderers.tsx
 import React from "react";
-import { Box, Text, useStdout } from "ink"; 
+import { Box, Text} from "ink"; 
 import path from "path";
 import { SimpleDiff } from './SimpleDiff.js'; 
 
@@ -49,23 +49,17 @@ export const renderShellCommand = ({
       {/* Linha 1: Título da Ferramenta */}
       <Box>
         <Text bold>
-          <Text color="cyan">? </Text>
           Shell Command
         </Text>
-      </Box>
-
-      {/* Linha 2: Descrição */}
-      <Box marginTop={1}>
-        <Text dimColor>Command to execute:</Text>
       </Box>
 
       {/* 
         Linha 3: O comando real, indentado.
         Usamos `marginLeft` para criar o recuo desejado.
       */}
-      <Box marginLeft={4}>
+      <Box paddingX={2}>
         <Text>
-          <Text color="gray">↳ </Text>
+          {/* <Text color="gray">↳ </Text> */}
           <Text color="cyan">{command}</Text>
         </Text>
       </Box>
@@ -96,7 +90,7 @@ export const renderLsTool = ({ toolCall }: RenderProps): React.ReactElement => {
       {/* Linha de título para a ferramenta */}
       <Box>
         <Text bold>
-          <Text color="blue">? </Text>
+          {/* <Text color="blue">? </Text> */}
           {/* {toolCall.function.name} */}
           ls Tool
         </Text>
@@ -106,17 +100,17 @@ export const renderLsTool = ({ toolCall }: RenderProps): React.ReactElement => {
         Linha descritiva e nome do diretório combinados para um visual mais limpo.
         A seta `↳` cria uma conexão visual direta com o nome do diretório.
       */}
-      <Box marginTop={1} flexDirection="column">
+      <Box  flexDirection="column">
   
   {/* Filho 1 */}
-  <Box>
+  {/* <Box>
     <Text>List contents of:</Text>
-  </Box>
+  </Box> */}
 
   {/* Filho 2 (que pode ter o seu próprio recuo) */}
-  <Box marginLeft={2}>
+  <Box paddingX={2}>
     <Text>
-      <Text color="gray">↳ </Text>
+      {/* <Text color="gray">↳ </Text> */}
       <Text color="cyan">{finalDirectoryName}</Text>
     </Text>
   </Box>
@@ -146,7 +140,7 @@ export const renderCountFilesLinesTool = ({ toolCall }: RenderProps): React.Reac
         {/* Linha de título para a ferramenta */}
         <Box>
           <Text bold>
-            <Text color="blue">? </Text>
+            {/* <Text color="blue">? </Text> */}
             {/* {toolCall.function.name} */}
             Count File Lines
           </Text>
@@ -156,15 +150,15 @@ export const renderCountFilesLinesTool = ({ toolCall }: RenderProps): React.Reac
           Linha descritiva e nome do diretório combinados para um visual mais limpo.
           A seta `↳` cria uma conexão visual direta com o nome do diretório.
         */}
-        <Box marginTop={1} flexDirection="column">
+        <Box  flexDirection="column">
     
     {/* Filho 1 */}
-    <Box>
+    {/* <Box>
       <Text>List contents of:</Text>
-    </Box>
+    </Box> */}
   
     {/* Filho 2 (que pode ter o seu próprio recuo) */}
-    <Box marginLeft={2}>
+    <Box paddingX={2}>
       <Text>
         <Text color="gray">↳ </Text>
         <Text color="cyan">{finalDirectoryName}</Text>
@@ -201,27 +195,27 @@ export const renderReadFileLines = ({ toolCall }: RenderProps): React.ReactEleme
         <Box>
           <Text bold>
             {/* Usamos uma cor diferente (ex: amarelo) para operações de leitura */}
-            <Text color="yellow">? </Text>
-            Read File Lines Tool
+            {/* <Text color="yellow">? </Text> */}
+            Read File
           </Text>
         </Box>
   
         {/* Linha 2: Descrição */}
-        <Box marginTop={1}>
+        {/* <Box marginTop={1}>
           <Text dimColor>Reading lines from file:</Text>
-        </Box>
+        </Box> */}
         
         {/* Linha 3: Detalhes do ficheiro e das linhas, indentados */}
-        <Box marginLeft={2} flexDirection="column">
+        <Box paddingX={2} flexDirection="column">
           {/* Detalhe do nome do ficheiro */}
           <Box>
             <Text>
-              <Text color="gray">↳ </Text>
+              {/* <Text color="gray">↳ </Text> */}
               <Text color="cyan">{finalFileName}</Text>
             </Text>
           </Box>
           {/* Detalhe das linhas */}
-          <Box>
+          <Box paddingX={3}>
             <Text>
               <Text color="gray">↳ </Text>
               <Text dimColor>lines </Text>
@@ -254,7 +248,7 @@ export const renderReadFileLines = ({ toolCall }: RenderProps): React.ReactEleme
         {/* CABEÇALHO DE UMA ÚNICA LINHA, INSPIRADO NA IMAGEM */}
         <Box>
           <Text bold>
-            <Text color="red">? </Text>
+            {/* <Text color="red">? </Text> */}
             Edit <Text color="cyan">{finalFileName}</Text>
           </Text>
         </Box>

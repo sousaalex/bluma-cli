@@ -15,9 +15,9 @@ const InteractiveMenuComponent = ({ onDecision }: InteractiveMenuProps) => {
   // A MUDANÇA ESTÁ AQUI: Melhoramos os 'labels' para serem mais claros e cativantes.
   // Os 'values' ('accept', 'decline', etc.) permanecem os mesmos.
   const options = [
-    { label: 'Yes, allow this command to run once', value: 'accept' as const },
-    { label: 'No, cancel this command', value: 'decline' as const },
-    { label: 'Always allow this type of command', value: 'accept_always' as const },
+    { label: '1. Yes, allow this command to run once', value: 'accept' as const },
+    { label: '2. No, cancel this command', value: 'decline' as const },
+    { label: '3. Always allow this type of command', value: 'accept_always' as const },
   ];
   
   const [selectedOption, setSelectedOption] = useState(0);
@@ -38,24 +38,24 @@ const InteractiveMenuComponent = ({ onDecision }: InteractiveMenuProps) => {
   });
 
   return (
-<Box marginTop={1} flexDirection="column">
+<Box flexDirection="column">
   {/* A pergunta agora tem um espaço extra em baixo */}
-  <Box paddingBottom={1}>
+  <Box >
     <Text bold>Do you want to authorize the proposed command?</Text>
   </Box>
   
   {/* A lista de opções agora tem um espaço extra em cima */}
-  <Box flexDirection="column" marginTop={1}>
+  <Box flexDirection="column">
     {options.map((option, index) => {
       const isSelected = selectedOption === index;
       return (
         // Adicionando um pequeno espaçamento vertical entre cada opção também
         <Box key={option.value} paddingLeft={1} paddingY={0}> 
-          <Text color={isSelected ? 'cyan' : 'gray'}>
+          <Text color={isSelected ? 'blue' : 'gray'}>
             {isSelected ? '❯ ' : '  '}
           </Text>
           <Text
-            color={isSelected ? 'cyan' : 'white'}
+            color={isSelected ? 'blue' : 'white'}
             bold={isSelected}
             dimColor={!isSelected}
           >

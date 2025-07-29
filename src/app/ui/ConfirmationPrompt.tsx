@@ -30,9 +30,9 @@ export const ConfirmationPrompt = ({ toolCalls, preview, onDecision }: Confirmat
     // A "MOLDURA" COMUM A TODOS OS PROMPTS
     <Box
       borderStyle="round"
-      borderColor="white" // Você pode deixar a cor dinâmica se quiser
+      borderColor="gray" // Você pode deixar a cor dinâmica se quiser
       flexDirection="column"
-      padding={1}
+      paddingX={1}
     >
       {/* 
         3. CHAMA A FUNÇÃO DE RENDERIZAÇÃO CORRETA PARA GERAR O "MIOLO"
