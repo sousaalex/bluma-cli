@@ -20,7 +20,7 @@ export const WorkingSpinner = () => {
   const spacesAfterDot = ' '.repeat(maxPosition - position);
 
   return (
-    <Box borderStyle="round" borderColor="gray">
+    <Box>
       <Text color="magenta">
         ({spacesBeforeDot}●{spacesAfterDot}) Working...
       </Text>

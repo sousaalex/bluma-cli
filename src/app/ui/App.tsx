@@ -52,25 +52,23 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
 
       const displayText =
         text.length > 10000 ? text.substring(0, 10000) + "..." : text;
-      setHistory((prev) => [
-        ...prev,
-        {
-          id: prev.length,
-          component: (
-            <Box >
-              <Box flexDirection="row" alignItems="center">
-                <Text color="white" dimColor>
-                  {">"} {""}
-                </Text>
-              </Box>
-              <Box flexDirection="column" marginBottom={1}>
-                <Text color="white" dimColor>{displayText}</Text>
-              </Box>
-            </Box>
-          ),
-        },
-      ]);
-
+    setHistory((prev) => [
+      ...prev,
+      {
+        id: prev.length,
+        component: (
+          // Uma única Box para o espaçamento
+          <Box marginBottom={1}>
+            {/* Um único Text que contém tudo */}
+            <Text color="white" dimColor>
+              {/* O prompt e o texto são renderizados como um bloco contínuo */}
+              <Text color="white">{">"} </Text>
+              {displayText}
+            </Text>
+          </Box>
+        ),
+      },
+    ]);
       agentInstance.current.processTurn({ content: text });
     },
     [isProcessing]

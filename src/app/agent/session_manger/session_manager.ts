@@ -71,55 +71,63 @@ export async function loadOrcreateSession(sessionId: string): Promise<[string, H
 }
 
 /**
-* Salva o histórico da conversa no arquivo de sessão correspondente.
-* Esta versão é mais robusta e lida com arquivos de sessão corrompidos e
-* trata os erros de forma segura em TypeScript.
-* @param sessionFile O caminho completo para o arquivo da sessão.
-* @param history O array de histórico da conversa a ser salvo.
-*/
+ * Salva o histórico da conversa no arquivo de sessão correspondente de forma atómica,
+ * prevenindo a corrupção de dados.
+ * @param sessionFile O caminho completo para o arquivo da sessão.
+ * @param history O array de histórico da conversa a ser salvo.
+ */
 export async function saveSessionHistory(sessionFile: string, history: HistoryMessage[]): Promise<void> {
- let sessionData: SessionData;
+  let sessionData: SessionData;
 
- try {
-   const fileContent = await fs.readFile(sessionFile, 'utf-8');
-   
-   if (fileContent.trim() === '') {
-       throw new Error("Session file is empty.");
-   }
+  try {
+    // Tenta ler o conteúdo atual para preservar metadados como 'created_at'
+    const fileContent = await fs.readFile(sessionFile, 'utf-8');
+    sessionData = JSON.parse(fileContent);
+  } catch (error) {
+    // Se a leitura falhar (ficheiro não existe, está corrompido ou vazio),
+    // inicializamos uma nova estrutura de sessão.
+    // A sua lógica de logging aqui estava boa, vamos mantê-la.
+    if (error instanceof Error) {
+      console.warn(`Could not read or parse session file ${sessionFile}. Re-initializing. Error: ${error.message}`);
+    } else {
+      console.warn(`An unknown error occurred while reading ${sessionFile}. Re-initializing.`, error);
+    }
+    
+    const sessionId = path.basename(sessionFile, '.json');
+    sessionData = {
+      session_id: sessionId,
+      created_at: new Date().toISOString(),
+      conversation_history: [], // Começa com histórico vazio
+    };
+  }
 
-   sessionData = JSON.parse(fileContent);
+  // Atualiza os dados da sessão com o novo histórico e timestamp
+  sessionData.conversation_history = history;
+  sessionData.last_updated = new Date().toISOString();
 
- } catch (error) {
-   // ---- AQUI ESTÁ A CORREÇÃO ----
-   // Primeiro, verificamos se 'error' é uma instância de Error.
-   if (error instanceof Error) {
-       // Dentro deste bloco, o TypeScript sabe que 'error' tem a propriedade 'message'.
-       console.warn(`Could not read or parse session file ${sessionFile}. Re-initializing. Error: ${error.message}`);
-   } else {
-       // Se não for um objeto Error, logamos o valor desconhecido de forma segura.
-       console.warn(`An unknown error occurred while reading ${sessionFile}. Re-initializing.`, error);
-   }
-   
-   const sessionId = path.basename(sessionFile, '.json');
-   sessionData = {
-     session_id: sessionId,
-     created_at: new Date().toISOString(),
-     conversation_history: [],
-   };
- }
+  // --- IMPLEMENTAÇÃO DO PADRÃO "SAFE SAVE" ---
+  const tempSessionFile = `${sessionFile}.${Date.now()}.tmp`; // Nome de ficheiro temporário único
 
- try {
-   sessionData.conversation_history = history;
-   sessionData.last_updated = new Date().toISOString();
+  try {
+    // 1. Escreve o novo conteúdo no ficheiro temporário
+    await fs.writeFile(tempSessionFile, JSON.stringify(sessionData, null, 2), 'utf-8');
 
-   await fs.writeFile(sessionFile, JSON.stringify(sessionData, null, 2), 'utf-8');
+    // 2. Se a escrita for bem-sucedida, renomeia atomicamente o temporário para o original
+    await fs.rename(tempSessionFile, sessionFile);
 
- } catch (writeError) {
-   // Aplicando a mesma lógica segura para o erro de escrita
-   if (writeError instanceof Error) {
-       console.error(`Fatal error saving session to ${sessionFile}: ${writeError.message}`);
-   } else {
-       console.error(`An unknown fatal error occurred while saving session to ${sessionFile}:`, writeError);
-   }
- }
+  } catch (writeError) {
+    // Se algo correr mal durante a escrita ou renomeação, loga o erro fatal.
+    if (writeError instanceof Error) {
+      console.error(`Fatal error saving session to ${sessionFile}: ${writeError.message}`);
+    } else {
+      console.error(`An unknown fatal error occurred while saving session to ${sessionFile}:`, writeError);
+    }
+
+    // Tenta limpar o ficheiro temporário se ele existir
+    try {
+      await fs.unlink(tempSessionFile);
+    } catch (cleanupError) {
+      // Ignora erros na limpeza, o erro principal é mais importante.
+    }
+  }
 }
