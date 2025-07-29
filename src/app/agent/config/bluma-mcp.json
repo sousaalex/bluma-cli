@@ -23,17 +23,17 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
     },
-    "notion": {
+    "notionApi": {
       "type": "stdio", 
       "command": "cmd",
       "args": [
         "/c",
         "npx",
         "-y",
-        "@suekou/mcp-notion-server"
+        "@notionhq/notion-mcp-server"
       ],
       "env": {
-        "NOTION_API_TOKEN": "${NOTION_API_TOKEN}"
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer ${NOTION_API_TOKEN}\", \"Notion-Version\": \"2022-06-28\" }"
       }
     },
     "upstash_context7-mcp": {

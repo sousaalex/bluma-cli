@@ -9,69 +9,39 @@ interface ToolResultDisplayProps {
 }
 
 const ToolResultDisplayComponent = ({ toolName, result }: ToolResultDisplayProps) => {
-  const MAX_LINES = 3;
-
-  // Ignora a renderização para estas ferramentas "silenciosas"
-  if (
-    toolName.includes("agent_end_task") ||
-    toolName.includes("bluma_nootebook") ||
-    toolName.includes("shell_command") ||
-    toolName.includes("ls_tool") ||
-    toolName.includes("count_file_lines") ||
-    toolName.includes("read_file_lines") ||
-    toolName.includes("edit_tool")
-  ) {
+  // NOVA LÓGICA:
+  // Se o nome da ferramenta NÃO for "message_notify_dev",
+  // retorna null imediatamente e não renderiza nada.
+  if (!toolName.includes("message_notify_dev")) {
     return null;
   }
 
-  // Lógica de renderização especial para notificações do agente
-  if (toolName.includes("message_notify_dev")) {
-    try {
-      const parsed = JSON.parse(result);
-      if (parsed.content && parsed.content.body) {
-        const bodyText = parsed.content.body.trim();
-        return (
-         <Box marginBottom={1} paddingX={1}>
-      <Text>
-       {/*  <Text color="white">● </Text> */}
-        {bodyText}
-      </Text>
-    </Box>
-
-        );
-      }
-    } catch (e) {
-      // Se o JSON falhar, o fallback abaixo tratará disso
-    }
-  }
-
-  // Fallback para todos os outros resultados de ferramentas
-  let formattedResult = result;
+  // Se o código chegou até aqui, significa que toolName É "message_notify_dev".
+  // Agora, tentamos processar e exibir a mensagem específica dele.
   try {
-    // Tenta formatar como JSON para uma leitura mais fácil
-    const parsedJson = JSON.parse(result);
-    formattedResult = JSON.stringify(parsedJson, null, 2);
+    const parsed = JSON.parse(result);
+
+    // Verifica se a estrutura esperada (content.body) existe no JSON
+    if (parsed.content && parsed.content.body) {
+      const bodyText = parsed.content.body.trim();
+      return (
+        <Box marginBottom={1} paddingX={1}>
+          <Text>
+            {/*  <Text color="white">● </Text> */}
+            {bodyText}
+          </Text>
+        </Box>
+      );
+    }
   } catch (e) {
-    // Se não for JSON, usa o resultado como está
-    formattedResult = result;
+    // Se houver um erro ao analisar o JSON (não é um JSON válido),
+    // também não mostramos nada.
+    return null;
   }
 
-  // Lógica para truncar resultados muito longos
-  const lines = formattedResult.split("\n");
-  const isTruncated = lines.length > MAX_LINES;
-  const visibleLines = isTruncated ? lines.slice(0, MAX_LINES) : lines;
-  const remainingCount = lines.length - MAX_LINES;
-
-  return (
-    <Box flexDirection="column" marginBottom={1}>
-      {visibleLines.map((line, idx) => (
-        <Text key={idx} color="gray">{line}</Text>
-      ))}
-      {isTruncated && (
-        <Text color="gray">...({remainingCount} more lines)</Text>
-      )}
-    </Box>
-  );
+  // Se o JSON for válido mas não tiver a estrutura esperada (content.body),
+  // ou se qualquer outra condição não for atendida, retorna null como fallback.
+  return null;
 };
 
 export const ToolResultDisplay = memo(ToolResultDisplayComponent);

@@ -43,7 +43,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
   const borderColor = isReadOnly ? "gray" : "gray";
 
   // Define o texto do placeholder. Só será mostrado quando o agente estiver a trabalhar.
-  const placeholder = isReadOnly ? "Agente a trabalhar... (Pressione ESC para cancelar)" : "";
+  const placeholder = isReadOnly ? "press esc to cancel" : "";
 
   // Determina se o placeholder deve ser mostrado
   const showPlaceholder = text.length === 0 && isReadOnly;
@@ -73,7 +73,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
       </Box>
 
       {/* Exibe o rodapé com a informação do desenvolvedor */}
-      <Box paddingX={1}>
+      <Box paddingX={1} justifyContent="center">
           <Text color="gray" dimColor>
             ctrl+c to exit | esc to interrupt | {isReadOnly ? "Read-only mode" : "Editable mode"}
           </Text>

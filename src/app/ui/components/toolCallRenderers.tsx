@@ -285,7 +285,7 @@ export const renderGenericToolCall = ({ toolName, args }: RenderProps): React.Re
   
     return (
       // A "moldura" padrão de sucesso com a borda cinza
-      <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1}>
+      <Box flexDirection="column" >
         {/* Cabeçalho com o 'check' verde */}
         <Box>
           <Text bold>
@@ -296,20 +296,19 @@ export const renderGenericToolCall = ({ toolName, args }: RenderProps): React.Re
   
         {/* Rótulo e conteúdo dos argumentos */}
         {formattedArgs && formattedArgs !== '{}' && (
-          <Box marginTop={1} flexDirection="column">
-            <Text dimColor>Arguments passed:</Text>
+          <Box paddingX={3}>
+            <Text color="gray">↳ </Text>
             {/* 
               Os argumentos são renderizados dentro de uma Box com indentação.
               NÃO há limite de altura aqui.
             */}
-            <Box marginLeft={2} flexDirection="column">
+            <Box  flexDirection="column">
               {/* 
                 Dividimos o JSON em linhas para poder adicionar o prefixo '↳' em cada uma,
                 mantendo a consistência visual.
               */}
               {formattedArgs.split('\n').map((line, index) => (
                 <Text key={index} color="gray">
-                  <Text dimColor>↳ </Text>
                   {line}
                 </Text>
               ))}

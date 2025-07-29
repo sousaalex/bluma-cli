@@ -5,18 +5,6 @@ import path from "path";
 import { SimpleDiff } from './SimpleDiff.js'; 
 
 // --- Função Utilitária (usada apenas no caso genérico) ---
-const formatArguments = (args: any): string => {
-  if (!args) return "";
-  if (typeof args === "string") {
-    try {
-      return JSON.stringify(JSON.parse(args), null, 2);
-    } catch (e) {
-      return args;
-    }
-  }
-  if (Object.keys(args).length === 0) return "";
-  return JSON.stringify(args, null, 2);
-};
 
 const getBasePath = (filePath: string): string => {
   // O módulo 'path' lida com barras '/' e '\' automaticamente
@@ -267,47 +255,67 @@ export const renderReadFileLines = ({ toolCall }: RenderProps): React.ReactEleme
   };
 
 
-// --- Renderizador Genérico (Padrão) (Existente) ---
 
 
 export const renderGeneric = ({ toolCall }: RenderProps): React.ReactElement => {
     const toolName = toolCall.function.name;
-    const formattedArgs = formatArguments(toolCall.function.arguments);
-    
-    const ARGS_BOX_HEIGHT = 5;
-  
-    // 1. Verifica se o conteúdo será truncado
-    const totalLines = formattedArgs.split('\n').length;
-    const areArgsTruncated = totalLines > ARGS_BOX_HEIGHT;
-  
+    const rawArguments = toolCall.function.arguments;
+    const MAX_LINES = 5;
+
+    // --- INÍCIO DA LÓGICA QUE VOCÊ FORNECEU, ADAPTADA PARA 'renderGeneric' ---
+
+    // 1. Formata os argumentos para uma string "pretty-printed"
+    let formattedArgsString: string;
+    if (!rawArguments) {
+        formattedArgsString = ""; // Lida com o caso de não haver argumentos
+    } else if (typeof rawArguments === 'string') {
+        try {
+            // Tenta formatar a string JSON
+            const parsedJson = JSON.parse(rawArguments);
+            formattedArgsString = JSON.stringify(parsedJson, null, 2);
+        } catch (e) {
+            // Se não for JSON, usa a string como está
+            formattedArgsString = rawArguments;
+        }
+    } else {
+        // Se já for um objeto, formata-o
+        formattedArgsString = JSON.stringify(rawArguments, null, 2);
+    }
+
+    // 2. Lógica para truncar os resultados (exatamente como no seu exemplo)
+    const lines = formattedArgsString.split("\n");
+    const isTruncated = lines.length > MAX_LINES;
+    const visibleLines = isTruncated ? lines.slice(0, MAX_LINES) : lines;
+    const remainingCount = lines.length - MAX_LINES;
+
+    // --- FIM DA LÓGICA ADAPTADA ---
+
     return (
       <Box flexDirection="column" marginBottom={1}>
-        {/* Cabeçalho */}
+        {/* Cabeçalho com o nome da ferramenta */}
         <Box>
-          <Text bold>
-            <Text color="magenta">? </Text>
-            {toolName}
-          </Text>
+          <Text bold>{toolName}</Text>
         </Box>
   
-        {/* Bloco de Argumentos */}
-        {formattedArgs && (
+        {/* Bloco de Argumentos, só aparece se houver argumentos */}
+        {formattedArgsString && (
           <Box flexDirection="column" marginTop={1}>
             <Text dimColor>Arguments:</Text>
-            {/* Caixa com altura fixa e overflow */}
-            <Box 
-              marginLeft={2} 
-              height={ARGS_BOX_HEIGHT} 
-              flexDirection="column" 
-              overflow="hidden"
-            >
-              <Text color="gray">{formattedArgs}</Text>
+            
+            {/* 
+              A RENDERIZAÇÃO CORRETA E ROBUSTA:
+              Usamos .map() para renderizar cada linha visível no seu próprio <Text>.
+            */}
+            <Box marginLeft={2} flexDirection="column">
+              {visibleLines.map((line, idx) => (
+                <Text key={idx} color="gray">{line}</Text>
+              ))}
             </Box>
   
-            {/* 2. Mostra a mensagem de truncamento SE for necessário */}
-            {areArgsTruncated && (
+            {/* Mensagem de truncamento, se necessário */}
+            {isTruncated && (
               <Box marginLeft={2}>
-                <Text dimColor>... ({totalLines - ARGS_BOX_HEIGHT} more lines hidden) ...</Text>
+                <Text dimColor>...({remainingCount} more lines hidden)</Text>
               </Box>
             )}
           </Box>
