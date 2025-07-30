@@ -124,6 +124,8 @@ export class Agent {
         - Follow the stripes o "Tool Naming Policy"
         - Never modify the names of the tools, use their real names without any modification.
         - Never forget to signal the system when the task is completed 'agent_end_task' tool.
+        ## Important: When writing to Notion, you must strictly follow its content structure, including the correct use of headings (heading_1, heading_2, etc.) and other formatting standards. No deviations are allowed.
+
       `;
       
       this.history.push({ role: 'system', content: systemPrompt });

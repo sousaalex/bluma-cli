@@ -10,7 +10,7 @@
         "@sousaalex1605/bluma-nootebook"
       ]
     },
-    "github": {
+    "githubApi": {
       "type": "stdio", 
       "command": "cmd",
       "args": [
