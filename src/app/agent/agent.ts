@@ -52,10 +52,10 @@ export class Agent {
     this.mcpClient = new MCPClient(nativeToolInvoker, eventBus);
     this.feedbackSystem = new AdvancedFeedbackSystem();
 
-    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+     const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
     const apiKey = process.env.AZURE_OPENAI_API_KEY;
     const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
-    this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || '';
+    this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || ''; 
 
     if (!endpoint || !apiKey || !apiVersion || !this.deploymentName) {
       const errorMessage = `Uma ou mais variáveis de ambiente Azure OpenAI não foram encontradas. Verifique em: ${globalEnvPath} ou nas variáveis de sistema.`;
@@ -63,7 +63,7 @@ export class Agent {
     } 
 
       //   const apiKey = "";
-      // const modelName = "moonshotai/kimi-k2";
+      // const modelName = "qwen/qwen3-coder:free";
 
       // if (!apiKey || !modelName) {
       //     throw new Error("Chave de API ou nome do modelo do OpenRouter não encontrados.");
@@ -124,8 +124,27 @@ export class Agent {
         - Follow the stripes o "Tool Naming Policy"
         - Never modify the names of the tools, use their real names without any modification.
         - Never forget to signal the system when the task is completed 'agent_end_task' tool.
-        ## Important: When writing to Notion, you must strictly follow its content structure, including the correct use of headings (heading_1, heading_2, etc.) and other formatting standards. No deviations are allowed.
+        ##Important: When writing to Notion, you must strictly follow its content structure, including the correct use of headings (heading_1, heading_2, etc.) and other formatting standards. No deviations are allowed.
+        - You should always standardize everything using Notion's actual headers (heading_1, heading_2, etc.), making the structure
+        semantically better for reading and navigation.
 
+        You are strictly forbidden from replying directly to the user.
+
+        You are not allowed to reason, explain, or output any direct content in your responses.
+
+        Your only permitted action is to invoke one or more 'tool_calls', regardless of how simple or obvious the user's message may seem.
+
+        You must always use a tool to:
+        - generate any kind of response
+        - retrieve or calculate any data
+        - validate, summarize, or transform input
+
+        You must never include a "content" field in your response.
+        Only 'tool_calls' are allowed when you reply as "role": "assistant".
+
+        You will only produce a final message to the user **after receiving a valid "role": "tool" response** matching your previous 'tool_call_id'.
+
+        You are a pure orchestration agent — your only job is to call tools. No autonomous answers, no internal reasoning.
       `;
       
       this.history.push({ role: 'system', content: systemPrompt });
@@ -255,7 +274,7 @@ private async _generateEditPreview(toolArgs: any): Promise<string | undefined> {
         model: this.deploymentName,
         messages: contextWindow,
         tools: this.mcpClient.getAvailableTools(),
-        tool_choice: 'auto',
+        tool_choice: 'required',
         parallel_tool_calls: false,
       });
 

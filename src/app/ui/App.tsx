@@ -240,12 +240,8 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
             />
           );
         } else if (parsed.type === 'assistant_message' && parsed.content) {
-        newComponent = (
-            <Box paddingX={1} marginBottom={1}>
-                <Text color="blue">{parsed.content}</Text>
-            </Box>
-        );
-    }
+            newComponent = null; // Não renderiza nada na tela
+          }
         if (newComponent) {
           setHistory((prev) => [
             ...prev,
@@ -270,7 +266,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
   const renderInteractiveComponent = () => {
         if (mcpStatus !== 'connected') {
           return (
-            <Box borderStyle="round" borderColor="black">
+            <Box borderStyle="round" borderColor="black" >
               <Text color="yellow">
                 <Spinner type="dots" /> {statusMessage || 'Connecting...'}
               </Text>
