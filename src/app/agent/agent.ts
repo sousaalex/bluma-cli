@@ -6,14 +6,14 @@ import os from 'os';
 import { EventEmitter } from 'events';
 
 // Importa todos os nossos módulos de suporte
-import { loadOrcreateSession, saveSessionHistory, HistoryMessage } from './session_manger/session_manager.js';
-import { getUnifiedSystemPrompt } from './core/prompt/prompt_builder.js';
-import { ToolInvoker } from './tool_invoker.js';
-import { MCPClient } from './tools/mcp/mcp_client.js';
-import { AdvancedFeedbackSystem } from './feedback/feedback_system.js';
+import { loadOrcreateSession, saveSessionHistory, HistoryMessage } from './session_manger/session_manager';
+import { getUnifiedSystemPrompt } from './core/prompt/prompt_builder';
+import { ToolInvoker } from './tool_invoker';
+import { MCPClient } from './tools/mcp/mcp_client';
+import { AdvancedFeedbackSystem } from './feedback/feedback_system';
 
-import { createApiContextWindow } from './core/context-api/context_manager.js';
-import { calculateEdit, createDiff } from './tools/natives/edit.js';
+import { createApiContextWindow } from './core/context-api/context_manager';
+import { calculateEdit, createDiff } from './tools/natives/edit';
 
 
 // --- Carregamento de Configuração Global ---
@@ -47,47 +47,85 @@ export class Agent {
     this.eventBus.on('user_interrupt', () => {
         this.isInterrupted = true;
     });
+    // NOVO: Ouve o side-channel do dev (feedbacks)
+    this.eventBus.on('dev_overlay', async (data: { kind?: string; payload: string; ts?: number }) => {
+      const clean = String(data.payload ?? '').trim();
+
+      // // Log de sistema: recebemos o evento de overlay do dev
+      // this.eventBus.emit('backend_message', {
+      //   type: 'log',
+      //   message: 'Received dev_overlay',
+      //   payload: clean,
+      //   ts: data.ts || Date.now(),
+      // });
+
+      // Fluxo minimalista: qualquer mensagem recebida entra como role: user
+      this.history.push({ role: 'user', content: clean });
+
+      // Emite evento para UI/logs indicando que recebemos overlay do dev
+      this.eventBus.emit('backend_message', {
+        type: 'dev_overlay',
+        payload: clean,
+        ts: data.ts || Date.now(),
+      });
+
+      // Persiste imediatamente no histórico da sessão se já tivermos sessão ativa
+      try {
+        if (this.sessionFile) {
+          await saveSessionHistory(this.sessionFile, this.history);
+          // Log de sistema: histórico salvo com sucesso
+          // this.eventBus.emit('backend_message', {
+          //   type: 'log',
+          //   message: 'Saved dev_overlay to session history',
+          //   ts: Date.now(),
+          // });
+        }
+      } catch (e: any) {
+        this.eventBus.emit('backend_message', { type: 'error', message: `Falha ao salvar histórico após dev_overlay: ${e.message}` });
+      }
+    });
+
 
     const nativeToolInvoker = new ToolInvoker();
     this.mcpClient = new MCPClient(nativeToolInvoker, eventBus);
     this.feedbackSystem = new AdvancedFeedbackSystem();
 
-     const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = process.env.AZURE_OPENAI_API_KEY;
-    const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
-    this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || ''; 
+    // const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+    // const apiKey = process.env.AZURE_OPENAI_API_KEY;
+    // const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
+    // this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || ''; 
 
-    if (!endpoint || !apiKey || !apiVersion || !this.deploymentName) {
-      const errorMessage = `Uma ou mais variáveis de ambiente Azure OpenAI não foram encontradas. Verifique em: ${globalEnvPath} ou nas variáveis de sistema.`;
-      throw new Error(errorMessage);
-    } 
+    // if (!endpoint || !apiKey || !apiVersion || !this.deploymentName) {
+    //   const errorMessage = `Uma ou mais variáveis de ambiente Azure OpenAI não foram encontradas. Verifique em: ${globalEnvPath} ou nas variáveis de sistema.`;
+    //   throw new Error(errorMessage);
+    // } 
 
-      //   const apiKey = "";
-      // const modelName = "qwen/qwen3-coder:free";
+      const apiKey = "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";
+      const modelName = "openrouter/horizon-alpha";
 
-      // if (!apiKey || !modelName) {
-      //     throw new Error("Chave de API ou nome do modelo do OpenRouter não encontrados.");
-      // } 
+      if (!apiKey || !modelName) {
+          throw new Error("Chave de API ou nome do modelo do OpenRouter não encontrados.");
+      } 
 
-      // this.deploymentName = modelName; 
+      this.deploymentName = modelName; 
+
+    //  this.client = new OpenAI({
+    //   // Configuração do cliente OpenAI hospedado no Azure
+    //   apiKey: apiKey,
+    //   baseURL: `${endpoint}/openai/deployments/${this.deploymentName}`,
+    //   defaultQuery: { 'api-version': apiVersion },
+    //   defaultHeaders: { 'api-key': apiKey },
+    // }); 
 
      this.client = new OpenAI({
-      // Configuração do cliente OpenAI hospedado no Azure
-      apiKey: apiKey,
-      baseURL: `${endpoint}/openai/deployments/${this.deploymentName}`,
-      defaultQuery: { 'api-version': apiVersion },
-      defaultHeaders: { 'api-key': apiKey },
-    }); 
-
-  //    this.client = new OpenAI({
-  //   // Configuração do cliente OpenAI hospedado no  OpenRouter
-  //   apiKey: apiKey,
-  //   baseURL: "https://openrouter.ai/api/v1", // <-- URL base do OpenRouter
-  //   defaultHeaders: {
-  //       "HTTP-Referer": "http://localhost:3000", // Substitua pelo seu site ou app
-  //       "X-Title": "Bluma CLI Agent", // Substitua pelo nome do seu projeto
-  //     },
-  // }); 
+    // Configuração do cliente OpenAI hospedado no  OpenRouter
+    apiKey: apiKey,
+    baseURL: "https://openrouter.ai/api/v1", // <-- URL base do OpenRouter
+    defaultHeaders: {
+        "HTTP-Referer": "http://localhost:3000", // Substitua pelo seu site ou app
+        "X-Title": "Bluma CLI Agent", // Substitua pelo nome do seu projeto
+      },
+  }); 
 
   }
 
@@ -145,12 +183,22 @@ export class Agent {
         You will only produce a final message to the user **after receiving a valid "role": "tool" response** matching your previous 'tool_call_id'.
 
         You are a pure orchestration agent — your only job is to call tools. No autonomous answers, no internal reasoning.
+
+        Live Dev Overlays:
+        The developer can send messages at any time. They MUST be incorporated immediately. Always confirm via message_notify_dev and proceed.
+       Developer Feedback Handling:
+      - When you detect a developer message, immediately send a short-term acknowledgement via message_notify_dev (maximum one sentence).
+      - Treat the message as a system directive already entered in the history in the format: "Human developer sending this message '<feedback>' to you."
+      - Add it to your workflow with a simple and clear flow of reasoning. Keep it minimal and direct (no verbose thought).
+      - Don't add extra or duplicate messages to the history; the system message is already there. Just act on it.
+
       `;
       
       this.history.push({ role: 'system', content: systemPrompt });
       await saveSessionHistory(this.sessionFile, this.history);
     }
     // console.log(`[Agent] Sessão carregada. Histórico contém ${this.history.length} mensagens.`);
+    this.isInitialized = true;
   }
 
   public getAvailableTools() {

@@ -6,7 +6,7 @@ import Spinner from "ink-spinner";
 import { EventEmitter } from "events";
 
 import { Header, SessionInfo } from "./layout";
-import { InputPrompt } from "./input/InputPrompt";
+import { InputPrompt, uiEventBus } from "./input/InputPrompt";
 import { ConfirmationPrompt } from "./ConfirmationPrompt";
 import { Agent } from "../agent/agent.js";
 
@@ -213,13 +213,11 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               marginBottom={1}
               paddingX={1}
             >
-              {" "}
               <Text color="yellow" bold>
-                {" "}
-                Protocol Violation{" "}
-              </Text>{" "}
-              <Text color="gray">{parsed.content}</Text>{" "}
-              <Text color="yellow">{parsed.message}</Text>{" "}
+                Protocol Violation
+              </Text>
+              <Text color="gray">{parsed.content}</Text>
+              <Text color="yellow">{parsed.message}</Text>
             </Box>
           );
         } else if (parsed.type === "error") {
@@ -239,6 +237,17 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               result={parsed.result}
             />
           );
+        } else if (parsed.type === 'dev_overlay') {
+          newComponent = (
+            <Box borderStyle="classic" borderColor="blue" paddingX={1} marginBottom={1}>
+              {/* <Text color="cyan">[dev_overlay] </Text> */}
+              <Text color="white">{parsed.payload}</Text>
+            </Box>
+          );
+        } else if (parsed.type === 'log') {
+          newComponent = (
+            <Text color="gray">ℹ️ {parsed.message}{parsed.payload ? `: ${parsed.payload}` : ''}</Text>
+          );
         } else if (parsed.type === 'assistant_message' && parsed.content) {
             newComponent = null; // Não renderiza nada na tela
           }
@@ -253,10 +262,19 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
       }
     };
 
+    // Ponte UI→Agent: reenvia eventos dev_overlay do uiEventBus para o eventBus do App/Agent
+    const handleUiOverlay = (data: { kind?: string; payload: string; ts?: number }) => {
+      // Propaga para o agente; a renderização virá do próprio Agent via backend_message
+      eventBus.emit('dev_overlay', data);
+    };
+
+    uiEventBus.on('dev_overlay', handleUiOverlay);
+
     eventBus.on("backend_message", handleBackendMessage);
     initializeAgent();
 
     return () => {
+      uiEventBus.off('dev_overlay', handleUiOverlay);
       eventBus.off("backend_message", handleBackendMessage);
     };
   }, [eventBus, sessionId, handleConfirmation]);

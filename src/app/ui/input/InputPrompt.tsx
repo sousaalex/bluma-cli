@@ -1,7 +1,13 @@
-// Ficheiro: InputPrompt.tsx (Versão com cursor sempre visível)
+// Ficheiro: InputPrompt.tsx (Versão com cursor sempre visível + modo permissivo de overlays)
 import { Box, Text, useStdout} from "ink";
 import { useCustomInput } from "./utils/useSimpleInputBuffer.js";
 import { useEffect, useState } from "react";
+import { EventEmitter } from "events";
+
+// Pequeno event bus singleton local para emitir overlays
+// Em um app maior, esse EventEmitter deve vir de um provider/context global.
+export const uiEventBus: EventEmitter = (global as any).__bluma_ui_eventbus__ || new EventEmitter();
+(global as any).__bluma_ui_eventbus__ = uiEventBus;
 
 interface InputPromptProps {
   onSubmit: (value: string) => void;
@@ -22,8 +28,27 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
     };
   }, [stdout]);
 
+  // Wrapper para onSubmit em modo processing (read-only):
+  // - Qualquer input não vazio do dev é emitido como mensagem simples ao backend
+  // - Sem suporte a prefixos [hint|constraint|override|assume|cancel]
+  const permissiveOnSubmit = (value: string) => {
+    const trimmed = (value || "").trim();
+
+    if (isReadOnly) {
+      if (trimmed.length > 0) {
+        const payload = trimmed;
+        uiEventBus.emit('dev_overlay', { kind: 'message', payload, ts: Date.now() });
+        return; // não envia para o fluxo normal para não poluir o chat
+      }
+      return; // ignore vazios enquanto read-only
+    }
+
+    // Fora do modo read-only: segue o fluxo normal
+    onSubmit(value);
+  };
+
   const { text, cursorPosition, viewStart } = useCustomInput({
-    onSubmit,
+    onSubmit: permissiveOnSubmit,
     viewWidth,
     isReadOnly,
     onInterrupt,
@@ -43,7 +68,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
   const borderColor = isReadOnly ? "gray" : "gray";
 
   // Define o texto do placeholder. Só será mostrado quando o agente estiver a trabalhar.
-  const placeholder = isReadOnly ? "press esc to cancel" : "";
+  const placeholder = isReadOnly ? "press esc to cancel | type a message while agent processes" : "";
 
   // Determina se o placeholder deve ser mostrado
   const showPlaceholder = text.length === 0 && isReadOnly;
@@ -75,7 +100,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
       {/* Exibe o rodapé com a informação do desenvolvedor */}
       <Box paddingX={1} justifyContent="center">
           <Text color="gray" dimColor>
-            ctrl+c to exit | esc to interrupt | {isReadOnly ? "Read-only mode" : "Editable mode"}
+            ctrl+c to exit | esc to interrupt | {isReadOnly ? "Read-only mode (message passthrough)" : "Editable mode"}
           </Text>
         </Box>
     </Box>

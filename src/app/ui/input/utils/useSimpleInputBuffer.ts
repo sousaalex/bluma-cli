@@ -87,12 +87,25 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
         return; // Não processa mais nada se ESC for pressionado
       }
 
-      // Se estiver em modo read-only, ignora todas as outras teclas
+      // Em modo read-only (processing):
+      // - Permite digitação e backspace para atualizar buffer visual
+      // - ENTER submete conteúdo para onSubmit (InputPrompt fará overlay [hint]) e limpa buffer
       if (isReadOnly) {
-        return;
+        if (key.return) {
+          if (state.text.trim().length > 0) {
+            onSubmit(state.text);
+            dispatch({ type: 'SUBMIT' });
+          }
+          return;
+        }
+        if (key.backspace || key.delete) return dispatch({ type: 'BACKSPACE' });
+        if (key.leftArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'left' });
+        if (key.rightArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'right' });
+        if (key.ctrl || key.meta || key.tab) return;
+        return dispatch({ type: 'INPUT', payload: input });
       }
 
-      // Lógica existente para outras teclas (só é executada se !isReadOnly)
+      // Lógica existente para outras teclas (modo editável)
       if (key.return) {
         if (state.text.trim().length > 0) {
           onSubmit(state.text);
@@ -107,7 +120,7 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
       
       dispatch({ type: 'INPUT', payload: input });
     },
-    // ALTERADO: useInput está SEMPRE ativo para capturar todas as teclas
+    // useInput está SEMPRE ativo para capturar todas as teclas
     { isActive: true } 
   );
 

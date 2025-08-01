@@ -197,6 +197,37 @@ npm run dev      # (If configured, hot-reload/TS watch)
 
 ---
 
+## Live Dev Overlays (Open Channel During Processing)
+BluMa supports a live side-channel that stays active even while the agent is processing. This lets the dev send guidance or constraints in real-time — like pair programming.
+
+Key points
+- Permissive mode enabled: during processing, any free text you type is treated as a [hint] automatically.
+- Structured prefixes are also supported at any time:
+  - [hint] Text for immediate guidance to the agent
+  - [constraint] Rules/limits (e.g., "não tocar em src/app/agent/**")
+  - [override] Parameter overrides as key=value pairs (e.g., "file_path=C:/... expected_replacements=2")
+  - [assume] Register explicit assumptions
+  - [cancel] Interrupt safely (already supported)
+
+How it works
+- Frontend: the input remains active in read-only (processing) mode and emits a dev_overlay event.
+- Agent backend: consumes overlays with precedence (constraint > override > hint). Hints and assumptions are injected into the system context before the next decision; overrides/constraints adjust tool parameters just before execution.
+- Logging & history: every overlay is logged and stored in session history for auditability.
+
+Examples
+- During a long task, just type:
+  - "Prefer do not touch tests yet" → will be treated as [hint]
+  - "[constraint] não editar src/app/ui/**" → blocks edits under that path
+  - "[override] expected_replacements=2" → adjusts the next edit_tool call
+  - "[assume] target=api" → adds an assumption in context
+
+Notes
+- The side-channel does not pause the agent — it adapts on the fly.
+- If an overlay conflicts with the current plan: constraint > override > hint.
+- All overlays are acknowledged via standard internal messages and persisted.
+
+---
+
 ## <a name="configuration-and-environment-variables"></a>Configuration and Environment Variables
 You must create a `.env` file (copy if needed from `.env.example`) with the following variables:
 - `AZURE_OPENAI_ENDPOINT`
