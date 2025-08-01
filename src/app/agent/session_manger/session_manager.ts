@@ -130,14 +130,23 @@ export async function saveSessionHistory(sessionFile: string, history: HistoryMe
   await withFileLock(sessionFile, async () => {
     let sessionData: SessionData;
 
+    // Robustez extra: garante diretório existente antes de qualquer IO
+    try {
+      const dir = path.dirname(sessionFile);
+      await fs.mkdir(dir, { recursive: true });
+    } catch {}
+
     try {
       const fileContent = await fs.readFile(sessionFile, 'utf-8');
       sessionData = JSON.parse(fileContent);
-    } catch (error) {
-      if (error instanceof Error) {
-        console.warn(`Could not read or parse session file ${sessionFile}. Re-initializing. Error: ${error.message}`);
-      } else {
-        console.warn(`An unknown error occurred while reading ${sessionFile}. Re-initializing.`, error);
+    } catch (error: any) {
+      const code = error && error.code;
+      if (code !== 'ENOENT') {
+        if (error instanceof Error) {
+          console.warn(`Could not read or parse session file ${sessionFile}. Re-initializing. Error: ${error.message}`);
+        } else {
+          console.warn(`An unknown error occurred while reading ${sessionFile}. Re-initializing.`, error);
+        }
       }
       const sessionId = path.basename(sessionFile, '.json');
       sessionData = {
@@ -145,6 +154,10 @@ export async function saveSessionHistory(sessionFile: string, history: HistoryMe
         created_at: new Date().toISOString(),
         conversation_history: [],
       };
+      // Cria o ficheiro base quando não existir
+      try {
+        await fs.writeFile(sessionFile, JSON.stringify(sessionData, null, 2), 'utf-8');
+      } catch {}
     }
 
     sessionData.conversation_history = history;

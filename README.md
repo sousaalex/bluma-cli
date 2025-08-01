@@ -193,7 +193,14 @@ npm run dev      # (If configured, hot-reload/TS watch)
 ---
 
 ## <a name="tests"></a>Tests
-- Organize your tests inside the `test/` folder in your preferred style or as your project's coverage grows
+- The repository ships with Jest 30 configured (babel-jest) and TypeScript support.
+- Test files are located under `tests/` and follow `*.spec.ts` naming.
+- Run tests:
+
+```bash
+npm test
+npm run test:watch
+```
 
 ---
 
@@ -234,10 +241,25 @@ You must create a `.env` file (copy if needed from `.env.example`) with the foll
 - `AZURE_OPENAI_API_KEY`
 - `AZURE_OPENAI_API_VERSION`
 - `AZURE_OPENAI_DEPLOYMENT`
+- `GITHUB_PERSONAL_ACCESS_TOKEN` (optional; required for GitHub integrations)
+- `NOTION_API_TOKEN` (optional; required for Notion integrations)
 
 And others required by your agent/context or Azure setup.
 
 Advanced config files are located in `src/app/agent/config/`.
+
+---
+
+## <a name="stack"></a>Tech Stack Overview
+- Language: TypeScript (ESM)
+- Runtime: Node.js >= 18
+- CLI UI: React 18 via Ink 5, plus `ink-text-input`, `ink-spinner`, `ink-big-text`
+- Bundler: esbuild, with `esbuild-plugin-node-externals`
+- Test Runner: Jest 30 + babel-jest
+- Transpilers: Babel presets (env, react, typescript)
+- LLM/Agent: Azure OpenAI via `openai` SDK; MCP via `@modelcontextprotocol/sdk`
+- Config loading: dotenv
+- Utilities: uuid, diff, react-devtools-core
 
 ---
 

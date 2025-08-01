@@ -44,23 +44,47 @@ export function createApiContextWindow(
   let currentTurn: HistoryMessage[] = [];
   let turnsFound = 0;
 
+  // Helper: identifica overlay do dev pelo metadata name
+  const isDevOverlay = (m: any) => m?.role === 'user' && m?.name === 'dev_overlay';
+
   for (let i = conversationHistory.length - 1; i >= 0; i--) {
     const msg = conversationHistory[i];
     currentTurn.unshift(msg); // Adiciona a mensagem no início do turno atual
 
-    // Um turno termina quando uma chamada de ferramenta para 'agent_end_task' é feita.
-    // Esta chamada está dentro de uma mensagem 'assistant'.
-    if (
+    // Regra: um turno termina quando uma chamada de ferramenta para 'agent_end_task' é feita
+    const endsWithAgentEnd = (
       msg.role === 'assistant' &&
-      // CORREÇÃO: Adicionamos o tipo explícito para 'tc' para resolver o erro do TypeScript.
-      msg.tool_calls?.some((tc: ChatCompletionMessageToolCall) => tc.function.name === 'agent_end_task')
-    ) {
-      turns.unshift([...currentTurn]); // Adiciona uma cópia do turno completo no início da lista de turnos
-      currentTurn = []; // Limpa para o próximo turno
+      (msg as any).tool_calls?.some((tc: ChatCompletionMessageToolCall) => tc.function.name === 'agent_end_task')
+    );
+
+    if (endsWithAgentEnd) {
+      // Inclui quaisquer overlays imediatamente anteriores como parte do mesmo turno.
+      // (já estão em currentTurn por causa do unshift acima)
+      turns.unshift([...currentTurn]);
+      currentTurn = [];
       turnsFound++;
 
       if (turnsFound >= maxTurns) {
         break; // Para a busca se já encontramos os turnos necessários
+      }
+      continue;
+    }
+
+    // Adicional: caso raro – se encontrarmos uma mensagem 'user' que NÃO é overlay
+    // e imediatamente antes já havia um assistant (sem end_task), podemos considerar
+    // que iniciou um novo turno. Porém, para não cortar overlays, apenas inicia
+    // novo turno se o item anterior (mais recente) no currentTurn não for overlay.
+    const prev = conversationHistory[i - 1];
+    if (msg.role === 'user' && !isDevOverlay(msg)) {
+      // Se o próximo mais recente (prev) for um assistant sem end_task, tratamos como fronteira macia.
+      if (prev && prev.role === 'assistant' && !(prev as any).tool_calls?.some((tc: ChatCompletionMessageToolCall) => tc.function.name === 'agent_end_task')) {
+        // Fechamos este turno apenas se já temos conteúdo significativo (não só overlays)
+        const hasNonOverlay = currentTurn.some(m => m.role !== 'user' || !isDevOverlay(m));
+        if (hasNonOverlay) {
+          turns.unshift([...currentTurn]);
+          currentTurn = [];
+          // Não incrementa turnsFound baseado nesta fronteira macia; só contamos fim real por end_task
+        }
       }
     }
   }

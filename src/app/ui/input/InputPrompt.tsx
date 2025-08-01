@@ -64,18 +64,21 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
   );
   const textAfterCursor = visibleText.slice(visibleCursorPosition + 1);
 
+  // Cursor sempre visível: se não houver caractere sob o cursor, usamos um espaço visual
+  const cursorGlyph = charAtCursor && charAtCursor.length > 0 ? charAtCursor : " ";
+
   // ALTERADO: A cor da borda agora reflete o estado de "read-only"
   const borderColor = isReadOnly ? "gray" : "gray";
 
   // Define o texto do placeholder. Só será mostrado quando o agente estiver a trabalhar.
-  const placeholder = isReadOnly ? "press esc to cancel | type a message while agent processes" : "";
+  const placeholder = isReadOnly ? " press esc to cancel | type a message while agent processes" : "";
 
   // Determina se o placeholder deve ser mostrado
   const showPlaceholder = text.length === 0 && isReadOnly;
 
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly}>
+      <Box borderStyle="single" borderColor={borderColor} borderDimColor={!isReadOnly}>
         <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
           <Text color="white" dimColor>{">"} </Text>
           
@@ -86,7 +89,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
           <Text>{textBeforeCursor}</Text>
           
           {/* 2. Renderiza o cursor. Se não houver caractere, usa um espaço. Fica sempre visível. */}
-          <Text inverse={!isReadOnly}>{charAtCursor || " "}</Text>
+          <Text inverse>{cursorGlyph}</Text>
           
           {/* 3. Renderiza o texto depois do cursor (ou o placeholder) */}
           {showPlaceholder ? (

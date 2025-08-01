@@ -59,8 +59,8 @@ export class Agent {
       //   ts: data.ts || Date.now(),
       // });
 
-      // Fluxo minimalista: qualquer mensagem recebida entra como role: user
-      this.history.push({ role: 'user', content: clean });
+      // Fluxo: mensagens do dev_overlay entram como role: user com metadata name
+      this.history.push({ role: 'user', name: 'dev_overlay', content: clean } as any);
 
       // Emite evento para UI/logs indicando que recebemos overlay do dev
       this.eventBus.emit('backend_message', {
@@ -219,6 +219,15 @@ export class Agent {
     const toolCall = decisionData.tool_calls[0];
     let toolResultContent: string;
     let shouldContinueConversation = true;
+
+    // Robustez: garante sessão inicializada antes de prosseguir
+    if (!this.sessionFile) {
+      const [sessionFile, history] = await loadOrcreateSession(this.sessionId);
+      this.sessionFile = sessionFile;
+      if (this.history.length === 0 && history.length > 0) {
+        this.history = history;
+      }
+    }
   
     if (decisionData.type === 'user_decision_execute') {
         const toolName = toolCall.function.name;
