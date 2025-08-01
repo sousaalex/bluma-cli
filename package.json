@@ -1,6 +1,6 @@
 {
   "name": "@nomad-e/bluma-cli",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "BluMa independent agent for automation and advanced software engineering.",
   "author": "Alex Fonseca",
   "license": "MIT",
