@@ -15,6 +15,8 @@ import { ToolCallDisplay } from "./components/ToolCallDisplay.js";
 import { ToolResultDisplay } from "./components/ToolResultDisplay.js";
 import SessionInfoConnectingMCP from "./SessionInfoConnectingMCP.js";
 import SlashCommands from "./components/SlashCommands.js";
+import { checkForUpdates } from "../agent/utils/update_check.js";
+import UpdateNotice from "./components/UpdateNotice.js";
 
 // --- Interfaces e Componentes (inalterados) ---
 
@@ -48,6 +50,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
 
   const alwaysAcceptList = useRef<string[]>([]);
   const workdir = process.cwd();
+  const updateCheckRan = useRef<boolean>(false);
 
   const handleInterrupt = useCallback(() => {
     if (!isProcessing) return; // Só interrompe se estiver a processar
@@ -228,6 +231,27 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
             }
             return newHistory;
           });
+
+          if (!updateCheckRan.current) {
+            updateCheckRan.current = true;
+            Promise.resolve()
+              .then(() => checkForUpdates())
+              .then((msg) => {
+                if (msg) {
+                  setHistory((prev) => ([
+                    ...prev,
+                    {
+                      id: prev.length,
+                      component: (
+                        <UpdateNotice message={msg} />
+                      ),
+                    },
+                  ]));
+                }
+              })
+              .catch(() => void 0);
+          }
+
           return;
         }
         if (parsed.type === "error") {

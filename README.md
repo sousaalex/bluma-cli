@@ -5,7 +5,7 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://shields.io/)
 
 <p align="center">
-  <img src="docs\assets\images\bluma.png" alt="Tela inicial BluMa CLI" width="1000"/>
+  <img src="docs\assets\bluma.png" alt="Tela inicial BluMa CLI" width="1000"/>
 </p>
 
 BluMa CLI is an independent agent for automation and advanced software engineering. The project is a conversational assistant that interacts via terminal (CLI), built with React/Ink, supporting smart agents (LLM, OpenAI Azure), tool execution, persistent history, session management, and extensibility through external plugins/tools.

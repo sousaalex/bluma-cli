@@ -5,6 +5,11 @@ import { render } from 'ink';
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import App, { AppProps } from './app/ui/App.js';
+import { startTitleKeeper } from './app/ui/utils/terminalTitle.js';
+
+// Start persistent terminal title keeper
+const BLUMA_TITLE = process.env.BLUMA_TITLE || 'BluMa - NomadEngenuity';
+startTitleKeeper(BLUMA_TITLE);
 
 // 1. Prepara as dependências mínimas que a UI precisa para iniciar.
 const eventBus = new EventEmitter();

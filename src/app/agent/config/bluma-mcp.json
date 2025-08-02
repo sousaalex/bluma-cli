@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "bluma": {
+    "sequentialThinking": {
       "type": "stdio", 
       "command": "cmd",
       "args": [

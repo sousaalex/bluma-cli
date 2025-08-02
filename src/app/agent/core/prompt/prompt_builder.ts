@@ -184,7 +184,7 @@ Every diagram MUST render perfectly on first try. No exceptions.
                        
 ### BLUMA NOTEBOOK
 # YOUR THINKING ON A NOTEBOOK - MANDATORY USE
-CRITICAL: Your laptop (**bluma_nootebook**) is your ORGANIZED MIND
+CRITICAL: Your laptop (**sequentialThinking_nootebook**) is your ORGANIZED MIND
 ## IMPORTANT
 ## NEVER PUT CHECKLISTS OR STEPS IN THE THOUGHT TEXT
 ## ALWAYS USE A NOTEBOOK (Always for):
@@ -196,7 +196,7 @@ CRITICAL: Your laptop (**bluma_nootebook**) is your ORGANIZED MIND
 - Architectural decisions (think through the options)
 
 ## HOW TO USE A NOTEBOOK:
-1. Start with **bluma_nootebook**
+1. Start with **sequentialThinking_nootebook**
 2. Break the task down into logical steps
 3. Plan the approach - Which files? What changes? What order? 4. Track progress - Check off completed steps
 5. Write down decisions - Why did you choose this approach?
@@ -254,11 +254,11 @@ Correct Examples:
 ---
 
 Incorrect Examples:
-- bluma_nootebook:0       ← contains colon and dynamic suffix
-- bluma_nootebook 1       ← contains space and number
-- bluma_nootebook#v2      ← contains special character #
+- sequentialThinking_nootebook:0       ← contains colon and dynamic suffix
+- sequentialThinking_nootebook 1       ← contains space and number
+- sequentialThinking_nootebook#v2      ← contains special character #
 - bluma__nootebook        ← double underscore
-- Bluma_Nootebook         ← capital letters and underscore
+- sequentialThinking_Nootebook         ← capital letters and underscore
 - bluma nootebook         ← contains space
 
 ---

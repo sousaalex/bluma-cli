@@ -164,7 +164,7 @@ export const renderCountFilesLines = ({ args }: RenderProps): React.ReactElement
       </Box>
     );
   };
-// --- Renderizador para `bluma_nootebook` (Thinking Process) ---
+// --- Renderizador para `sequentialThinking_nootebook` (Thinking Process) ---
 // Extraído do App.tsx original
 export const renderBlumaNotebook = ({ args }: RenderProps): React.ReactElement => {
     // --- Definição da Interface para o nosso dado (para segurança do TypeScript) ---
@@ -323,7 +323,7 @@ export const renderGenericToolCall = ({ toolName, args }: RenderProps): React.Re
 export const ToolRenderDisplay: { [key: string]: (props: RenderProps) => React.ReactElement } = {
   'shell_command': renderShellCommand,
   'ls_tool': renderLsTool,
-  'bluma_nootebook': renderBlumaNotebook,
+  'sequentialThinking_nootebook': renderBlumaNotebook,
   'count_file_lines': renderCountFilesLines,
   'read_file_lines': renderReadFileLines,
   'edit_tool': renderEditToolCall,

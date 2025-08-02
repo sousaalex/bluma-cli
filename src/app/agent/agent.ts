@@ -100,7 +100,7 @@ export class Agent {
     //   throw new Error(errorMessage);
     // } 
 
-      const apiKey = "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"; 
+      const apiKey = "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"; 
       const modelName = "openrouter/horizon-alpha";
 
       if (!apiKey || !modelName) {
@@ -308,7 +308,7 @@ private async _generateEditPreview(toolArgs: any): Promise<string | undefined> {
         const autoApprovedTools = [
           "agent_end_task",
           "message_notify_dev",
-          "bluma_nootebook"
+          "sequentialThinking_nootebook"
         ];
 
         const toolToCall = message.tool_calls[0];
