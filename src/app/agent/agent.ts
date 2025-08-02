@@ -90,42 +90,42 @@ export class Agent {
     this.mcpClient = new MCPClient(nativeToolInvoker, eventBus);
     this.feedbackSystem = new AdvancedFeedbackSystem();
 
-    // const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-    // const apiKey = process.env.AZURE_OPENAI_API_KEY;
-    // const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
-    // this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || ''; 
+    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+    const apiKey = process.env.AZURE_OPENAI_API_KEY;
+    const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
+    this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || ''; 
 
-    // if (!endpoint || !apiKey || !apiVersion || !this.deploymentName) {
-    //   const errorMessage = `Uma ou mais variáveis de ambiente Azure OpenAI não foram encontradas. Verifique em: ${globalEnvPath} ou nas variáveis de sistema.`;
-    //   throw new Error(errorMessage);
-    // } 
+    if (!endpoint || !apiKey || !apiVersion || !this.deploymentName) {
+      const errorMessage = `Uma ou mais variáveis de ambiente Azure OpenAI não foram encontradas. Verifique em: ${globalEnvPath} ou nas variáveis de sistema.`;
+      throw new Error(errorMessage);
+    } 
 
-      const apiKey = "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"; 
-      const modelName = "openrouter/horizon-alpha";
+      // const apiKey = "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"; 
+      // const modelName = "openrouter/horizon-alpha";
 
-      if (!apiKey || !modelName) {
-          throw new Error("Chave de API ou nome do modelo do OpenRouter não encontrados.");
-      } 
+      // if (!apiKey || !modelName) {
+      //     throw new Error("Chave de API ou nome do modelo do OpenRouter não encontrados.");
+      // } 
 
-      this.deploymentName = modelName; 
-
-    //  this.client = new OpenAI({
-    //   // Configuração do cliente OpenAI hospedado no Azure
-    //   apiKey: apiKey,
-    //   baseURL: `${endpoint}/openai/deployments/${this.deploymentName}`,
-    //   defaultQuery: { 'api-version': apiVersion },
-    //   defaultHeaders: { 'api-key': apiKey },
-    // }); 
+      // this.deploymentName = modelName; 
 
      this.client = new OpenAI({
-    // Configuração do cliente OpenAI hospedado no  OpenRouter
-    apiKey: apiKey,
-    baseURL: "https://openrouter.ai/api/v1", // <-- URL base do OpenRouter
-    defaultHeaders: {
-        "HTTP-Referer": "http://localhost:3000", // Substitua pelo seu site ou app
-        "X-Title": "Bluma CLI Agent", // Substitua pelo nome do seu projeto
-      },
-  }); 
+      // Configuração do cliente OpenAI hospedado no Azure
+      apiKey: apiKey,
+      baseURL: `${endpoint}/openai/deployments/${this.deploymentName}`,
+      defaultQuery: { 'api-version': apiVersion },
+      defaultHeaders: { 'api-key': apiKey },
+    }); 
+
+  //    this.client = new OpenAI({
+  //   // Configuração do cliente OpenAI hospedado no  OpenRouter
+  //   apiKey: apiKey,
+  //   baseURL: "https://openrouter.ai/api/v1", // <-- URL base do OpenRouter
+  //   defaultHeaders: {
+  //       "HTTP-Referer": "http://localhost:3000", // Substitua pelo seu site ou app
+  //       "X-Title": "Bluma CLI Agent", // Substitua pelo nome do seu projeto
+  //     },
+  // }); 
 
   }
 
