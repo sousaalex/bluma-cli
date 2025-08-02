@@ -1,6 +1,6 @@
 {
   "name": "@nomad-e/bluma-cli",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "BluMa independent agent for automation and advanced software engineering.",
   "author": "Alex Fonseca",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^20.14.2",
     "@types/react": "^18.3.3",
+    "@types/update-notifier": "^6.0.8",
     "@types/uuid": "^9.0.8",
     "babel-jest": "^30.0.5",
     "esbuild": "^0.21.4",
@@ -46,6 +47,8 @@
     "ink-text-input": "^6.0.0",
     "openai": "^4.47.3",
     "react-devtools-core": "^4.28.5",
+    "read-package-up": "^11.0.0",
+    "update-notifier": "^7.0.0",
     "uuid": "^9.0.1"
   },
   "files": [
