@@ -91,7 +91,7 @@ interface McpServerConfig {
 
             this.eventBus.emit('backend_message', {
                 type: 'connection_status',
-                message: `Connecting to MCP server: ${serverName}...`
+                message: `${serverName} server is being connected...`
               });
 
           if (serverConf.type === 'stdio') {
@@ -207,6 +207,20 @@ interface McpServerConfig {
   
     public getAvailableTools(): ToolDefinition[] {
       return this.globalToolsForLlm;
+    }
+
+    // New: detailed list for UI with origin metadata
+    public getAvailableToolsDetailed(): Array<ToolDefinition & { source: 'native' | 'mcp'; server: string; originalName: string }> {
+      const detailed: Array<ToolDefinition & { source: 'native' | 'mcp'; server: string; originalName: string }> = [];
+      for (const tool of this.globalToolsForLlm) {
+        const name = tool.function?.name;
+        if (!name) continue;
+        const route = this.toolToServerMap.get(name);
+        if (!route) continue;
+        const source = route.server === 'native' ? 'native' : 'mcp';
+        detailed.push({ ...tool, source, server: route.server, originalName: route.originalName });
+      }
+      return detailed;
     }
   
     public async close(): Promise<void> {

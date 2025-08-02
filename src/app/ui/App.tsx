@@ -1,19 +1,20 @@
 //App.tsx
 // Ficheiro: src/app/ui/App.tsx
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react'; // Adicionado 'memo'
+import React, { useState, useEffect, useRef, useCallback, memo } from "react"; // Adicionado 'memo'
 import { Box, Text, Static } from "ink";
-import Spinner from "ink-spinner";
 import { EventEmitter } from "events";
 
 import { Header, SessionInfo } from "./layout";
-import { InputPrompt, uiEventBus } from "./input/InputPrompt";
+import { InputPrompt, uiEventBus } from "./components/InputPrompt";
 import { ConfirmationPrompt } from "./ConfirmationPrompt";
 import { Agent } from "../agent/agent.js";
 
-import { WorkingTimer } from './WorkingTimer.js'; 
+import { WorkingTimer } from "./WorkingTimer.js";
 
-import { ToolCallDisplay } from './components/ToolCallDisplay.js';
-import { ToolResultDisplay } from './components/ToolResultDisplay.js'; 
+import { ToolCallDisplay } from "./components/ToolCallDisplay.js";
+import { ToolResultDisplay } from "./components/ToolResultDisplay.js";
+import SessionInfoConnectingMCP from "./SessionInfoConnectingMCP.js";
+import SlashCommands from "./components/SlashCommands.js";
 
 // --- Interfaces e Componentes (inalterados) ---
 
@@ -27,9 +28,8 @@ export interface AppProps {
   sessionId: string;
 }
 
-
 const AppComponent = ({ eventBus, sessionId }: AppProps) => {
-    const agentInstance = useRef<Agent | null>(null);
+  const agentInstance = useRef<Agent | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(
     "Initializing agent..."
@@ -42,52 +42,88 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
   const [pendingConfirmation, setPendingConfirmation] = useState<any[] | null>(
     null
   );
-  const [confirmationPreview, setConfirmationPreview] = useState<string | null>(null);
+  const [confirmationPreview, setConfirmationPreview] = useState<string | null>(
+    null
+  );
 
   const alwaysAcceptList = useRef<string[]>([]);
   const workdir = process.cwd();
 
-   const handleInterrupt = useCallback(() => {
-        if (!isProcessing) return; // Só interrompe se estiver a processar
+  const handleInterrupt = useCallback(() => {
+    if (!isProcessing) return; // Só interrompe se estiver a processar
 
-        // Emite um evento para o agente parar o que está a fazer
-        eventBus.emit('user_interrupt');
+    // Emite um evento para o agente parar o que está a fazer
+    eventBus.emit("user_interrupt");
 
-        // Atualiza a UI imediatamente
-        setIsProcessing(false);
-        setHistory(prev => [
-            ...prev,
-            {
-                id: prev.length,
-                component: <Text color="yellow">-- Task cancelled by dev. --</Text>
-            }
-        ]);
-    }, [isProcessing, eventBus]);
-
-  const handleSubmit = useCallback(
-    (text: string) => {
-      if (!text || isProcessing || !agentInstance.current) return;
-      setIsProcessing(true);
-
-      const displayText =
-        text.length > 10000 ? text.substring(0, 10000) + "..." : text;
+    // Atualiza a UI imediatamente
+    setIsProcessing(false);
     setHistory((prev) => [
       ...prev,
       {
         id: prev.length,
-        component: (
-          // Uma única Box para o espaçamento
-          <Box marginBottom={1}>
-            {/* Um único Text que contém tudo */}
-            <Text color="white" dimColor>
-              {/* O prompt e o texto são renderizados como um bloco contínuo */}
-              <Text color="white">{">"} </Text>
-              {displayText}
-            </Text>
-          </Box>
-        ),
+        component: <Text color="yellow">-- Task cancelled by dev. --</Text>,
       },
     ]);
+  }, [isProcessing, eventBus]);
+
+  // Delegated slash command renderer is handled by SlashCommands component
+
+  const handleSubmit = useCallback(
+    (text: string) => {
+      if (!text || isProcessing || !agentInstance.current) return;
+
+      // Intercepta comandos de slash
+      if (text.startsWith('/')) {
+        const [cmd] = text.slice(1).trim().split(/\s+/);
+        // If it's just a single slash without a command, do nothing (avoid stray echo)
+        if (!cmd) {
+          setIsProcessing(false);
+          return;
+        }
+        setHistory((prev) => ([
+          ...prev,
+          {
+            id: prev.length,
+            component: (
+              <Box marginBottom={1}>
+                <Text color="white" dimColor>
+                  {text}
+                </Text>
+              </Box>
+            ),
+          },
+          {
+            id: prev.length + 1,
+            component: (
+              <SlashCommands input={text} setHistory={setHistory as any} agentRef={agentInstance as any} />
+            ),
+          }
+        ]));
+        setIsProcessing(false);
+        return;
+      }
+
+      setIsProcessing(true);
+
+      const displayText =
+        text.length > 10000 ? text.substring(0, 10000) + "..." : text;
+      setHistory((prev) => [
+        ...prev,
+        {
+          id: prev.length,
+          component: (
+            // Uma única Box para o espaçamento
+            <Box marginBottom={1}>
+              {/* Um único Text que contém tudo */}
+              <Text color="white" dimColor>
+                {/* O prompt e o texto são renderizados como um bloco contínuo */}
+                <Text color="white">{">"} </Text>
+                {displayText}
+              </Text>
+            </Box>
+          ),
+        },
+      ]);
       agentInstance.current.processTurn({ content: text });
     },
     [isProcessing]
@@ -120,8 +156,6 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
     []
   );
 
-
-
   useEffect(() => {
     setHistory([{ id: 0, component: <Header /> }]);
 
@@ -153,7 +187,6 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
           return;
         }
         if (parsed.type === "confirmation_request") {
-          
           const toolToConfirm = parsed.tool_calls[0].function.name;
           if (alwaysAcceptList.current.includes(toolToConfirm)) {
             handleConfirmation("accept", parsed.tool_calls);
@@ -227,7 +260,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
             <ToolCallDisplay
               toolName={parsed.tool_name}
               args={parsed.arguments}
-              preview={parsed.preview} 
+              preview={parsed.preview}
             />
           );
         } else if (parsed.type === "tool_result") {
@@ -237,20 +270,26 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               result={parsed.result}
             />
           );
-        } else if (parsed.type === 'dev_overlay') {
+        } else if (parsed.type === "dev_overlay") {
           newComponent = (
-            <Box borderStyle="classic" borderColor="blue" paddingX={1} marginBottom={1}>
-              {/* <Text color="cyan">[dev_overlay] </Text> */}
-              <Text color="white">{parsed.payload}</Text>
+            <Box marginBottom={1}>
+              <Text color="gray">
+                <Text color="blue">{">"} </Text>
+                {parsed.payload}
+              </Text>
             </Box>
+          
           );
-        } else if (parsed.type === 'log') {
+        } else if (parsed.type === "log") {
           newComponent = (
-            <Text color="gray">ℹ️ {parsed.message}{parsed.payload ? `: ${parsed.payload}` : ''}</Text>
+            <Text color="gray">
+              ℹ️ {parsed.message}
+              {parsed.payload ? `: ${parsed.payload}` : ""}
+            </Text>
           );
-        } else if (parsed.type === 'assistant_message' && parsed.content) {
-            newComponent = null; // Não renderiza nada na tela
-          }
+        } else if (parsed.type === "assistant_message" && parsed.content) {
+          newComponent = null; // Não renderiza nada na tela
+        }
         if (newComponent) {
           setHistory((prev) => [
             ...prev,
@@ -263,18 +302,22 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
     };
 
     // Ponte UI→Agent: reenvia eventos dev_overlay do uiEventBus para o eventBus do App/Agent
-    const handleUiOverlay = (data: { kind?: string; payload: string; ts?: number }) => {
+    const handleUiOverlay = (data: {
+      kind?: string;
+      payload: string;
+      ts?: number;
+    }) => {
       // Propaga para o agente; a renderização virá do próprio Agent via backend_message
-      eventBus.emit('dev_overlay', data);
+      eventBus.emit("dev_overlay", data);
     };
 
-    uiEventBus.on('dev_overlay', handleUiOverlay);
+    uiEventBus.on("dev_overlay", handleUiOverlay);
 
     eventBus.on("backend_message", handleBackendMessage);
     initializeAgent();
 
     return () => {
-      uiEventBus.off('dev_overlay', handleUiOverlay);
+      uiEventBus.off("dev_overlay", handleUiOverlay);
       eventBus.off("backend_message", handleBackendMessage);
     };
   }, [eventBus, sessionId, handleConfirmation]);
@@ -282,51 +325,57 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
   // --- Lógica de Renderização Unificada ---
 
   const renderInteractiveComponent = () => {
-        if (mcpStatus !== 'connected') {
-          return (
-            <Box borderStyle="round" borderColor="black" >
-              <Text color="yellow">
-                <Spinner type="dots" /> {statusMessage || 'Connecting...'}
-              </Text>
-            </Box>
-          );
-        }
-    
-        if (pendingConfirmation) {
-          return (
-            <ConfirmationPrompt
-              toolCalls={pendingConfirmation}
-              preview={confirmationPreview} 
-              onDecision={(decision) => {
-                setConfirmationPreview(null);
-                handleConfirmation(decision, pendingConfirmation)
-              }}
-            />
-          );
-        }
+    if (mcpStatus !== "connected") {
+      return (
+       <Box
+       borderStyle="round"
+       borderColor="black"
+       >
+        <SessionInfoConnectingMCP
+          sessionId={sessionId}
+          workdir={workdir}
+          statusMessage={statusMessage}
+        />
+         
+       </Box>
+      );
+    }
 
-        // O InputPrompt é agora renderizado aqui, juntamente com o spinner se necessário
-        return (
-            <Box flexDirection="column">
-                {/* O spinner só aparece quando está a processar E não há confirmação pendente */}
-                 {isProcessing && !pendingConfirmation && <WorkingTimer />}
-                <InputPrompt 
-                    onSubmit={handleSubmit}
-                    isReadOnly={isProcessing} // O input fica "read-only" enquanto processa
-                    onInterrupt={handleInterrupt} // Passa a função de interrupção
-                />
-            </Box>
-        );
-    };
+    if (pendingConfirmation) {
+      return (
+        <ConfirmationPrompt
+          toolCalls={pendingConfirmation}
+          preview={confirmationPreview}
+          onDecision={(decision) => {
+            setConfirmationPreview(null);
+            handleConfirmation(decision, pendingConfirmation);
+          }}
+        />
+      );
+    }
 
+    // O InputPrompt é agora renderizado aqui, juntamente com o spinner se necessário
     return (
-        <Box flexDirection="column">
-            <Static items={history}>
-                {(item) => <Box key={item.id}>{item.component}</Box>}
-            </Static>
-            {renderInteractiveComponent()}
-        </Box>
+      <Box flexDirection="column">
+        {/* O spinner só aparece quando está a processar E não há confirmação pendente */}
+        {isProcessing && !pendingConfirmation && <WorkingTimer />}
+        <InputPrompt
+          onSubmit={handleSubmit}
+          isReadOnly={isProcessing} // O input fica "read-only" enquanto processa
+          onInterrupt={handleInterrupt} // Passa a função de interrupção
+        />
+      </Box>
     );
+  };
+
+  return (
+    <Box flexDirection="column">
+      <Static items={history}>
+        {(item) => <Box key={item.id}>{item.component}</Box>}
+      </Static>
+      {renderInteractiveComponent()}
+    </Box>
+  );
 };
 
 export const App = memo(AppComponent);

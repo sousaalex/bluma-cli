@@ -1,8 +1,10 @@
 // Ficheiro: InputPrompt.tsx (Versão com cursor sempre visível + modo permissivo de overlays)
-import { Box, Text, useStdout} from "ink";
-import { useCustomInput } from "./utils/useSimpleInputBuffer.js";
-import { useEffect, useState } from "react";
+import { Box, Text, useStdout, useInput } from "ink";
+import { useCustomInput } from "../utils/useSimpleInputBuffer.js";
+// Nota: se o hook não expor setText, usamos submissão direta ao escolher o comando
+import { useEffect, useMemo, useState } from "react";
 import { EventEmitter } from "events";
+import { filterSlashCommands, getSlashCommands } from "../utils/slashRegistry.js";
 
 // Pequeno event bus singleton local para emitir overlays
 // Em um app maior, esse EventEmitter deve vir de um provider/context global.
@@ -54,6 +56,9 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
     onInterrupt,
   });
 
+  const [slashOpen, setSlashOpen] = useState(false);
+  const [slashIndex, setSlashIndex] = useState(0);
+
   const visibleText = text.slice(viewStart, viewStart + viewWidth);
   const visibleCursorPosition = cursorPosition - viewStart;
 
@@ -76,9 +81,47 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
   // Determina se o placeholder deve ser mostrado
   const showPlaceholder = text.length === 0 && isReadOnly;
 
+  const slashQuery = useMemo(() => (text.startsWith('/') ? text : ''), [text]);
+  const slashSuggestions = useMemo(() => {
+    if (!slashQuery) return [] as ReturnType<typeof filterSlashCommands>;
+    return filterSlashCommands(slashQuery);
+  }, [slashQuery]);
+
+  useEffect(() => {
+    if (isReadOnly) {
+      setSlashOpen(false);
+      return;
+    }
+    if (text.startsWith('/')) {
+      setSlashOpen(true);
+      setSlashIndex(0);
+    } else {
+      setSlashOpen(false);
+    }
+  }, [text, isReadOnly]);
+
+  useInput((input, key) => {
+    if (!slashOpen) return;
+    if (key.downArrow) {
+      setSlashIndex((i) => Math.min(i + 1, Math.max(0, slashSuggestions.length - 1)));
+    } else if (key.upArrow) {
+      setSlashIndex((i) => Math.max(i - 1, 0));
+    } else if (key.return) {
+      const choice = slashSuggestions[slashIndex];
+      if (choice) {
+        const cmd = choice.name;
+        setSlashOpen(false);
+        // envia diretamente o comando escolhido, evitando necessidade de setText
+        permissiveOnSubmit(cmd);
+      }
+    } else if (key.escape) {
+      setSlashOpen(false);
+    }
+  }, { isActive: slashOpen });
+
   return (
     <Box flexDirection="column">
-      <Box borderStyle="single" borderColor={borderColor} borderDimColor={!isReadOnly}>
+      <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly} width={viewWidth -7} paddingY={0}>
         <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
           <Text color="white" dimColor>{">"} </Text>
           
@@ -100,10 +143,28 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
         </Box>
       </Box>
 
+      {slashOpen && slashSuggestions.length > 0 && (
+        <Box flexDirection="column" marginTop={1}>
+          {slashSuggestions.map((s, idx) => {
+            const isSelected = idx === slashIndex;
+            return (
+              <Box key={s.name} paddingLeft={1} paddingY={0}>
+                <Text color={isSelected ? 'blue' : 'gray'}>
+                  {isSelected ? '❯ ' : '  '}
+                </Text>
+                <Text color={isSelected ? 'blue' : 'white'} bold={isSelected} dimColor={!isSelected}>
+                  {s.name} <Text color="gray">- {s.description}</Text>
+                </Text>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+
       {/* Exibe o rodapé com a informação do desenvolvedor */}
       <Box paddingX={1} justifyContent="center">
           <Text color="gray" dimColor>
-            ctrl+c to exit | esc to interrupt | {isReadOnly ? "Read-only mode (message passthrough)" : "Editable mode"}
+            ctrl+c to exit | /help to explore commands | esc to interrupt | {isReadOnly ? "Read-only mode (message passthrough)" : "Editable mode"}
           </Text>
         </Box>
     </Box>

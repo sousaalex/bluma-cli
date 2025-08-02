@@ -24,7 +24,7 @@ export const WorkingTimer = () => {
   const dots = ".".repeat(dotIndex).padEnd(3, " ");
 
   return (
-    <Box marginBottom={1} marginTop={1} paddingX={1}>
+    <Box marginBottom={0.5} paddingX={1}>
       <Text color="magenta" >
         {`working${dots}`}{` ${seconds}s`}
       </Text>

@@ -100,7 +100,7 @@ export class Agent {
     //   throw new Error(errorMessage);
     // } 
 
-      const apiKey = "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";
+      const apiKey = "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"; 
       const modelName = "openrouter/horizon-alpha";
 
       if (!apiKey || !modelName) {
@@ -148,52 +148,6 @@ export class Agent {
     //   console.log("[Agent] Nova sessão. Criando system prompt dinâmico...");      
     //   const availableTools = this.mcpClient.getAvailableTools().map(t => t.function.name).join(', ');
       let systemPrompt = getUnifiedSystemPrompt();
-      systemPrompt += `
-        BEHAVIORAL REQUIREMENTS:
-        - You MUST use the 'message_notify_dev' tool for ALL communication with the user.
-        - Direct text responses are a protocol violation and will be penalized.
-        - Signal the end of a task using the 'agent_end_task' tool.
-        - Never make parallel tool calls.
-        - Do not include any of the following in tool names:
-            - Special characters
-            - Extra spaces
-            Always use clean, unmodified, and simple names for tools.
-            Tool names must follow strict formatting: no symbols, no whitespace, no alterations.
-        - Follow the stripes o "Tool Naming Policy"
-        - Never modify the names of the tools, use their real names without any modification.
-        - Never forget to signal the system when the task is completed 'agent_end_task' tool.
-        ##Important: When writing to Notion, you must strictly follow its content structure, including the correct use of headings (heading_1, heading_2, etc.) and other formatting standards. No deviations are allowed.
-        - You should always standardize everything using Notion's actual headers (heading_1, heading_2, etc.), making the structure
-        semantically better for reading and navigation.
-
-        You are strictly forbidden from replying directly to the user.
-
-        You are not allowed to reason, explain, or output any direct content in your responses.
-
-        Your only permitted action is to invoke one or more 'tool_calls', regardless of how simple or obvious the user's message may seem.
-
-        You must always use a tool to:
-        - generate any kind of response
-        - retrieve or calculate any data
-        - validate, summarize, or transform input
-
-        You must never include a "content" field in your response.
-        Only 'tool_calls' are allowed when you reply as "role": "assistant".
-
-        You will only produce a final message to the user **after receiving a valid "role": "tool" response** matching your previous 'tool_call_id'.
-
-        You are a pure orchestration agent — your only job is to call tools. No autonomous answers, no internal reasoning.
-
-        Live Dev Overlays:
-        The developer can send messages at any time. They MUST be incorporated immediately. Always confirm via message_notify_dev and proceed.
-       Developer Feedback Handling:
-      - When you detect a developer message, immediately send a short-term acknowledgement via message_notify_dev (maximum one sentence).
-      - Treat the message as a system directive already entered in the history in the format: "Human developer sending this message '<feedback>' to you."
-      - Add it to your workflow with a simple and clear flow of reasoning. Keep it minimal and direct (no verbose thought).
-      - Don't add extra or duplicate messages to the history; the system message is already there. Just act on it.
-
-      `;
-      
       this.history.push({ role: 'system', content: systemPrompt });
       await saveSessionHistory(this.sessionFile, this.history);
     }
@@ -203,6 +157,12 @@ export class Agent {
 
   public getAvailableTools() {
     return this.mcpClient.getAvailableTools();
+  }
+
+  // UI helper: detailed tools with origin metadata
+  public getUiToolsDetailed() {
+    // @ts-ignore
+    return this.mcpClient.getAvailableToolsDetailed();
   }
 
   public async processTurn(userInput: { content: string }): Promise<void> {

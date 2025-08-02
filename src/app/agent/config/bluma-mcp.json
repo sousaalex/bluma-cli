@@ -10,19 +10,6 @@
         "@sousaalex1605/bluma-nootebook"
       ]
     },
-    "githubApi": {
-      "type": "stdio", 
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      }
-    },
     "notionApi": {
       "type": "stdio", 
       "command": "cmd",
