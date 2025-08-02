@@ -121,7 +121,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
 
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly} width={viewWidth -7} paddingY={0}>
+      <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly}>
         <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
           <Text color="white" dimColor>{">"} </Text>
           

@@ -12,11 +12,7 @@ const BRAND_COLORS = {
 export const Header = () => {
   return (
     <Box flexDirection="column">
-      <Box
-        flexDirection="column"
-        height={8}
-        marginBottom={1}
-      >
+      <Box flexDirection="column" height={8} marginBottom={1}>
         <BigText
           text="BluMa CLI"
           font="block"
@@ -24,7 +20,7 @@ export const Header = () => {
         />
       </Box>
 
-      <Box flexDirection="column"  paddingX={1}>
+      <Box flexDirection="column" paddingX={1}>
         <Text>How to get started with BluMa:</Text>
         <Text>
           1. You can ask questions, modify files, or execute commands directly.
@@ -32,12 +28,12 @@ export const Header = () => {
         <Text>
           2. Be as clear and specific as possible to get accurate responses.
         </Text>
-        {/* <Text>
-          3. Create a <Text color="cyan">BluMa.md</Text> file to personalize how
-          BluMa interacts with you.
-        </Text> */}
         <Text>
-          3. Type <Text color="cyan">/help</Text> to explore available commands
+        3. Run <Text color="cyan">/init</Text> to create a <Text color="cyan">BluMa.md</Text>,  
+        file with instructions for BluMa.
+        </Text>
+        <Text>
+          4. Type <Text color="cyan">/help</Text> to explore available commands
           and features.
         </Text>
       </Box>
@@ -64,7 +60,7 @@ export const SessionInfo = ({
   <Box
     borderStyle="round" // Borda arredondada para destaque visual
     borderColor="gray" // Borda cinza, mantém discreto mas separado
-    // paddingX={1} // Espaço horizontal entre a borda e o conteúdo
+    padding={1} // Espaço horizontal entre a borda e o conteúdo
     flexDirection="column" // Empilha itens em coluna para melhor leitura
     marginBottom={1} // Espaço abaixo, separa visualmente dos próximos componentes
   >

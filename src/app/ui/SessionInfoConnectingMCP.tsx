@@ -17,9 +17,10 @@ export const SessionInfoConnectingMCP: React.FC<Props> = ({ sessionId, workdir, 
       borderColor="gray"
       flexDirection="column"
       marginBottom={1}
+      padding={1}
     >
       {/* Linha principal: hostname e ID da sessão para consistência visual */}
-      <Text>
+      <Text >
         <Text bold color="white">localhost</Text>{' '}
         <Text color="gray"> session:</Text>{' '}
         <Text color="magenta">{sessionId}</Text>
