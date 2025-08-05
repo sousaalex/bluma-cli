@@ -15,9 +15,10 @@ interface InputPromptProps {
   onSubmit: (value: string) => void;
   isReadOnly: boolean;
   onInterrupt: () => void;
+  disableWhileProcessing?: boolean; // when true, keep input visually active but ignore submissions/keys (except ESC)
 }
 
-export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptProps) => {
+export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhileProcessing = false }: InputPromptProps) => {
   const { stdout } = useStdout();
   
   const [viewWidth, setViewWidth] = useState(() => stdout.columns - 6);
@@ -49,10 +50,15 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt }: InputPromptPr
     onSubmit(value);
   };
 
+  const effectiveReadOnly = disableWhileProcessing ? false : isReadOnly; // keep visually active when disabling while processing
+
   const { text, cursorPosition, viewStart } = useCustomInput({
-    onSubmit: permissiveOnSubmit,
+    onSubmit: (value: string) => {
+      if (disableWhileProcessing && isReadOnly) return; // ignore submissions while processing
+      permissiveOnSubmit(value);
+    },
     viewWidth,
-    isReadOnly,
+    isReadOnly: effectiveReadOnly,
     onInterrupt,
   });
 

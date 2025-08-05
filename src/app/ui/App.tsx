@@ -383,8 +383,8 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
         {isProcessing && !pendingConfirmation && <WorkingTimer />}
         <InputPrompt
           onSubmit={handleSubmit}
-          isReadOnly={isProcessing} // O input fica "read-only" enquanto processa
-          onInterrupt={handleInterrupt} // Passa a função de interrupção
+          isReadOnly={isProcessing} // restore passthrough mode with placeholder during processing
+          onInterrupt={handleInterrupt}
         />
       </Box>
     );

@@ -31,9 +31,9 @@ describe('InitSubAgent seed message', () => {
     const userMsgs = history.filter((m) => m.role === 'user');
     expect(userMsgs.length).toBeGreaterThan(0);
     const lastUser = userMsgs[userMsgs.length - 1];
-    // Verifica que a seed contém instruções para mapear, inferir stack e gerar BluMa.md
-    expect(String(lastUser.content)).toMatch(/Mapeia o/i);
-    expect(String(lastUser.content)).toMatch(/infere a stack/i);
+    // Validate the EN seed contains instructions to map, infer stack and generate BluMa.md
+    expect(String(lastUser.content)).toMatch(/\bmap the directory structure/i);
+    expect(String(lastUser.content)).toMatch(/\binfer the technology stack/i);
     expect(String(lastUser.content)).toMatch(/BluMa\.md/i);
   });
 });

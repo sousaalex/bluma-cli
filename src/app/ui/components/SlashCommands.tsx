@@ -42,18 +42,18 @@ export const SlashCommands: React.FC<SlashCommandsProps> = ({ input, setHistory,
     }
 
     if (cmd === 'init') {
-      // Dispara o fluxo do subagente /init através do Agent Core
+      // Fire the /init subagent via Agent Core and avoid rendering any extra UI box to prevent duplication
       (async () => {
         try {
           await agentRef.current?.processTurn({ content: '/init' });
         } catch (e: any) {
           setHistory(prev => prev.concat({
             id: Date.now(),
-            component: outBox(<Text color="red">Falha ao executar /init: {e?.message || String(e)}</Text>)
+            component: outBox(<Text color="red">Failed to execute /init: {e?.message || String(e)}</Text>)
           }));
         }
       })();
-      // return outBox(<Text color="cyan">Comando "/init" enviado. Gerando BluMa.md...</Text>);
+      return null; // prevent duplicate echo and error box
     }
 
     if (cmd === 'mcp') {

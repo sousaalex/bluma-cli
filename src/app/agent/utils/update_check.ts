@@ -59,11 +59,11 @@ export async function checkForUpdates(): Promise<string | null> {
 
     // Decide the check interval
     const isCI = Boolean(process.env.CI);
-    const isNoCache = process.env.BLUMA_UPDATE_NO_CACHE === "1";
-    const isDev = process.env.NODE_ENV !== "production";
+    // const isNoCache = process.env.BLUMA_UPDATE_NO_CACHE === "1";
+    // const isDev = process.env.NODE_ENV !== "production";
 
     // In dev or when no-cache flag is set, we want to check every start
-    const updateCheckInterval = isNoCache || isDev ? 0 : 1000 * 60 * 60 * 24; // 0 => always check
+    const updateCheckInterval = 0; // 0 => always check
 
     const notifier = updateNotifier({
       pkg: { name: pkg.name, version: pkg.version },
