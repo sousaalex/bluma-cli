@@ -41,6 +41,21 @@ export const SlashCommands: React.FC<SlashCommandsProps> = ({ input, setHistory,
       return outBox(<Text color="green">History cleared.</Text>);
     }
 
+    if (cmd === 'init') {
+      // Dispara o fluxo do subagente /init através do Agent Core
+      (async () => {
+        try {
+          await agentRef.current?.processTurn({ content: '/init' });
+        } catch (e: any) {
+          setHistory(prev => prev.concat({
+            id: Date.now(),
+            component: outBox(<Text color="red">Falha ao executar /init: {e?.message || String(e)}</Text>)
+          }));
+        }
+      })();
+      // return outBox(<Text color="cyan">Comando "/init" enviado. Gerando BluMa.md...</Text>);
+    }
+
     if (cmd === 'mcp') {
       const all = (agentRef.current as any)?.getUiToolsDetailed?.() || (agentRef.current as any)?.getAvailableTools?.() || [];
       const isMcp = (t: any) => (t.source?.toLowerCase?.() === 'mcp') || (!!t.server && t.server !== 'native');

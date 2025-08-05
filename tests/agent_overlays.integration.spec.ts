@@ -34,7 +34,8 @@ describe('Agent Live Dev Overlays - Integration (light)', () => {
 
     bus.emit('dev_overlay', { kind: 'hint', payload: 'Focar em arquivos .ts apenas', ts: 10 });
 
-    const last = (agent as any).history[(agent as any).history.length - 1];
+    const h = (agent as any).getHistorySnapshot();
+    const last = h[h.length - 1];
     expect(last.role).toBe('user');
     expect(last.content).toBe('Focar em arquivos .ts apenas');
 

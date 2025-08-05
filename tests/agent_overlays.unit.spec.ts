@@ -34,7 +34,8 @@ describe('Agent Live Dev Overlays - Unit', () => {
 
     bus.emit('dev_overlay', { payload: 'Usar abordagem segura', ts: 1 });
 
-    const last = (agent as any).history[(agent as any).history.length - 1];
+    const h = (agent as any).getHistorySnapshot();
+    const last = h[h.length - 1];
     expect(last.role).toBe('user');
     expect(last.content).toBe('Usar abordagem segura');
 
@@ -50,7 +51,7 @@ describe('Agent Live Dev Overlays - Unit', () => {
     bus.emit('dev_overlay', { payload: 'target=api', ts: 2 });
     bus.emit('dev_overlay', { payload: 'Apenas .ts', ts: 3 });
 
-    const h = (agent as any).history;
+    const h = (agent as any).getHistorySnapshot();
     expect(h[h.length - 2].content).toBe('target=api');
     expect(h[h.length - 1].content).toBe('Apenas .ts');
   });
@@ -58,7 +59,8 @@ describe('Agent Live Dev Overlays - Unit', () => {
   test('dev_overlay aceita kind mas ignora sem semântica especial (comportamento atual)', () => {
     const { agent, bus } = createAgentForTest();
     bus.emit('dev_overlay', { kind: 'override', payload: 'expected_replacements=2', ts: 4 });
-    const last = (agent as any).history[(agent as any).history.length - 1];
+    const hist = (agent as any).getHistorySnapshot();
+    const last = hist[hist.length - 1];
     expect(last.content).toBe('expected_replacements=2');
   });
 });

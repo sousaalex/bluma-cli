@@ -29,8 +29,8 @@ export const Header = () => {
           2. Be as clear and specific as possible to get accurate responses.
         </Text>
         <Text>
-        3. Run <Text color="cyan">/init</Text> to create a <Text color="cyan">BluMa.md</Text>,  
-        file with instructions for BluMa.
+          3. Run <Text color="cyan">/init</Text> to create a{" "}
+          <Text color="cyan">BluMa.md</Text>, file with instructions for BluMa.
         </Text>
         <Text>
           4. Type <Text color="cyan">/help</Text> to explore available commands
@@ -60,32 +60,35 @@ export const SessionInfo = ({
   <Box
     borderStyle="round" // Borda arredondada para destaque visual
     borderColor="gray" // Borda cinza, mantém discreto mas separado
-    padding={1} // Espaço horizontal entre a borda e o conteúdo
     flexDirection="column" // Empilha itens em coluna para melhor leitura
     marginBottom={1} // Espaço abaixo, separa visualmente dos próximos componentes
   >
-    {/* Linha principal: hostname e ID da sessão (identidade visual da CLI) */}
-    <Text>
-      <Text bold color="white">
-        localhost
+    <Box
+        marginLeft={1}
+        flexDirection="column"
+    >
+      {/* Linha principal: hostname e ID da sessão (identidade visual da CLI) */}
+      <Text>
+        <Text bold color="white">
+          localhost
+        </Text>
+        <Text color="gray"> session:</Text>{" "}
+        <Text color="magenta">{sessionId}</Text>
       </Text>
-      <Text color="gray"> session:</Text>{" "}
-      <Text color="magenta">{sessionId}</Text>
-    </Text>
-    {/* Linha do diretório de trabalho (contexto de execução do agente) */}
-    <Text>
-      <Text color="magenta">↳</Text>{" "}
-      <Text color="gray">workdir: {workdir}</Text>
-    </Text>
-    {/* Linha do status do MCP (central de coordenação dos plugins/ações) */}
-    <Text>
-      <Text color="magenta">↳</Text> <Text color="gray">mcp: </Text>
-      <Text color={mcpStatus === "connected" ? "green" : "yellow"}>
-        {mcpStatus}
+      {/* Linha do diretório de trabalho (contexto de execução do agente) */}
+      <Text>
+        <Text color="magenta">↳</Text>{" "}
+        <Text color="gray">workdir: {workdir}</Text>
       </Text>
-    </Text>
-    {/* Linha com total de ferramentas conectadas ou "loading..." se carregando */}
-    {/* <Text>
+      {/* Linha do status do MCP (central de coordenação dos plugins/ações) */}
+      <Text>
+        <Text color="magenta">↳</Text> <Text color="gray">mcp: </Text>
+        <Text color={mcpStatus === "connected" ? "green" : "yellow"}>
+          {mcpStatus}
+        </Text>
+      </Text>
+      {/* Linha com total de ferramentas conectadas ou "loading..." se carregando */}
+      {/* <Text>
             <Text color="magenta">↳</Text> 
             <Text color="gray">Tools: </Text>
             <Text color="cyan">
@@ -93,5 +96,6 @@ export const SessionInfo = ({
                 {toolsCount !== null ? toolsCount : 'loading...'}
             </Text>
         </Text> */}
+    </Box>
   </Box>
 );

@@ -164,7 +164,7 @@ export const renderCountFilesLines = ({ args }: RenderProps): React.ReactElement
       </Box>
     );
   };
-// --- Renderizador para `sequentialThinking_nootebook` (Thinking Process) ---
+// --- Renderizador para `reasoning_nootebook` (Thinking Process) ---
 // Extraído do App.tsx original
 export const renderBlumaNotebook = ({ args }: RenderProps): React.ReactElement => {
     // --- Definição da Interface para o nosso dado (para segurança do TypeScript) ---
@@ -193,17 +193,16 @@ export const renderBlumaNotebook = ({ args }: RenderProps): React.ReactElement =
         // Usamos a mesma estrutura de caixa com borda
         <Box borderStyle="round" borderColor="green" flexDirection="column" paddingX={1}>
           {/* Título da seção */}
-          <Box>
+          {/* <Box>
             <Text bold>
-              {/* Um ícone de cérebro ou engrenagem para 'Thinking' */}
               <Text color="green">🧠 </Text> 
               Thinking Process
             </Text>
-          </Box>
+          </Box> */}
   
           {/* Seção do "Pensamento" */}
-          <Box marginTop={1} flexDirection="column">
-            <Text dimColor>Thought:</Text>
+          <Box flexDirection="column">
+            <Text bold>Thought:</Text>
             {/* O pensamento em si, com uma leve indentação e cor neutra */}
             <Box marginLeft={2}>
               <Text color="gray">{thinkingData.thought}</Text>
@@ -218,7 +217,7 @@ export const renderBlumaNotebook = ({ args }: RenderProps): React.ReactElement =
               {thinkingData.remaining_tasks.map((task, index) => (
                 <Box key={index} marginLeft={2}>
                   <Text>
-                    <Text color="gray">↳ </Text>
+                    {/* <Text color="gray">↳ </Text> */}
                     {/* Damos uma cor diferente para tarefas concluídas (●) vs. pendentes ([ ]) */}
                     <Text color={task.startsWith('🗸') ? 'green' : 'yellow'}>{task}</Text>
                   </Text>
@@ -323,7 +322,7 @@ export const renderGenericToolCall = ({ toolName, args }: RenderProps): React.Re
 export const ToolRenderDisplay: { [key: string]: (props: RenderProps) => React.ReactElement } = {
   'shell_command': renderShellCommand,
   'ls_tool': renderLsTool,
-  'sequentialThinking_nootebook': renderBlumaNotebook,
+  'reasoning_nootebook': renderBlumaNotebook,
   'count_file_lines': renderCountFilesLines,
   'read_file_lines': renderReadFileLines,
   'edit_tool': renderEditToolCall,

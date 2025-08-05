@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "sequentialThinking": {
+    "reasoning": {
       "type": "stdio", 
       "command": "cmd",
       "args": [

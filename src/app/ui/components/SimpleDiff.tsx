@@ -1,6 +1,5 @@
-// Em: src/components/components/SimpleDiff.tsx
+//src/components/components/SimpleDiff.tsx
 
-import React from 'react';
 import { Box, Text } from 'ink';
 
 interface SimpleDiffProps {
@@ -50,7 +49,7 @@ export const SimpleDiff = ({ text, maxHeight }: SimpleDiffProps) => {
         return (
           <Text key={index} color={color}>
             {/* ADICIONA O PREFIXO '↳' PARA CONSISTÊNCIA */}
-            <Text dimColor>  ↳ </Text>
+            {/* <Text dimColor>  ↳ </Text> */}
             {line === '' ? ' ' : line}
           </Text>
         );

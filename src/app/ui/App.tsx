@@ -76,14 +76,16 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
       if (!text || isProcessing || !agentInstance.current) return;
 
       // Intercepta comandos de slash
-      if (text.startsWith('/')) {
+      if (text.startsWith("/")) {
         const [cmd] = text.slice(1).trim().split(/\s+/);
         // If it's just a single slash without a command, do nothing (avoid stray echo)
         if (!cmd) {
           setIsProcessing(false);
           return;
         }
-        setHistory((prev) => ([
+        // Ativa o estado de processamento também para comandos slash
+        setIsProcessing(true);
+        setHistory((prev) => [
           ...prev,
           {
             id: prev.length,
@@ -98,11 +100,14 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
           {
             id: prev.length + 1,
             component: (
-              <SlashCommands input={text} setHistory={setHistory as any} agentRef={agentInstance as any} />
+              <SlashCommands
+                input={text}
+                setHistory={setHistory as any}
+                agentRef={agentInstance as any}
+              />
             ),
-          }
-        ]));
-        setIsProcessing(false);
+          },
+        ]);
         return;
       }
 
@@ -238,15 +243,13 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               .then(() => checkForUpdates())
               .then((msg) => {
                 if (msg) {
-                  setHistory((prev) => ([
+                  setHistory((prev) => [
                     ...prev,
                     {
                       id: prev.length,
-                      component: (
-                        <UpdateNotice message={msg} />
-                      ),
+                      component: <UpdateNotice message={msg} />,
                     },
-                  ]));
+                  ]);
                 }
               })
               .catch(() => void 0);
@@ -302,7 +305,6 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
                 {parsed.payload}
               </Text>
             </Box>
-          
           );
         } else if (parsed.type === "log") {
           newComponent = (
@@ -351,17 +353,13 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
   const renderInteractiveComponent = () => {
     if (mcpStatus !== "connected") {
       return (
-       <Box
-       borderStyle="round"
-       borderColor="black"
-       >
-        <SessionInfoConnectingMCP
-          sessionId={sessionId}
-          workdir={workdir}
-          statusMessage={statusMessage}
-        />
-         
-       </Box>
+        <Box borderStyle="round" borderColor="black">
+          <SessionInfoConnectingMCP
+            sessionId={sessionId}
+            workdir={workdir}
+            statusMessage={statusMessage}
+          />
+        </Box>
       );
     }
 
