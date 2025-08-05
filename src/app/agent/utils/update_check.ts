@@ -63,7 +63,7 @@ export async function checkForUpdates(): Promise<string | null> {
     // const isDev = process.env.NODE_ENV !== "production";
 
     // In dev or when no-cache flag is set, we want to check every start
-    const updateCheckInterval = 0; // 0 => always check
+    const updateCheckInterval = 0; 
 
     const notifier = updateNotifier({
       pkg: { name: pkg.name, version: pkg.version },

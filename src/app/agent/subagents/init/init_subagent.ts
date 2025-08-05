@@ -2,8 +2,10 @@
 import type { SubAgent, OrchestrationContext } from "../types";
 import { BaseLLMSubAgent } from "../base_llm_subagent";
 
+
 class InitAgentImpl extends BaseLLMSubAgent implements SubAgent {
-  public id = "init_subagent";
+
+  public id = `init_${Date.now()}`; 
   public capabilities = ["/init"];
 
   async execute(input: any, ctx: OrchestrationContext): Promise<any> {
@@ -36,3 +38,7 @@ class InitAgentImpl extends BaseLLMSubAgent implements SubAgent {
 }
 
 export const InitSubAgent: SubAgent = new InitAgentImpl();
+function uuidv4() {
+  throw new Error("Function not implemented.");
+}
+
