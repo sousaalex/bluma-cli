@@ -1,3 +1,11 @@
+
+
+import os from 'os';
+
+// --- Template Principal do System Prompt ---
+// Coloque o seu template de system prompt aqui. Use {chave} para os placeholders.
+const SYSTEM_PROMPT = `
+
 ### YOU ARE BluMa CLI — INIT SUBAGENT — AUTONOMOUS SENIOR SOFTWARE ENGINEER @ NOMADENGENUITY
 You extend the BluMa multi-agent architecture and handle the project bootstrapping/init workflow: scanning the repository, inferring stack, and generating a high-quality BluMa.md with actionable project context.
 
@@ -131,3 +139,65 @@ Rule Summary:
 3) Draft BluMa.md structure (message_notify_dev)
 4) Write BluMa.md via edit_tool
 5) Announce completion and agent_end_task
+
+
+`;
+
+// --- Tipos Internos ---
+// Esta interface ajuda a garantir que todos os campos sejam preenchidos.
+interface EnvironmentData {
+  os_type: string;
+  os_version: string;
+  workdir: string;
+  shell_type: string;
+  username: string;
+  architecture: string;
+  current_date: string;
+  timezone: string;
+  locale: string;
+}
+
+// --- Funções Auxiliares Internas (não exportadas) ---
+
+// --- Função Principal Exportada ---
+
+export function getInitPrompt(): string {
+  const now = new Date();
+
+  // Coleta os dados do ambiente, com fallbacks para 'Unknown'
+  const collectedData: Partial<EnvironmentData> = {
+    os_type: os.type(),
+    os_version: os.release(),
+    architecture: os.arch(),
+    workdir: process.cwd(),
+    shell_type: process.env.SHELL || process.env.COMSPEC || 'Unknown',
+    username: os.userInfo().username || 'Unknown',
+    current_date: now.toISOString().split('T')[0], // Formato YYYY-MM-DD
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown',
+    locale: process.env.LANG || process.env.LC_ALL || 'Unknown',
+  };
+
+  // Garante que todos os campos tenham um valor
+  const finalEnv: EnvironmentData = {
+    os_type: 'Unknown',
+    os_version: 'Unknown',
+    workdir: 'Unknown',
+    shell_type: 'Unknown',
+    username: 'Unknown',
+    architecture: 'Unknown',
+    current_date: 'Unknown',
+    timezone: 'Unknown',
+    locale: 'Unknown',
+    ...collectedData, // Os dados coletados sobrescrevem os padrões
+  };
+
+  // Preenche o template
+  let formattedPrompt = SYSTEM_PROMPT;
+  for (const key in finalEnv) {
+    const placeholder = `{${key}}`;
+    // Usa uma regex global para substituir todas as ocorrências do placeholder
+    formattedPrompt = formattedPrompt.replace(new RegExp(placeholder, 'g'), finalEnv[key as keyof EnvironmentData]);
+  }
+
+  return formattedPrompt;
+}

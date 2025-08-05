@@ -5,7 +5,6 @@ import { BaseLLMSubAgent } from '../base_llm_subagent';
 class InitAgentImpl extends BaseLLMSubAgent implements SubAgent {
   public id = 'init_subagent';
   public capabilities = ['/init'];
-  protected systemPromptPath = './init_system_prompt.md';
 
   async execute(input: any, ctx: OrchestrationContext): Promise<any> {
     this.ctx = ctx;
@@ -14,7 +13,7 @@ class InitAgentImpl extends BaseLLMSubAgent implements SubAgent {
     await this.initializeHistory();
 
     // Seed user message fixa para orientar a primeira volta do LLM
-    const seed = 'analise o dir actual.';
+    const seed = 'Mapeia o diretório atual, infere a stack do projeto e prepara a geração do arquivo BluMa.md com o contexto do repositório.';
 
     // Se houver input do front, concatenamos de forma segura; caso contrário, usamos só o seed
 //     const combined = input ? `${seed}
