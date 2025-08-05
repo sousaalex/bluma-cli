@@ -4,7 +4,7 @@ import { useCustomInput } from "../utils/useSimpleInputBuffer.js";
 // Nota: se o hook não expor setText, usamos submissão direta ao escolher o comando
 import { useEffect, useMemo, useState } from "react";
 import { EventEmitter } from "events";
-import { filterSlashCommands, getSlashCommands } from "../utils/slashRegistry.js";
+import { filterSlashCommands } from "../utils/slashRegistry.js";
 
 // Pequeno event bus singleton local para emitir overlays
 // Em um app maior, esse EventEmitter deve vir de um provider/context global.
@@ -15,13 +15,15 @@ interface InputPromptProps {
   onSubmit: (value: string) => void;
   isReadOnly: boolean;
   onInterrupt: () => void;
-  disableWhileProcessing?: boolean; // when true, keep input visually active but ignore submissions/keys (except ESC)
+  disableWhileProcessing?: boolean; // when true, input fica TOTALMENTE bloqueado
 }
 
 export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhileProcessing = false }: InputPromptProps) => {
+  // 1) HOOKS SEMPRE NO TOPO, SEM RETORNOS ANTES
   const { stdout } = useStdout();
-  
   const [viewWidth, setViewWidth] = useState(() => stdout.columns - 6);
+  const [slashOpen, setSlashOpen] = useState(false);
+  const [slashIndex, setSlashIndex] = useState(0);
 
   useEffect(() => {
     const onResize = () => setViewWidth(stdout.columns - 6);
@@ -40,7 +42,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     if (isReadOnly) {
       if (trimmed.length > 0) {
         const payload = trimmed;
-        uiEventBus.emit('dev_overlay', { kind: 'message', payload, ts: Date.now() });
+        uiEventBus.emit("dev_overlay", { kind: "message", payload, ts: Date.now() });
         return; // não envia para o fluxo normal para não poluir o chat
       }
       return; // ignore vazios enquanto read-only
@@ -50,7 +52,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     onSubmit(value);
   };
 
-  const effectiveReadOnly = disableWhileProcessing ? false : isReadOnly; // keep visually active when disabling while processing
+  const effectiveReadOnly = isReadOnly;
 
   const { text, cursorPosition, viewStart } = useCustomInput({
     onSubmit: (value: string) => {
@@ -62,17 +64,11 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     onInterrupt,
   });
 
-  const [slashOpen, setSlashOpen] = useState(false);
-  const [slashIndex, setSlashIndex] = useState(0);
-
+  // PREPARO DE VARIÁVEIS DERIVADAS (independente do retorno condicional)
   const visibleText = text.slice(viewStart, viewStart + viewWidth);
   const visibleCursorPosition = cursorPosition - viewStart;
-
   const textBeforeCursor = visibleText.slice(0, visibleCursorPosition);
-  const charAtCursor = visibleText.slice(
-    visibleCursorPosition,
-    visibleCursorPosition + 1
-  );
+  const charAtCursor = visibleText.slice(visibleCursorPosition, visibleCursorPosition + 1);
   const textAfterCursor = visibleText.slice(visibleCursorPosition + 1);
 
   // Cursor sempre visível: se não houver caractere sob o cursor, usamos um espaço visual
@@ -82,12 +78,12 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
   const borderColor = isReadOnly ? "gray" : "gray";
 
   // Define o texto do placeholder. Só será mostrado quando o agente estiver a trabalhar.
-  const placeholder = isReadOnly ? " press esc to cancel | type a message while agent processes" : "";
+  const placeholder = isReadOnly ? " Press Esc to cancel | Enter message while agent runs" : "";
 
   // Determina se o placeholder deve ser mostrado
   const showPlaceholder = text.length === 0 && isReadOnly;
 
-  const slashQuery = useMemo(() => (text.startsWith('/') ? text : ''), [text]);
+  const slashQuery = useMemo(() => (text.startsWith("/") ? text : ""), [text]);
   const slashSuggestions = useMemo(() => {
     if (!slashQuery) return [] as ReturnType<typeof filterSlashCommands>;
     return filterSlashCommands(slashQuery);
@@ -98,7 +94,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
       setSlashOpen(false);
       return;
     }
-    if (text.startsWith('/')) {
+    if (text.startsWith("/")) {
       setSlashOpen(true);
       setSlashIndex(0);
     } else {
@@ -125,54 +121,68 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     }
   }, { isActive: slashOpen });
 
+  // 2) RENDERIZAÇÃO: EVITAR EARLY RETURN QUE ALTERE ORDEM DE HOOKS
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly}>
-        <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
-          <Text color="white" dimColor>{">"} </Text>
-          
-          {/* --- LÓGICA DE RENDERIZAÇÃO UNIFICADA --- */}
-          {/* Esta estrutura agora funciona para todos os casos. */}
-          
-          {/* 1. Renderiza o texto antes do cursor (vazio se o input estiver vazio) */}
-          <Text>{textBeforeCursor}</Text>
-          
-          {/* 2. Renderiza o cursor. Se não houver caractere, usa um espaço. Fica sempre visível. */}
-          <Text inverse>{cursorGlyph}</Text>
-          
-          {/* 3. Renderiza o texto depois do cursor (ou o placeholder) */}
-          {showPlaceholder ? (
-            <Text dimColor>{placeholder}</Text>
-          ) : (
-            <Text>{textAfterCursor}</Text>
-          )}
-        </Box>
-      </Box>
+      {disableWhileProcessing ? (
+        // Modo bloqueado visualmente, mantendo hooks estáveis
+        <>
+          <Box borderStyle="round" borderColor="gray" borderDimColor>
+            <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
+              <Text color="white">{">"} </Text>
+              <Text dimColor>ctrl+c to exit</Text>
+            </Box>
+          </Box>
+          {/* <Box paddingX={1} justifyContent="center">
+            <Text color="gray" dimColor>
+              Aguardando conclusão do diagnóstico inicial /init...
+            </Text>
+          </Box> */}
+        </>
+      ) : (
+        <>
+          <Box borderStyle="round" borderColor={borderColor} borderDimColor>
+            <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
+              <Text color="white">{">"} </Text>
+              {/* 1. Texto antes do cursor */}
+              <Text>{textBeforeCursor}</Text>
+              {/* 2. Cursor sempre visível */}
+              <Text inverse>{cursorGlyph}</Text>
+              {/* 3. Texto depois do cursor ou placeholder */}
+              {showPlaceholder ? (
+                <Text dimColor>{placeholder}</Text>
+              ) : (
+                <Text>{textAfterCursor}</Text>
+              )}
+            </Box>
+          </Box>
 
-      {slashOpen && slashSuggestions.length > 0 && (
-        <Box flexDirection="column" marginTop={1}>
-          {slashSuggestions.map((s, idx) => {
-            const isSelected = idx === slashIndex;
-            return (
-              <Box key={s.name} paddingLeft={1} paddingY={0}>
-                <Text color={isSelected ? 'blue' : 'gray'}>
-                  {isSelected ? '❯ ' : '  '}
-                </Text>
-                <Text color={isSelected ? 'blue' : 'white'} bold={isSelected} dimColor={!isSelected}>
-                  {s.name} <Text color="gray">- {s.description}</Text>
-                </Text>
-              </Box>
-            );
-          })}
-        </Box>
+          {slashOpen && slashSuggestions.length > 0 && (
+            <Box flexDirection="column" marginTop={1}>
+              {slashSuggestions.map((s, idx) => {
+                const isSelected = idx === slashIndex;
+                return (
+                  <Box key={s.name} paddingLeft={1} paddingY={0}>
+                    <Text color={isSelected ? "blue" : "gray"}>
+                      {isSelected ? "❯ " : "  "}
+                    </Text>
+                    <Text color={isSelected ? "blue" : "white"} bold={isSelected} dimColor={!isSelected}>
+                      {s.name} <Text color="gray">- {s.description}</Text>
+                    </Text>
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+        </>
       )}
 
-      {/* Exibe o rodapé com a informação do desenvolvedor */}
+      {/* Rodapé informativo */}
       <Box paddingX={1} justifyContent="center">
-          <Text color="gray" dimColor>
-            ctrl+c to exit | /help to explore commands | esc to interrupt | {isReadOnly ? "Read-only mode (message passthrough)" : "Editable mode"}
-          </Text>
-        </Box>
+        <Text color="gray" dimColor>
+          ctrl+c to exit | /help to explore commands | esc to interrupt | {isReadOnly ? "Read-only mode (message passthrough)" : "Editable mode"}
+        </Text>
+      </Box>
     </Box>
   );
 };

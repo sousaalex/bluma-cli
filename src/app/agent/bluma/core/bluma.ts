@@ -37,6 +37,8 @@ export class BluMaAgent {
 
     this.eventBus.on('user_interrupt', () => {
       this.isInterrupted = true;
+      // Informe a UI para desbloquear input imediatamente
+      this.eventBus.emit('backend_message', { type: 'done', status: 'interrupted' });
     });
 
     // Listener de dev_overlay movido do Agent para o núcleo onde há histórico

@@ -48,6 +48,9 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
     null
   );
 
+  // Novo: bloqueio total do input durante execução do subagente /init
+  const [isInitAgentActive, setIsInitAgentActive] = useState(false);
+
   const alwaysAcceptList = useRef<string[]>([]);
   const workdir = process.cwd();
   const updateCheckRan = useRef<boolean>(false);
@@ -82,6 +85,10 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
         if (!cmd) {
           setIsProcessing(false);
           return;
+        }
+        // BLOQUEIA TOTAL SE FOR /init
+        if (cmd === "init") {
+          setIsInitAgentActive(true);
         }
         // Ativa o estado de processamento também para comandos slash
         setIsProcessing(true);
@@ -190,6 +197,10 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
 
     const handleBackendMessage = (parsed: any) => {
       try {
+        // Libera input quando terminar /init
+        if (parsed.type === "done" || parsed.type === "error") {
+          setIsInitAgentActive(false);
+        }
         if (parsed.type === "connection_status") {
           setStatusMessage(parsed.message);
           return;
@@ -383,7 +394,8 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
         {isProcessing && !pendingConfirmation && <WorkingTimer />}
         <InputPrompt
           onSubmit={handleSubmit}
-          isReadOnly={isProcessing} // restore passthrough mode with placeholder during processing
+          isReadOnly={isProcessing || isInitAgentActive}
+          disableWhileProcessing={isInitAgentActive}
           onInterrupt={handleInterrupt}
         />
       </Box>
