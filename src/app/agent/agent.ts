@@ -112,8 +112,8 @@ export class Agent {
 
     // Configuração de cliente OpenAI (OpenRouter)
 
-    // const apiKey = "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";
-    // const modelName = 'openrouter/horizon-beta';
+    // const apiKey = "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";
+    // const modelName = 'openai/gpt-oss-120b';
     // if (!apiKey || !modelName) throw new Error('Chave de API ou nome do modelo do OpenRouter não encontrados.');
     // this.deploymentName = modelName;
 

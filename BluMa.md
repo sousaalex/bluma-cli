@@ -1,86 +1,90 @@
-# BluMa.md
+# BluMa Project Summary (Auto-generated)
 
-Project: @nomad-e/bluma-cli (version 0.0.31)
+## Project Overview
 
-Overview
-BluMa CLI is an independent automation/engineering agent with a rich terminal UI built on React/Ink. It orchestrates an LLM-driven agent core, tool invocation (native + MCP), interactive confirmations, session/history, and extensibility via plugins. The CLI entry renders an Ink app that wires the agent and UI through an EventEmitter.
+**BluMa CLI** is a modern, automation-focused engineering agent for the terminal. It leverages React-based (Ink) interactive UIs and orchestrates code automation, workflow management, developer prompts, and tool integration in a conversational agent model. Smart agent collaboration (OpenAI-compatible LLMs, Azure) and extensibility via native and plugin-based tools are key features. Persistent session/context, confirmation workflows, and extensibility make it suitable for complex developer environments.
 
-Detected Tech Stack (from manifests/configs)
-- Language/Runtime: TypeScript (ESM) on Node.js >= 18 (package.json, tsconfig.json)
-- UI: React 18 via Ink 5 with ink-text-input, ink-spinner, ink-big-text (package.json)
-- LLM/MCP: openai SDK; @modelcontextprotocol/sdk (package.json); agent wiring in src/app/agent/agent.ts
-- Build: esbuild + esbuild-plugin-node-externals (scripts/build.js)
-- Transpile: Babel (preset-env, preset-typescript) for Jest transforms (babel.config.cjs, jest.config.cjs)
-- Tests: Jest 30 + babel-jest, testMatch under tests/**/*.spec.(ts|js) (jest.config.cjs)
-- Env/config: dotenv; config files under src/app/agent/config copied to dist/config at build (scripts/build.js)
+## Technology Stack
 
-High-level Directory Map
-- /src/main.ts — Program entry; renders Ink App with sessionId and event bus.
-- /src/app/ui/** — Ink/React CLI components and layout, input prompt, confirmation flow, update notice, overlays.
-- /src/app/agent/** — Agent core, LLM client, prompt builder, session manager, feedback system, tool invoker, MCP client, subagents.
-  - bluma/core/bluma.ts — BluMaAgent core loop/state (referenced by agent.ts).
-  - core/** — llm.ts adapter, prompt builder, context manager.
-  - tools/** — mcp client and native tools (ls, readLines, count_lines, edit, shell_command, message, end_task).
-  - subagents/** — registry and implementations, including init subagent.
-  - config/** — runtime config JSON copied to dist/config by build script.
-- /scripts/build.js — esbuild bundling and post-build config copy.
-- /tests/** — Jest unit/integration specs for agents, subagents, UI, and tools.
-- package.json, tsconfig.json, babel.config.cjs, jest.config.cjs — project/test/build configs.
+- **Language:** TypeScript (ES Modules)
+- **Runtime:** Node.js >= 18
+- **CLI UI:** React 18 via Ink 5, with Ink ecosystem (ink-input, ink-spinner, ink-big-text)
+- **Build:** esbuild, babel (env, react, typescript presets)
+- **Testing:** Jest 30 + babel-jest, TypeScript support
+- **Agent/LLM:** Azure OpenAI + `openai` SDK, MCP via `@modelcontextprotocol/sdk`
+- **Config:** dotenv, advanced configs in `src/app/agent/config/`
+- **Other Deps:** uuid, diff, react-devtools-core, update-notifier
 
-Entry Points and Runtime Flow
-- Binary/CLI: package.json sets "bin": { "bluma": "dist/main.js" } and main: "dist/main.js".
-- Build output: dist/main.js (ESM) with a hashbang injected by build script.
-- Runtime entry: src/main.ts creates EventEmitter + sessionId and renders App from src/app/ui/App.tsx.
-- UI boot: App.tsx constructs Agent(sessionId, eventBus), awaits initialize(), and wires backend_message events to UI components and confirmation prompts.
-- Agent orchestration: src/app/agent/agent.ts wires ToolInvoker (native), MCPClient, AdvancedFeedbackSystem, BluMaAgent, and SubAgentsBluMa. It routes "/init" to the init subagent and otherwise delegates to BluMaAgent.
+## Directory Structure (Summary)
 
-Key Configs and Scripts
-- scripts/build.js
-  - Bundles src/main.ts → dist/main.js with esbuild (esm, node platform, externals plugin).
-  - Injects shebang (#!/usr/bin/env node).
-  - Copies config files from src/app/agent/config → dist/config.
-- tsconfig.json
-  - target/module: esnext; jsx: react-jsx; outDir: dist; moduleResolution: bundler; strict/skipLibCheck enabled.
-- babel.config.cjs
-  - Presets: @babel/preset-env (node 18), @babel/preset-typescript.
-- jest.config.cjs
-  - transform via babel-jest; testMatch: **/tests/**/*.spec.(ts|js); testEnvironment: node.
+```
+bluma-engineer/
+├── package.json             # NPM manifest, scripts & project meta
+├── tsconfig.json            # TypeScript compiler settings
+├── babel.config.cjs         # Babel transpiler config (node 18+, TS)
+├── jest.config.cjs          # Test runner setup (Jest + Babel)
+├── scripts/
+│   └── build.js             # esbuild CLI build script
+├── src/
+│   ├── main.ts              # CLI entry point, Ink renderer
+│   └── app/
+│        ├── agent/          # Agent logic, session, tools, LLM, MCP SDK
+│        │      ├── config/  # Config for MCP, native tools, credentials
+│        │      ├── core/    # LLM, prompt construction, orchestration
+│        │      ├── feedback/# Agent feedback, system suggestions
+│        │      ├── subagents/# Modular agent extensions
+│        │      ├── tools/   # Tool registry, native/tooling/MCP
+│        │      └── utils/   # Utility helpers, updates, history
+│        ├── protocols/      # Protocol wrappers, sys messages
+│        └── ui/             # Ink/React CLI components, layout, prompts
+│              ├── components/
+│              ├── utils/
+├── tests/                   # Jest/TS test suites (*.spec.ts)
+├── docs/                    # Documentation, banners, images
+│   └── assets/
+├── CONTRIBUTING.md
+├── LICENSE
+└── README.md
+```
 
-Useful CLI Commands (package.json scripts)
-- npm run build — Build with esbuild, inject hashbang, copy config to dist/config.
-- npm start — Run compiled CLI (node dist/main.js).
-- npm test — Run Jest test suite.
-- npm run test:watch — Jest in watch mode.
+## Key Configs & Scripts
 
-Operational Notes for BluMa
-- Environment variables:
-  - Uses dotenv; a global env path is loaded in the agent: ~/.bluma-cli/.env (src/app/agent/agent.ts). Also see .env / .env.example at repo root.
-  - For LLM (Azure/OpenAI/OpenRouter), ensure endpoint/model keys are configured per your deployment strategy.
-- MCP/tools:
-  - Native tools available: count_lines, edit, end_task, ls, message, readLines, shell_command (under src/app/agent/tools/natives/). MCP client is instantiated and connected on initialize().
-- Confirmation workflow:
-  - The UI requests confirmation for tool_calls unless whitelisted via “accept always” during the session (App.tsx handling for confirmation_request).
-- Build artifacts:
-  - dist/main.js is the CLI binary; config JSON files are required at runtime and copied to dist/config by the build script.
+- **package.json:**
+  - Scripts: `build` (node scripts/build.js), `start` (node dist/main.js), `test`, `test:watch`, `prepack` (build before publish)
+  - Main: `dist/main.js`, Bin: `bluma` CLI entry
+- **tsconfig.json:** Targeting Node 18+, ESM, JSX (react-jsx), strict typing
+- **babel.config.cjs:** Preset config for env, TypeScript; targets node 18
+- **jest.config.cjs:** Jest with babel-jest for .ts/.tsx, roots in project, `tests/` matching
+- **scripts/build.js:** esbuild (TypeScript to JS, bundle step)
+- **src/app/agent/config/:** Advanced agent, MCP, and native tools config
 
-Subagents and Behavior
-- Init Subagent (src/app/agent/subagents/init/init_subagent.ts)
-  - Capability: "/init". Seeds a fixed user instruction to scan repo and produce BluMa.md; executes via BaseLLMSubAgent and uses the same tool/confirmation channel.
-- SubAgents orchestrator (src/app/agent/subagents/subagents_bluma.ts, registry.ts) manages registration and routing for slash commands.
+## Primary Entry Points
 
-Testing Footprint (from /tests)
-- Coverage across agents, init subagent seed, session manager, prompt builder, overlays, UI working state, edit tool, routing, and integration flows.
+- `src/main.ts`: CLI program entry (runs Ink React app)
+- `src/app/agent/agent.ts`: Agent core logic
+- Scripts in package.json: see above
 
-Quick Start
-1) npm install
-2) npm run build
-3) npm start  (or invoke dist/main.js directly; after global install, use `bluma`)
+## Useful CLI Commands
 
-Evidence References
-- package.json, tsconfig.json, babel.config.cjs, jest.config.cjs
-- scripts/build.js
-- src/main.ts, src/app/ui/App.tsx
-- src/app/agent/agent.ts
-- src/app/agent/tools/natives/*, src/app/agent/tools/mcp/mcp_client.ts
-- src/app/agent/subagents/init/init_subagent.ts
-- tests/**/*.spec.*
+- `npm run build` — Compile TS to JS, bundle via esbuild (output: dist/)
+- `npm start` — Run the CLI (after build)
+- `npx bluma` — Run built CLI interactively
+- `npm test` or `npm run test:watch` — Run Jest tests (with TS support)
+
+## Operational & Dev Notes
+
+- **.env** required; see README for variables (OpenAI/Azure keys, etc).
+- Main config, plugin, and tool definition files: `src/app/agent/config/`
+- Test coverage in `/tests`; do not edit production logic when test constraints active
+- Supports live dev overlay channel for mid-task hints/constraints
+- All persistent state/logs stored relative to CLI working directory
+
+## Next Tasks / BluMa Agent Notes
+
+- Consult `src/app/agent/config/` for adding or customizing tools, credentials
+- Follow CONTRIBUTING.md for patch/process standards
+- Use session overlays to pass dev guidance in real time
+
+---
+_Auto-generated by BluMa InitSubAgent. Always validate details against current repo state before assuming architectural invariants._
+

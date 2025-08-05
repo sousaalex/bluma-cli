@@ -18,7 +18,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, details, hint }) =
       marginBottom={1}
     >
       <Text color="red" bold>
-        ❌ Error
+        Error
       </Text>
       <Text color="red">{message}</Text>
       {details ? (

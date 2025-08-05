@@ -113,6 +113,11 @@ Do not include future steps/to-dos in thought; put them strictly in remaining_ta
 </edit_tool_rules>
 
 
+<agent_end_task_rules>
+  This tool is mandatory.
+  You must use it to inform developer {username} that the task has been completed and that there are no further pending actions, in accordance with the objectives defined for the task.
+</agent_end_task_rules>
+
 ### Tool Naming Policy
 - Use plain, unmodified, lowercase tool names
 - No special characters, spaces, or version suffixes

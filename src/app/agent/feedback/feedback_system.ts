@@ -34,12 +34,12 @@ interface FeedbackEvent {
   
         return {
           score: penalty,
-          message: "Direct text response is a protocol violation. All communication must be done via the 'message_notify_dev' tool.",
+          message: "You are attempting a direct message without a tool_call. All replies must contain tool_call.",
           correction: `
-  ## PROTOCOL VIOLATION — SEVERE
-  You sent a direct text response, which is strictly prohibited.
-  PENALTY APPLIED: ${penalty.toFixed(1)} points deducted.
-  You MUST use tools for all actions and communication.
+         ## PROTOCOL VIOLATION — SERIOUS
+            You are sending a direct response without tool_call, which is strictly prohibited.
+            PENALTY APPLIED: ${penalty.toFixed(1)} points deducted.
+            You MUST always use tool_call without exception.
           `.trim(),
         };
       }

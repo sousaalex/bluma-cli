@@ -190,7 +190,7 @@ interface McpServerConfig {
     public async invoke(toolName: string, args: any): Promise<any> {
       const route = this.toolToServerMap.get(toolName);
       if (!route) {
-        return { error: `Ferramenta '${toolName}' não encontrada ou registrada.` };
+        return { error: `This tool '${toolName}'is not found or registered you must use the correct name of this tool.` };
       }
   
       if (route.server === 'native') {
@@ -198,7 +198,7 @@ interface McpServerConfig {
       } else {
         const session = this.sessions.get(route.server);
         if (!session) {
-          return { error: `Sessão para o servidor '${route.server}' não encontrada.` };
+          return { error: `Session to the server '${route.server}' não encontrada.` };
         }
         const result = await session.callTool({ name: route.originalName, arguments: args });
         return result.content;
@@ -230,7 +230,7 @@ interface McpServerConfig {
           await session.close();
         //   console.log(`[MCPClient] Conexão com '${name}' encerrada.`);
         } catch (error) {
-          console.error(`[MCPClient] Erro ao encerrar conexão com '${name}':`, error);
+          console.error(`[MCPClient]Error closing connection to'${name}':`, error);
         }
       }
     }
