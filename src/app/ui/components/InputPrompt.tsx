@@ -141,7 +141,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
         </>
       ) : (
         <>
-          <Box borderStyle="round" borderColor={borderColor} borderDimColor>
+          <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly}>
             <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
               <Text color="white">{">"} </Text>
               {/* 1. Texto antes do cursor */}

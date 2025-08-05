@@ -17,6 +17,7 @@ import SessionInfoConnectingMCP from "./SessionInfoConnectingMCP.js";
 import SlashCommands from "./components/SlashCommands.js";
 import { checkForUpdates } from "../agent/utils/update_check.js";
 import UpdateNotice from "./components/UpdateNotice.js";
+import ErrorMessage from "./components/ErrorMessage.js";
 
 // --- Interfaces e Componentes (inalterados) ---
 
@@ -292,7 +293,13 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
             </Box>
           );
         } else if (parsed.type === "error") {
-          newComponent = <Text color="red">❌ {parsed.message}</Text>;
+          newComponent = (
+            <ErrorMessage
+              message={parsed.message}
+              details={parsed.details || undefined}
+              hint={parsed.hint || undefined}
+            />
+          );
         } else if (parsed.type === "tool_call") {
           newComponent = (
             <ToolCallDisplay
