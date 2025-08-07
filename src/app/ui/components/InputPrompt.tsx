@@ -5,7 +5,7 @@ import { useCustomInput } from "../utils/useSimpleInputBuffer.js";
 import { useEffect, useMemo, useState } from "react";
 import { EventEmitter } from "events";
 import { filterSlashCommands } from "../utils/slashRegistry.js";
-
+import { useAtCompletion } from "../hooks/useAtCompletion";
 // Pequeno event bus singleton local para emitir overlays
 // Em um app maior, esse EventEmitter deve vir de um provider/context global.
 export const uiEventBus: EventEmitter = (global as any).__bluma_ui_eventbus__ || new EventEmitter();
@@ -127,6 +127,23 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
   }, { isActive: slashOpen });
 
   // 2) RENDERIZAÇÃO: EVITAR EARLY RETURN QUE ALTERE ORDEM DE HOOKS
+
+  // --- Path Autocomplete Integration ---
+  const cwd = process.cwd();
+  const pathAutocomplete = useAtCompletion({ cwd, text, cursorPosition, setText });
+  useInput((input, key) => {
+    if (!pathAutocomplete.open) return;
+    if (key.downArrow) {
+      pathAutocomplete.setSelected((i) => Math.min(i + 1, Math.max(0, pathAutocomplete.suggestions.length - 1)));
+    } else if (key.upArrow) {
+      pathAutocomplete.setSelected((i) => Math.max(i - 1, 0));
+    } else if (key.return || key.tab) {
+      pathAutocomplete.insertAtSelection();
+    } else if (key.escape) {
+      pathAutocomplete.close();
+    }
+  }, { isActive: pathAutocomplete.open });
+
   return (
     <Box flexDirection="column">
       {disableWhileProcessing ? (
@@ -138,11 +155,6 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
               <Text dimColor>ctrl+c to exit</Text>
             </Box>
           </Box>
-          {/* <Box paddingX={1} justifyContent="center">
-            <Text color="gray" dimColor>
-              Aguardando conclusão do diagnóstico inicial /init...
-            </Text>
-          </Box> */}
         </>
       ) : (
         <>
@@ -161,6 +173,25 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
               )}
             </Box>
           </Box>
+
+          {/* SUGESTÃO PATH AUTOCOMPLETE */}
+          {pathAutocomplete.open && pathAutocomplete.suggestions.length > 0 && (
+            <Box flexDirection="column" marginTop={1}>
+              {pathAutocomplete.suggestions.map((s, idx) => {
+                const isSelected = idx === pathAutocomplete.selected;
+                return (
+                  <Box key={s.fullPath} paddingLeft={1} paddingY={0}>
+                    <Text color={isSelected ? "cyan" : "gray"}>
+                      {isSelected ? "❯ " : "  "}
+                    </Text>
+                    <Text color={isSelected ? "cyan" : "white"} bold={isSelected} dimColor={!isSelected}>
+                      {s.label}
+                    </Text>
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
 
           {slashOpen && slashSuggestions.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
