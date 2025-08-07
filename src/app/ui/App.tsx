@@ -90,9 +90,13 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
         // BLOQUEIA TOTAL SE FOR /init
         if (cmd === "init") {
           setIsInitAgentActive(true);
+          // Ativa o estado de processamento apenas para /init
+          setIsProcessing(true);
+        } else {
+          // Não ativamos o estado de processamento para comandos de consulta (/help, /tools, /mcp, etc.)
+          setIsProcessing(false);
+          setIsInitAgentActive(false);
         }
-        // Ativa o estado de processamento também para comandos slash
-        setIsProcessing(true);
         setHistory((prev) => [
           ...prev,
           {
