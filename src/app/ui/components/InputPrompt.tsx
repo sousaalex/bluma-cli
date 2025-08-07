@@ -55,8 +55,10 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
   const effectiveReadOnly = isReadOnly;
 
   const { text, cursorPosition, viewStart, setText } = useCustomInput({
+    // Sobrepõe a lógica padrão: nunca submete se autocomplete aberto
     onSubmit: (value: string) => {
-      if (disableWhileProcessing && isReadOnly) return; // ignore submissions while processing
+      if (disableWhileProcessing && isReadOnly) return;
+      if (pathAutocomplete.open) return; // Nunca submit se autocomplete aberto
       permissiveOnSubmit(value);
     },
     viewWidth,
@@ -132,17 +134,52 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
   const cwd = process.cwd();
   const pathAutocomplete = useAtCompletion({ cwd, text, cursorPosition, setText });
   useInput((input, key) => {
-    if (!pathAutocomplete.open) return;
-    if (key.downArrow) {
-      pathAutocomplete.setSelected((i) => Math.min(i + 1, Math.max(0, pathAutocomplete.suggestions.length - 1)));
-    } else if (key.upArrow) {
-      pathAutocomplete.setSelected((i) => Math.max(i - 1, 0));
-    } else if (key.return || key.tab) {
-      pathAutocomplete.insertAtSelection();
-    } else if (key.escape) {
-      pathAutocomplete.close();
+    // PATH AUTOCOMPLETE: ENTER/TAB só insere path, nunca submete
+    if (pathAutocomplete.open) {
+      if (key.downArrow) {
+        pathAutocomplete.setSelected((i) => Math.min(i + 1, Math.max(0, pathAutocomplete.suggestions.length - 1)));
+        return;
+      } else if (key.upArrow) {
+        pathAutocomplete.setSelected((i) => Math.max(i - 1, 0));
+        return;
+      } else if (key.return || key.tab) {
+        // Simpler behavior: if autocomplete is open and we have a selected suggestion,
+        // attempt to insert it. We also guard by checking that there is an @ pattern
+        // immediately before the cursor to avoid accidental inserts.
+        const selected = pathAutocomplete.suggestions[pathAutocomplete.selected];
+        if (selected) {
+          // Quick scan for @pattern before cursor (same logic as useAtCompletion.scanForAt)
+          const before = text.slice(0, cursorPosition);
+          const m = before.match(/@([\w\/.\-_]*)$/);
+          if (m) {
+            (globalThis as any).__BLUMA_SUPPRESS_SUBMIT__ = true; // ensure input hook won't submit
+            pathAutocomplete.insertAtSelection();
+          }
+        }
+        return;
+      } else if (key.escape) {
+        pathAutocomplete.close();
+        return;
+      }
+      // Enquanto autocomplete aberto, block submit
+      return;
     }
-  }, { isActive: pathAutocomplete.open });
+  }, { isActive: true });
+
+  // SUBMIT: Só permite se o cursor tiver UM espaço após path
+  function canSubmitGivenCursor() {
+    // Cursor deve não estar "colado" a path gerado pelo @autocomplete;
+    // Checamos se o caractere após cursor é espaço ou fim da string
+    if (visibleCursorPosition < visibleText.length) {
+      return visibleText[visibleCursorPosition] === " ";
+    } else {
+      // Está no final, não envia!
+      return false;
+    }
+  }
+
+  // Adapte o chamado da onSubmit ao checar canSubmitGivenCursor antes de submeter input
+  // (Se necessário, adaptar o hook useCustomInput; aqui ilustramos lógica para uso no permissiveOnSubmit ou onSubmit callback)
 
   return (
     <Box flexDirection="column">

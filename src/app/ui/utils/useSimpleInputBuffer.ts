@@ -115,7 +115,17 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
       }
 
       // Lógica existente para outras teclas (modo editável)
+      // PATCH: never submit on ENTER if path autocomplete is open or suppression flag set.
       if (key.return) {
+        // If at-completion overlay is open, ignore ENTER to allow selection handlers to process.
+        if ((globalThis as any).__BLUMA_AT_OPEN__) {
+          return;
+        }
+        if ((globalThis as any).__BLUMA_SUPPRESS_SUBMIT__) {
+          // ENTER was captured upstream; clear flag and ignore submit.
+          (globalThis as any).__BLUMA_SUPPRESS_SUBMIT__ = false;
+          return;
+        }
         if (state.text.trim().length > 0) {
           onSubmit(state.text);
           dispatch({ type: 'SUBMIT' });
@@ -137,6 +147,13 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
     text: state.text,
     cursorPosition: state.cursorPosition,
     viewStart: state.viewStart,
-    setText: (t: string, moveCursorToEnd: boolean = true) => dispatch({ type: 'SET', payload: { text: t, moveCursorToEnd } }),
+    setText: (t: string, pos?: number) => {
+      if (typeof pos === 'number') {
+        dispatch({ type: 'SET', payload: { text: t, moveCursorToEnd: false, cursorPosition: pos } });
+      } else {
+        dispatch({ type: 'SET', payload: { text: t, moveCursorToEnd: true } });
+      }
+    },
+    setCursor: (pos: number) => dispatch({ type: 'SET_CURSOR', payload: pos }),
   };
 };

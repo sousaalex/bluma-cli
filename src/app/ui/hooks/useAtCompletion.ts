@@ -61,12 +61,15 @@ export function useAtCompletion({ cwd, text,
     const res = scanForAt(newText, newCursor);
     if (res.pattern!==null && res.pattern.length>=0) {
       setOpen(true);
+      // Inform global flag that @autocomplete is open so the input buffer won't auto-submit on Enter
+      (globalThis as any).__BLUMA_AT_OPEN__ = true;
       const suggs = listPathSuggestions(cwd, res.pattern);
       setSuggestions(suggs);
       setSelected(0);
       lastQuery.current = res.pattern;
     } else {
       setOpen(false);
+      (globalThis as any).__BLUMA_AT_OPEN__ = false;
       setSuggestions([]);
     }
   }
@@ -77,11 +80,28 @@ export function useAtCompletion({ cwd, text,
     const res = scanForAt(text, cursorPosition);
     if(!res || res.insertStart<0) return;
     const chosen = suggestions[selected].label;
-    const before = text.slice(0, res.insertStart);
+    const isDir = suggestions[selected].isDir;
+    // Instead of always replacing everything after '@', replace only the current segment
+    // (text after the last '/' in the @pattern). This preserves parent path segments.
+    const pattern = res.pattern || '';
+    const lastSlash = pattern.lastIndexOf('/');
+    const segmentOffset = lastSlash >= 0 ? lastSlash + 1 : 0; // number of chars into pattern where current segment starts
+    const segmentStart = res.insertStart + segmentOffset; // absolute index in text where segment starts
+    const before = text.slice(0, segmentStart);
     const after = text.slice(cursorPosition);
-    setText(before + chosen + after);
-    setOpen(false);
-    setSuggestions([]);
+    const newText = before + chosen + after;
+    // Move cursor to end of inserted text (setText moveCursorToEnd = true)
+    setText(newText + (isDir ? '' : ' '), true); // se arquivo, insere espaço após, se dir, só path
+    if (isDir) {
+      setOpen(false); setSuggestions([]);
+      setTimeout(() => {
+        setOpen(true);
+        update(newText, newText.length); // sempre cursor no final após inserir dir
+      }, 0);
+    } else { // arquivo
+      setOpen(false);
+      setSuggestions([]);
+    }
   }
   function close() {
     setOpen(false);
