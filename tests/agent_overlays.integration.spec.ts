@@ -26,20 +26,20 @@ function createAgentForTest() {
 }
 
 describe('Agent Live Dev Overlays - Integration (light)', () => {
-  test('dev_overlay adiciona ao histórico e emite backend_message', async () => {
+  test('user_overlay adiciona ao histórico e emite backend_message', async () => {
     const { agent, bus } = createAgentForTest();
 
     const events: any[] = [];
     bus.on('backend_message', (e) => events.push(e));
 
-    bus.emit('dev_overlay', { kind: 'hint', payload: 'Focar em arquivos .ts apenas', ts: 10 });
+    bus.emit('user_overlay', { kind: 'hint', payload: 'Focar em arquivos .ts apenas', ts: 10 });
 
     const h = (agent as any).getHistorySnapshot();
     const last = h[h.length - 1];
-    expect(last.role).toBe('developer');
+    expect(last.role).toBe('user');
     expect(last.content).toBe('Focar em arquivos .ts apenas');
 
-    const overlayEvent = events.find(e => e.type === 'dev_overlay');
+    const overlayEvent = events.find(e => e.type === 'user_overlay');
     expect(overlayEvent).toBeTruthy();
     expect(overlayEvent.payload).toBe('Focar em arquivos .ts apenas');
   });

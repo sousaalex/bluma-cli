@@ -319,7 +319,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               result={parsed.result}
             />
           );
-        } else if (parsed.type === "dev_overlay") {
+        } else if (parsed.type === "user_overlay") {
           newComponent = (
             <Box marginBottom={1}>
               <Text color="gray">
@@ -349,23 +349,23 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
       }
     };
 
-    // Ponte UI→Agent: reenvia eventos dev_overlay do uiEventBus para o eventBus do App/Agent
+    // Ponte UI→Agent: reenvia eventos user_overlay do uiEventBus para o eventBus do App/Agent
     const handleUiOverlay = (data: {
       kind?: string;
       payload: string;
       ts?: number;
     }) => {
       // Propaga para o agente; a renderização virá do próprio Agent via backend_message
-      eventBus.emit("dev_overlay", data);
+      eventBus.emit("user_overlay", data);
     };
 
-    uiEventBus.on("dev_overlay", handleUiOverlay);
+    uiEventBus.on("user_overlay", handleUiOverlay);
 
     eventBus.on("backend_message", handleBackendMessage);
     initializeAgent();
 
     return () => {
-      uiEventBus.off("dev_overlay", handleUiOverlay);
+      uiEventBus.off("user_overlay", handleUiOverlay);
       eventBus.off("backend_message", handleBackendMessage);
     };
   }, [eventBus, sessionId, handleConfirmation]);

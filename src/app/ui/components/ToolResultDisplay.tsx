@@ -10,13 +10,13 @@ interface ToolResultDisplayProps {
 
 const ToolResultDisplayComponent = ({ toolName, result }: ToolResultDisplayProps) => {
   // NOVA LÓGICA:
-  // Se o nome da ferramenta NÃO for "message_notify_dev",
+  // Se o nome da ferramenta NÃO for "message_notify_user",
   // retorna null imediatamente e não renderiza nada.
-  if (!toolName.includes("message_notify_dev")) {
+  if (!toolName.includes("message_notify_user")) {
     return null;
   }
 
-  // Se o código chegou até aqui, significa que toolName É "message_notify_dev".
+  // Se o código chegou até aqui, significa que toolName É "message_notify_user".
   // Agora, tentamos processar e exibir a mensagem específica dele.
   try {
     const parsed = JSON.parse(result);

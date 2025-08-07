@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url'; // <<< ADICIONE ESTA IMPORTAÇÃO
 // Importa as implementações das ferramentas de seus respectivos arquivos
 import { shellCommand } from './tools/natives/shell_command.js';
 import { editTool } from './tools/natives/edit.js';
-import { messageNotifyDev } from './tools/natives/message.js';
+import { messageNotifyuser } from './tools/natives/message.js';
 import { ls } from './tools/natives/ls.js';
 import { readLines } from './tools/natives/readLines.js'
 import { countLines } from './tools/natives/count_lines.js';
@@ -86,7 +86,7 @@ export class ToolInvoker {
   private registerTools(): void {
     this.toolImplementations.set('shell_command', shellCommand);
     this.toolImplementations.set('edit_tool', editTool);
-    this.toolImplementations.set('message_notify_dev', messageNotifyDev);
+    this.toolImplementations.set('message_notify_user', messageNotifyuser);
     this.toolImplementations.set('ls_tool', ls);
     this.toolImplementations.set('count_file_lines', countLines);
     this.toolImplementations.set('read_file_lines', readLines)

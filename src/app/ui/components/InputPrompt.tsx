@@ -42,7 +42,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     if (isReadOnly) {
       if (trimmed.length > 0) {
         const payload = trimmed;
-        uiEventBus.emit("dev_overlay", { kind: "message", payload, ts: Date.now() });
+        uiEventBus.emit("user_overlay", { kind: "message", payload, ts: Date.now() });
         return; // não envia para o fluxo normal para não poluir o chat
       }
       return; // ignore vazios enquanto read-only

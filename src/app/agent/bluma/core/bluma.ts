@@ -41,17 +41,17 @@ export class BluMaAgent {
       this.eventBus.emit('backend_message', { type: 'done', status: 'interrupted' });
     });
 
-    // Listener de dev_overlay movido do Agent para o núcleo onde há histórico
-    this.eventBus.on('dev_overlay', async (data: { kind?: string; payload: string; ts?: number }) => {
+    // Listener de user_overlay movido do Agent para o núcleo onde há histórico
+    this.eventBus.on('user_overlay', async (data: { kind?: string; payload: string; ts?: number }) => {
       const clean = String(data.payload ?? '').trim();
-      this.history.push({ role: 'developer', name: 'dev_overlay', content: clean } as any);
-      this.eventBus.emit('backend_message', { type: 'dev_overlay', payload: clean, ts: data.ts || Date.now() });
+      this.history.push({ role: 'user', name: 'user_overlay', content: clean } as any);
+      this.eventBus.emit('backend_message', { type: 'user_overlay', payload: clean, ts: data.ts || Date.now() });
       try {
         if (this.sessionFile) {
           await saveSessionHistory(this.sessionFile, this.history);
         }
       } catch (e: any) {
-        this.eventBus.emit('backend_message', { type: 'error', message: `Falha ao salvar histórico após dev_overlay: ${e.message}` });
+        this.eventBus.emit('backend_message', { type: 'error', message: `Falha ao salvar histórico após user_overlay: ${e.message}` });
       }
     });
   }
@@ -83,7 +83,7 @@ export class BluMaAgent {
   public async processTurn(userInput: { content: string }): Promise<void> {
     this.isInterrupted = false;
     const inputText = String(userInput.content || '').trim();
-    this.history.push({ role: 'developer', content: inputText });
+    this.history.push({ role: 'user', content: inputText });
     await this._continueConversation();
   }
 
@@ -198,7 +198,7 @@ ${editData.error.display}`;
       this.history.push(message);
 
       if (message.tool_calls) {
-        const autoApprovedTools = ['agent_end_task', 'message_notify_dev', 'reasoning_nootebook'];
+        const autoApprovedTools = ['agent_end_task', 'message_notify_user', 'reasoning_nootebook'];
         const toolToCall = message.tool_calls[0];
         const isSafeTool = autoApprovedTools.some((safeTool) => toolToCall.function.name.includes(safeTool));
 

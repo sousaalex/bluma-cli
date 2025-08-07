@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 
-interface MessageNotifyDevArgs {
+interface MessageNotifyuserArgs {
   text_markdown: string;
 }
 
 interface Notification {
-  type: 'message_notify_dev';
+  type: 'message_notify_user';
   id: string;
   timestamp: string;
   content: {
@@ -17,15 +17,15 @@ interface Notification {
 }
 
 /**
- * Generates a structured notification message for the developer.
+ * Generates a structured notification message for the user.
  * @param args - Object containing the message body in Markdown.
  * @returns A Promise that resolves to the notification object.
  */
-export function messageNotifyDev(args: MessageNotifyDevArgs): Promise<Notification> {
+export function messageNotifyuser(args: MessageNotifyuserArgs): Promise<Notification> {
   const { text_markdown } = args;
 
   const notification: Notification = {
-    type: 'message_notify_dev',
+    type: 'message_notify_user',
     id: `notify_${uuidv4()}`,
     timestamp: new Date().toISOString(),
     content: {
