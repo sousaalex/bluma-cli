@@ -54,7 +54,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
 
   const effectiveReadOnly = isReadOnly;
 
-  const { text, cursorPosition, viewStart } = useCustomInput({
+  const { text, cursorPosition, viewStart, setText } = useCustomInput({
     onSubmit: (value: string) => {
       if (disableWhileProcessing && isReadOnly) return; // ignore submissions while processing
       permissiveOnSubmit(value);
@@ -113,8 +113,13 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
       if (choice) {
         const cmd = choice.name;
         setSlashOpen(false);
-        // envia diretamente o comando escolhido, evitando necessidade de setText
-        permissiveOnSubmit(cmd);
+        // Insere o comando completo no input buffer em vez de submeter imediatamente
+        try {
+          setText(`${cmd} `, true);
+        } catch (e) {
+          // Se o hook não expor setText por algum motivo, fallback para submissão direta (compatibilidade)
+          permissiveOnSubmit(`${cmd} `);
+        }
       }
     } else if (key.escape) {
       setSlashOpen(false);

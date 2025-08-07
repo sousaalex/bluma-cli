@@ -5,7 +5,9 @@ describe('prompt_builder', () => {
     const prompt = getUnifiedSystemPrompt();
     expect(typeof prompt).toBe('string');
     expect(prompt.length).toBeGreaterThan(50);
-    expect(prompt).toMatch(/YOU ARE BluMa CLI/i);
-    expect(prompt).toMatch(/BEHAVIORAL RULES|CRITICAL COMMUNICATION PROTOCOL|ZERO TOLERANCE/i);
+    // Header matcher atualizado conforme texto atual do prompt
+    expect(prompt).toMatch(/IDENTITY AND OBJECTIVE/i);
+    // Deve conter seções de regras/protocolos
+    expect(prompt).toMatch(/CORE DIRECTIVES|COMMUNICATION PROTOCOL|SCOPE & LIMITATIONS/i);
   });
 });

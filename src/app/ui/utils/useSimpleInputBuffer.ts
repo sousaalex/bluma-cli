@@ -14,7 +14,8 @@ type InputAction =
   | { type: 'INPUT'; payload: string }
   | { type: 'MOVE_CURSOR'; direction: 'left' | 'right' }
   | { type: 'BACKSPACE' }
-  | { type: 'SUBMIT' };
+  | { type: 'SUBMIT' }
+  | { type: 'SET'; payload: { text: string; moveCursorToEnd?: boolean } };
 
 // O Reducer (inalterado)
 function inputReducer(state: InputState, action: InputAction, viewWidth: number): InputState {
@@ -30,7 +31,7 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
 
   switch (action.type) {
     case 'INPUT': {
-      const cleanInput = action.payload.replace(/(\r\n|\n|\r)/gm, "");
+      const cleanInput = action.payload.replace(/(||)/gm, "");
       const newText =
         state.text.slice(0, state.cursorPosition) +
         cleanInput +
@@ -59,6 +60,14 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
     }
     case 'SUBMIT': {
       return { text: '', cursorPosition: 0, viewStart: 0 };
+    }
+    case 'SET': {
+      const t = action.payload.text.replace(/(||)/gm, "");
+      const moveToEnd = action.payload.moveCursorToEnd ?? true;
+      const newText = t;
+      const newCursorPosition = moveToEnd ? newText.length : Math.min(state.cursorPosition, newText.length);
+      const newViewStart = adjustView(newCursorPosition, 0);
+      return { text: newText, cursorPosition: newCursorPosition, viewStart: newViewStart };
     }
     default:
       return state;
@@ -127,6 +136,7 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
   return {
     text: state.text,
     cursorPosition: state.cursorPosition,
-    viewStart: state.viewStart
+    viewStart: state.viewStart,
+    setText: (t: string, moveCursorToEnd: boolean = true) => dispatch({ type: 'SET', payload: { text: t, moveCursorToEnd } }),
   };
 };

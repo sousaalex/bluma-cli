@@ -172,7 +172,7 @@ ${editData.error.display}`;
   private async _continueConversation(): Promise<void> {
     try {
       if (this.isInterrupted) {
-        this.eventBus.emit('backend_message', { type: 'info', message: 'Agent task cancelled by user.' });
+        this.eventBus.emit('backend_message', { type: 'info', message: 'Task Canceled.' });
         return;
       }
 

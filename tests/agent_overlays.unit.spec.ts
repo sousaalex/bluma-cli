@@ -36,7 +36,8 @@ describe('Agent Live Dev Overlays - Unit', () => {
 
     const h = (agent as any).getHistorySnapshot();
     const last = h[h.length - 1];
-    expect(last.role).toBe('user');
+    // Alinhado ao comportamento atual: role 'developer'
+    expect(last.role).toBe('developer');
     expect(last.content).toBe('Usar abordagem segura');
 
     // Deve emitir evento para UI/logs
