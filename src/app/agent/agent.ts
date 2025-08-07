@@ -43,86 +43,86 @@ export class Agent {
 
     // Configuração de cliente LLM (OpenAI)
 
-    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = process.env.AZURE_OPENAI_API_KEY;
-    const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
-    this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || '';
+    // const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+    // const apiKey = process.env.AZURE_OPENAI_API_KEY;
+    // const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
+    // this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || '';
 
-    const missing: string[] = [];
-    if (!endpoint) missing.push('AZURE_OPENAI_ENDPOINT');
-    if (!apiKey) missing.push('AZURE_OPENAI_API_KEY');
-    if (!apiVersion) missing.push('AZURE_OPENAI_API_VERSION');
-    if (!this.deploymentName) missing.push('AZURE_OPENAI_DEPLOYMENT');
+    // const missing: string[] = [];
+    // if (!endpoint) missing.push('AZURE_OPENAI_ENDPOINT');
+    // if (!apiKey) missing.push('AZURE_OPENAI_API_KEY');
+    // if (!apiVersion) missing.push('AZURE_OPENAI_API_VERSION');
+    // if (!this.deploymentName) missing.push('AZURE_OPENAI_DEPLOYMENT');
 
-    if (missing.length > 0) {
-      // Interrompe o start e fornece instruções específicas por SO para definir variáveis globalmente
-      const platform = process.platform; // 'win32' | 'darwin' | 'linux' | others
-      const varList = missing.join(', ');
+    // if (missing.length > 0) {
+    //   // Interrompe o start e fornece instruções específicas por SO para definir variáveis globalmente
+    //   const platform = process.platform; // 'win32' | 'darwin' | 'linux' | others
+    //   const varList = missing.join(', ');
 
-      let guidance = '';
-      if (platform === 'win32') {
-        guidance = [
-          'Windows (PowerShell):',
-          `  $env:${missing[0]}="<value>" # sessão atual`,
-          ...missing.slice(1).map((v) => `  $env:${v}="<value>"`),
-          '  # Persistir para o utilizador:',
-          ...missing.map((v) => `  [System.Environment]::SetEnvironmentVariable("${v}", "<value>", "User")`),
-          '',
-          'Windows (cmd.exe):',
-          ...missing.map((v) => `  setx ${v} "<value>"`),
-        ].join('');
-      } else if (platform === 'darwin' || platform === 'linux') {
-        guidance = [
-          'macOS/Linux (bash/zsh):',
-          ...missing.map((v) => `  echo 'export ${v}="<value>"' >> ~/.bashrc  # ou ~/.zshrc`),
-          '  source ~/.bashrc  # ou: source ~/.zshrc',
-        ].join('');
-      } else {
-        guidance = [
-          'Generic POSIX:',
-          ...missing.map((v) => `  export ${v}="<value>"`),
-        ].join('');
-      }
+    //   let guidance = '';
+    //   if (platform === 'win32') {
+    //     guidance = [
+    //       'Windows (PowerShell):',
+    //       `  $env:${missing[0]}="<value>" # sessão atual`,
+    //       ...missing.slice(1).map((v) => `  $env:${v}="<value>"`),
+    //       '  # Persistir para o utilizador:',
+    //       ...missing.map((v) => `  [System.Environment]::SetEnvironmentVariable("${v}", "<value>", "User")`),
+    //       '',
+    //       'Windows (cmd.exe):',
+    //       ...missing.map((v) => `  setx ${v} "<value>"`),
+    //     ].join('');
+    //   } else if (platform === 'darwin' || platform === 'linux') {
+    //     guidance = [
+    //       'macOS/Linux (bash/zsh):',
+    //       ...missing.map((v) => `  echo 'export ${v}="<value>"' >> ~/.bashrc  # ou ~/.zshrc`),
+    //       '  source ~/.bashrc  # ou: source ~/.zshrc',
+    //     ].join('');
+    //   } else {
+    //     guidance = [
+    //       'Generic POSIX:',
+    //       ...missing.map((v) => `  export ${v}="<value>"`),
+    //     ].join('');
+    //   }
 
-      const message = [
-        `Missing required environment variables: ${varList}.`,
-        `Configure them globally using the commands below (based on your OS), or set them in the config file: ${globalEnvPath}.`,
-        '',
-        guidance,
-      ].join('');
+    //   const message = [
+    //     `Missing required environment variables: ${varList}.`,
+    //     `Configure them globally using the commands below (based on your OS), or set them in the config file: ${globalEnvPath}.`,
+    //     '',
+    //     guidance,
+    //   ].join('');
 
-      this.eventBus.emit('backend_message', {
-        type: 'error',
-        code: 'missing_env',
-        missing,
-        path: globalEnvPath,
-        message,
-      });
-      throw new Error(message);
-    }
+    //   this.eventBus.emit('backend_message', {
+    //     type: 'error',
+    //     code: 'missing_env',
+    //     missing,
+    //     path: globalEnvPath,
+    //     message,
+    //   });
+    //   throw new Error(message);
+    // }
 
-    const openai = new OpenAI({
-      // Configuração do cliente OpenAI hospedado no Azure
-      apiKey: apiKey,
-      baseURL: `${endpoint}/openai/deployments/${this.deploymentName}`,
-      defaultQuery: { 'api-version': apiVersion },
-      defaultHeaders: { 'api-key': apiKey },
-    });
-    this.llm = new OpenAIAdapter(openai);
+    // const openai = new OpenAI({
+    //   // Configuração do cliente OpenAI hospedado no Azure
+    //   apiKey: apiKey,
+    //   baseURL: `${endpoint}/openai/deployments/${this.deploymentName}`,
+    //   defaultQuery: { 'api-version': apiVersion },
+    //   defaultHeaders: { 'api-key': apiKey },
+    // });
+    // this.llm = new OpenAIAdapter(openai);
 
     // Configuração de cliente OpenAI (OpenRouter)
 
-    // const apiKey = "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";
-    // const modelName = 'openai/gpt-oss-120b';
-    // if (!apiKey || !modelName) throw new Error('Chave de API ou nome do modelo do OpenRouter não encontrados.');
-    // this.deploymentName = modelName;
+    const apiKey = "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";
+    const modelName = 'openrouter/horizon-beta';
+    if (!apiKey || !modelName) throw new Error('Chave de API ou nome do modelo do OpenRouter não encontrados.');
+    this.deploymentName = modelName;
 
-    // const openai = new OpenAI({
-    //   apiKey,
-    //   baseURL: 'https://openrouter.ai/api/v1',
-    //   defaultHeaders: { 'HTTP-Referer': 'http://localhost:3000', 'X-Title': 'Bluma CLI Agent' },
-    // });
-    // this.llm = new OpenAIAdapter(openai);
+    const openai = new OpenAI({
+      apiKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+      defaultHeaders: { 'HTTP-Referer': 'http://localhost:3000', 'X-Title': 'Bluma CLI Agent' },
+    });
+    this.llm = new OpenAIAdapter(openai);
 
     // Instancia o núcleo BluMaAgent que cuidará do loop/estado
     this.core = new BluMaAgent(
