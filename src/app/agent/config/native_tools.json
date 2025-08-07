@@ -71,7 +71,7 @@
             "type": "function",
             "function": {
                 "name": "agent_end_task",
-                "description": "Formally ends the current task, logs it, and informs the developer that no further actions are required from the agent in this instance.",
+                "description": "Formally ends the current task, logs it, and informs the dev that no further actions are required from the agent in this instance.",
                 "parameters": {
                     "type": "object",
                     "properties": {},

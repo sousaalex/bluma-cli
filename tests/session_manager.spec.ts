@@ -24,7 +24,7 @@ describe('session_manager safe save', () => {
 
     const newHistory = [
       { role: 'system', content: 'hello' },
-      { role: 'user', content: 'world' },
+      { role: 'developer', content: 'world' },
     ];
     await saveSessionHistory(file, newHistory);
 

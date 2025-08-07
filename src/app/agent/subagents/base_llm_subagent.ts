@@ -17,7 +17,7 @@ export abstract class BaseLLMSubAgent implements SubAgent {
     this.isInterrupted = false;
     this.ctx.eventBus.on('user_interrupt', () => { this.isInterrupted = true; });
     await this.initializeHistory();
-    this.history.push({ role: 'user', content: typeof input === 'string' ? input : JSON.stringify(input) });
+    this.history.push({ role: 'developer', content: typeof input === 'string' ? input : JSON.stringify(input) });
     await this._continueConversation();
     return { history: this.history };
   }
@@ -60,7 +60,7 @@ ${(editData as any).error.display}`;
   private async _continueConversation(): Promise<void> {
     try {
       if (this.isInterrupted) {
-        this.emitEvent('info', { message: 'SubAgent task cancelled by user.' });
+        this.emitEvent('info', { message: 'SubAgent task cancelled by developer.' });
         return;
       }
 
@@ -74,7 +74,7 @@ ${(editData as any).error.display}`;
       });
 
       if (this.isInterrupted) {
-        this.emitEvent('info', { message: 'SubAgent task cancelled by user.' });
+        this.emitEvent('info', { message: 'SubAgent task cancelled by developer.' });
         return;
       }
 
@@ -141,7 +141,7 @@ ${(editData as any).error.display}`;
       try {
         if (this.isInterrupted) {
           this.emitEvent('info', { message: 'SubAgent task cancelled before tool execution.' });
-          toolResultContent = JSON.stringify({ error: 'Task cancelled by user before execution.' });
+          toolResultContent = JSON.stringify({ error: 'Task cancelled by developer before execution.' });
         } else {
             const result = await this.ctx.mcpClient.invoke(toolName, toolArgs);
             let finalResult = result as any;

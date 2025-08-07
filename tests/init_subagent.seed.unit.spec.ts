@@ -28,7 +28,7 @@ describe('InitSubAgent seed message', () => {
 
     expect(llmSpy).toHaveBeenCalled();
     const history = sub.history as any[];
-    const userMsgs = history.filter((m) => m.role === 'user');
+    const userMsgs = history.filter((m) => m.role === 'developer');
     expect(userMsgs.length).toBeGreaterThan(0);
     const lastUser = userMsgs[userMsgs.length - 1];
     // Validate the EN seed contains instructions to map, infer stack and generate BluMa.md

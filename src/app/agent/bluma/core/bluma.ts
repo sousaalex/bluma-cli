@@ -44,7 +44,7 @@ export class BluMaAgent {
     // Listener de dev_overlay movido do Agent para o núcleo onde há histórico
     this.eventBus.on('dev_overlay', async (data: { kind?: string; payload: string; ts?: number }) => {
       const clean = String(data.payload ?? '').trim();
-      this.history.push({ role: 'user', name: 'dev_overlay', content: clean } as any);
+      this.history.push({ role: 'developer', name: 'dev_overlay', content: clean } as any);
       this.eventBus.emit('backend_message', { type: 'dev_overlay', payload: clean, ts: data.ts || Date.now() });
       try {
         if (this.sessionFile) {
@@ -83,7 +83,7 @@ export class BluMaAgent {
   public async processTurn(userInput: { content: string }): Promise<void> {
     this.isInterrupted = false;
     const inputText = String(userInput.content || '').trim();
-    this.history.push({ role: 'user', content: inputText });
+    this.history.push({ role: 'developer', content: inputText });
     await this._continueConversation();
   }
 
@@ -177,13 +177,16 @@ ${editData.error.display}`;
       }
 
       const contextWindow = createApiContextWindow(this.history, this.maxContextTurns);
-
+      
       const response = await this.llm.chatCompletion({
         model: this.deploymentName,
         messages: contextWindow as any,
+        temperature: 0.2,
         tools: this.mcpClient.getAvailableTools() as any,
         tool_choice: 'required',
+        reasoning_effort: 'high',
         parallel_tool_calls: false,
+        max_tokens: 512, // Limite de tokens para evitar respostas muito longas
       });
 
       if (this.isInterrupted) {

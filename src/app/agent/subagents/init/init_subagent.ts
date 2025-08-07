@@ -16,7 +16,7 @@ class InitAgentImpl extends BaseLLMSubAgent implements SubAgent {
     });
     await this.initializeHistory();
 
-    // Fixed user seed message to guide the first LLM turn (derived from PRD), in EN only
+    // Fixed developer seed message to guide the first LLM turn (derived from PRD), in EN only
     const seed = `
     Scan the current project repository comprehensively. 
     Map the directory structure (excluding heavy/ignored folders), infer the technology stack from manifests and configs, identify entry points and useful scripts, and analyze module relationships and architectural patterns. 
@@ -30,7 +30,7 @@ class InitAgentImpl extends BaseLLMSubAgent implements SubAgent {
 
     // Initial input: ${typeof input === 'string' ? input : JSON.stringify(input)}` : seed;
     const combined = seed;
-    this.history.push({ role: "user", content: combined } as any);
+    this.history.push({ role: "developer", content: combined } as any);
 
     await (this as any)._continueConversation();
     return { history: this.history };

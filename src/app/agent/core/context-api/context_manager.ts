@@ -8,7 +8,7 @@ import type { ChatCompletionMessageToolCall } from 'openai/resources/chat/comple
  * REGRAS:
  * 1.  Sempre inclui todas as mensagens 'system' do início do histórico.
  * 2.  Inclui os últimos N 'turnos completos' do histórico.
- * 3.  Um turno começa com uma mensagem 'user' e consideramos que termina
+ * 3.  Um turno começa com uma mensagem 'developer' e consideramos que termina
  *     quando uma chamada à ferramenta 'agent_end_task' é feita.
  * 4.  Sempre inclui o turno ATUAL (o mais recente), mesmo que esteja em andamento.
  *
@@ -45,7 +45,7 @@ export function createApiContextWindow(
   let turnsFound = 0;
 
   // Helper: identifica overlay do dev pelo metadata name
-  const isDevOverlay = (m: any) => m?.role === 'user' && m?.name === 'dev_overlay';
+  const isDevOverlay = (m: any) => m?.role === 'developer' && m?.name === 'dev_overlay';
 
   for (let i = conversationHistory.length - 1; i >= 0; i--) {
     const msg = conversationHistory[i];
@@ -70,16 +70,16 @@ export function createApiContextWindow(
       continue;
     }
 
-    // Adicional: caso raro – se encontrarmos uma mensagem 'user' que NÃO é overlay
+    // Adicional: caso raro – se encontrarmos uma mensagem 'developer' que NÃO é overlay
     // e imediatamente antes já havia um assistant (sem end_task), podemos considerar
     // que iniciou um novo turno. Porém, para não cortar overlays, apenas inicia
     // novo turno se o item anterior (mais recente) no currentTurn não for overlay.
     const prev = conversationHistory[i - 1];
-    if (msg.role === 'user' && !isDevOverlay(msg)) {
+    if (msg.role === 'developer' && !isDevOverlay(msg)) {
       // Se o próximo mais recente (prev) for um assistant sem end_task, tratamos como fronteira macia.
       if (prev && prev.role === 'assistant' && !(prev as any).tool_calls?.some((tc: ChatCompletionMessageToolCall) => tc.function.name === 'agent_end_task')) {
         // Fechamos este turno apenas se já temos conteúdo significativo (não só overlays)
-        const hasNonOverlay = currentTurn.some(m => m.role !== 'user' || !isDevOverlay(m));
+        const hasNonOverlay = currentTurn.some(m => m.role !== 'developer' || !isDevOverlay(m));
         if (hasNonOverlay) {
           turns.unshift([...currentTurn]);
           currentTurn = [];

@@ -9,31 +9,6 @@
         "-y",
         "@sousaalex1605/bluma-nootebook"
       ]
-    },
-    "notionApi": {
-      "type": "stdio", 
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@notionhq/notion-mcp-server"
-      ],
-      "env": {
-        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer ${NOTION_API_TOKEN}\", \"Notion-Version\": \"2022-06-28\" }"
-      }
-    },
-    "upstash_context7-mcp": {
-      "type": "stdio", 
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@upstash/context7-mcp@latest"
-      ],
-      "disabled": false,
-      "autoApprove": []
     }
   }
 }

@@ -36,7 +36,7 @@ describe('Agent Live Dev Overlays - Integration (light)', () => {
 
     const h = (agent as any).getHistorySnapshot();
     const last = h[h.length - 1];
-    expect(last.role).toBe('user');
+    expect(last.role).toBe('developer');
     expect(last.content).toBe('Focar em arquivos .ts apenas');
 
     const overlayEvent = events.find(e => e.type === 'dev_overlay');
