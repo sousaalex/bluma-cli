@@ -212,23 +212,33 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
           </Box>
 
           {/* SUGESTÃO PATH AUTOCOMPLETE */}
-          {pathAutocomplete.open && pathAutocomplete.suggestions.length > 0 && (
-            <Box flexDirection="column" marginTop={1}>
-              {pathAutocomplete.suggestions.map((s, idx) => {
-                const isSelected = idx === pathAutocomplete.selected;
-                return (
-                  <Box key={s.fullPath} paddingLeft={1} paddingY={0}>
-                    <Text color={isSelected ? "cyan" : "gray"}>
-                      {isSelected ? "❯ " : "  "}
-                    </Text>
-                    <Text color={isSelected ? "cyan" : "white"} bold={isSelected} dimColor={!isSelected}>
-                      {s.label}
-                    </Text>
-                  </Box>
-                );
-              })}
-            </Box>
-          )}
+          {pathAutocomplete.open && pathAutocomplete.suggestions.length > 0 && (() => {
+            const VISIBLE = 7; // max items visible in the suggestions box
+            const total = pathAutocomplete.suggestions.length;
+            const sel = Math.max(0, Math.min(pathAutocomplete.selected, total - 1));
+            // calculate window start so selection is visible and attempts to center
+            let start = Math.max(0, sel - Math.floor(VISIBLE / 2));
+            if (start + VISIBLE > total) start = Math.max(0, total - VISIBLE);
+            const windowItems = pathAutocomplete.suggestions.slice(start, start + VISIBLE);
+            return (
+              <Box flexDirection="column" marginTop={1} height={Math.min(VISIBLE, total)} overflowY="auto">
+                {windowItems.map((s, idx) => {
+                  const realIdx = start + idx;
+                  const isSelected = realIdx === pathAutocomplete.selected;
+                  return (
+                    <Box key={s.fullPath} paddingLeft={1} paddingY={0}>
+                      <Text color={isSelected ? "cyan" : "gray"}>
+                        {isSelected ? "❯ " : "  "}
+                      </Text>
+                      <Text color={isSelected ? "cyan" : "white"} bold={isSelected} dimColor={!isSelected}>
+                        {s.label}
+                      </Text>
+                    </Box>
+                  );
+                })}
+              </Box>
+            );
+          })()}
 
           {slashOpen && slashSuggestions.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
