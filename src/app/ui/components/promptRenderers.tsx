@@ -71,7 +71,8 @@ export const renderLsTool = ({ toolCall }: RenderProps): React.ReactElement => {
   }
 
   // A MUDANÇA ESTÁ AQUI: Usamos a nossa nova função auxiliar
-  const finalDirectoryName = getBasePath(directoryPath);
+  // const finalDirectoryName = getBasePath(directoryPath);
+  const finalDirectoryName = directoryPath;
 
   return (
 <Box flexDirection="column" marginBottom={1}>
@@ -99,7 +100,7 @@ export const renderLsTool = ({ toolCall }: RenderProps): React.ReactElement => {
   <Box paddingX={2}>
     <Text>
       {/* <Text color="gray">↳ </Text> */}
-      <Text color="magenta">{finalDirectoryName}</Text>
+      <Text color="magenta" dimColor>{finalDirectoryName}</Text>
     </Text>
   </Box>
 
@@ -121,8 +122,9 @@ export const renderCountFilesLinesTool = ({ toolCall }: RenderProps): React.Reac
     }
   
     // A MUDANÇA ESTÁ AQUI: Usamos a nossa nova função auxiliar
-    const finalDirectoryName = getBasePath(directoryPath);
-  
+    // const finalDirectoryName = getBasePath(directoryPath);
+    const finalDirectoryName = directoryPath;
+    
     return (
   <Box flexDirection="column" marginBottom={1}>
         {/* Linha de título para a ferramenta */}
@@ -149,7 +151,7 @@ export const renderCountFilesLinesTool = ({ toolCall }: RenderProps): React.Reac
     <Box paddingX={2}>
       <Text>
         <Text color="gray">↳ </Text>
-        <Text color="magenta">{finalDirectoryName}</Text>
+        <Text color="magenta" dimColor>{finalDirectoryName}</Text>
       </Text>
     </Box>
   
@@ -175,7 +177,8 @@ export const renderReadFileLines = ({ toolCall }: RenderProps): React.ReactEleme
       filepath = "Error parsing arguments";
     }
   
-    const finalFileName = getBasePath(filepath);
+    // const finalFileName = getBasePath(filepath);
+    const finalFileName = filepath;
   
     return (
       <Box flexDirection="column" marginBottom={1}>

@@ -60,7 +60,8 @@ export const renderLsTool = ({ args }: RenderProps): React.ReactElement => {
   }
 
   // A função para extrair o nome final continua útil.
-  const finalDirectoryName = path.basename(directoryPath);
+  // const finalDirectoryName = path.basename(directoryPath);
+  const finalDirectoryName = directoryPath;
 
   return (
     <Box flexDirection="column">
@@ -96,7 +97,8 @@ export const renderCountFilesLines = ({
   }
 
   // A função para extrair o nome final continua útil.
-  const finalDirectoryName = path.basename(directoryPath);
+  // const finalDirectoryName = path.basename(directoryPath);
+  const finalDirectoryName = directoryPath;
 
   return (
     <Box flexDirection="column">
@@ -133,7 +135,8 @@ export const renderReadFileLines = ({
     filepath = "Error parsing arguments";
   }
 
-  const finalFileName = path.basename(filepath);
+  // const finalFileName = path.basename(filepath);
+  const finalFileName = filepath;
 
   return (
     // A caixa externa com a borda, seguindo o template
@@ -264,7 +267,8 @@ export const renderEditToolCall = ({
   } catch (e) {
     filepath = "Error parsing arguments";
   }
-  const finalFileName = path.basename(filepath);
+  // const finalFileName = path.basename(filepath);
+  const finalFileName = filepath;
 
   return (
     <Box flexDirection="column" paddingX={1}>
