@@ -385,12 +385,12 @@ stateDiagram-v2
 ### Deployment Diagram
 ```mermaid
 graph TD
-    CLI[CLI (BluMa)] --> LocalFS[(Local File System)]
-    CLI --> AzureOpenAI[(Azure OpenAI API)]
-    CLI --> GitHubAPI[(GitHub API)]
-    CLI --> NotionAPI[(Notion API)]
-    CLI --> OtherAPIs[(Other External APIs)]
-    CLI --> MCPServer[(MCP Server / Plugins)]
+    CLI["CLI (BluMa)"] --> LocalFS[("Local File System")]
+    CLI --> AzureOpenAI[("Azure OpenAI API")]
+    CLI --> GitHubAPI[("GitHub API")]
+    CLI --> NotionAPI[("Notion API")]
+    CLI --> OtherAPIs[("Other External APIs")]
+    CLI --> MCPServer[("MCP Server / Plugins")]
 ```
 
 ---
