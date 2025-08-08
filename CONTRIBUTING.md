@@ -1,7 +1,6 @@
 # Contributing to BluMa CLI
 
-First, thank you for wanting to improve BluMa CLI!
-Here are some guidelines to speed up your workflow and keep the project healthy.
+First, thank you for wanting to improve BluMa CLI! Your contributions are critical to keeping the project growing and improving. This guide outlines the standards and process to follow so we maintain quality, consistency, and a productive workflow.
 
 ## Table of Contents
 - [How to contribute](#how-to-contribute)
@@ -16,11 +15,19 @@ Here are some guidelines to speed up your workflow and keep the project healthy.
 
 ## How to contribute
 
-1. **Fork the repository** and create a branch for your feature/fix (`feature/feature-name` or `fix/short-desc`)
-2. Set up and run locally (see [Local Setup Tips](#local-setup-tips))
-3. Test your changes in different environments and platforms if possible
-4. Write tests and documentation for any significant additions
-5. Open the PR against the main branch
+### 📋 Prerequisites
+- **Node.js** >= 18 and **npm** >= 9 installed on your development machine
+- Environment variables configured as per [README Configuration section](README.md#configuration-and-environment-variables)
+- All dependencies installed (`npm install`)
+
+### 🔄 Workflow
+1. **Fork** the repository
+2. **Clone** your fork locally
+3. Create a branch named according to [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat/add-logging`)
+4. Make your changes following the [Style Guide](#style-guide)
+5. Add or update tests when adding/modifying features
+6. Ensure code builds without errors and passes lint checks (`npm run lint`)
+7. Push to your fork and open a Pull Request against the `main` branch
 
 ## How to open an issue
 - Report bugs with as much context, screenshots, steps to reproduce, and your environment as possible

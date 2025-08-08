@@ -16,19 +16,24 @@ BluMa CLI is an independent agent for automation and advanced software engineeri
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Requirements](#requirements)
+- [Architecture Diagram](#-architecture-diagram)
 - [Installation](#installation)
-- [How to Run](#how-to-run)
-- [Project Structure](#project-structure)
+- [Usage](#usage)
+  - [Examples](#-usage-examples)
+- [Configuration and Environment Variables](#configuration-and-environment-variables)
 - [Development and Build](#development-and-build)
 - [Extensibility: Tools and Plugins](#extensibility-tools-and-plugins)
 - [Tests](#tests)
-- [Configuration and Environment Variables](#configuration-and-environment-variables)
+- [Limitations / Next Steps](#️-limitations--next-steps)
+- [Security Notes](#-security-notes)
+- [Tech Stack Overview](#stack)
+- [Contributing](#-contributing)
 - [License](#license)
 
 ---
 
 ## <a name="overview"></a>Overview
-BluMa CLI is a modern CLI focused on automation, LLM collaboration, documentation, refactoring, running complex tasks, and integrating with external tools. It uses React (via Ink) for rich terminal interfaces and features context/conversation management, smart feedback, and interactive confirmation systems.
+BluMa CLI is a modular conversational agent and task automation framework focused on advanced software engineering workflows. It runs entirely in the terminal using React (via Ink) for a rich interactive UI, and is architected around a **UI layer** (`main.ts` + `App.tsx`) and an **agent layer** (`Agent` orchestrator + `BluMaAgent` core). It enables LLM-powered automation, documentation, refactoring, running complex development tasks, and integrating with both native and external tools. The system features persistent sessions, contextual reasoning, smart feedback, and an interactive confirmation system for controlled execution.
 
 ---
 
@@ -267,3 +272,286 @@ Advanced config files are located in `src/app/agent/config/`.
 Apache-2.0. Made by Alex Fonseca and NomadEngenuity contributors.
 
 Enjoy, hack, and—if possible—contribute!
+
+---
+
+## 🏗 Architecture Diagram
+Below is a simplified diagram showing BluMa CLI's core architecture:
+```
+[ main.ts ] → [ App.tsx (UI Layer) ]
+       ↓
+[ Agent (Orchestrator) ]
+       ↓
+[ BluMaAgent (Core Loop & State) ]
+       ↓
+[ MCPClient / Tools / Native Tools / SubAgents ]
+       ↓
+[ External APIs & System Operations ]
+```
+This flow ensures a clean separation between presentation, orchestration, core logic, and integration layers.
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant UI as UI (main.ts + App.tsx)
+    participant Agent as Agent (Orchestrator)
+    participant Core as BluMaAgent (Core Loop)
+    participant MCP as MCPClient / Tools
+
+    UI->>Agent: Initialize(sessionId, eventBus)
+    Agent->>Core: initialize()
+    Core->>MCP: initialize tools
+    UI->>Agent: processTurn(userInput)
+    Agent->>Core: processTurn(content)
+    Core->>MCP: Get available tools & context
+    MCP-->>Core: Tool list & details
+    Core-->>Agent: Tool call request or LLM message
+    Agent-->>UI: backend_message (e.g., confirmation_request)
+    UI->>Agent: handleToolResponse()
+    Agent->>Core: handleToolResponse(decision)
+    Core->>MCP: Execute tool
+    MCP-->>Core: Tool result
+    Core-->>Agent: backend_message(done)
+    Agent-->>UI: Update history & UI state
+```
+
+---
+
+### Component Diagram
+```mermaid
+flowchart TD
+    subgraph UI[UI Layer]
+        M[main.ts]
+        A[App.tsx]
+    end
+    subgraph AG[Agent Layer]
+        AGN[Agent (Orchestrator)]
+        CORE[BluMaAgent (Core Loop)]
+    end
+    subgraph TOOLS[Tools & Integration]
+        MCP[MCPClient]
+        NT[Native Tools]
+        SA[SubAgents]
+    end
+    EXT[External APIs & FS]
+
+    M --> A --> AGN --> CORE --> MCP --> NT
+    CORE --> SA
+    MCP --> EXT
+    NT --> EXT
+```
+
+---
+
+### Activity Diagram
+```mermaid
+flowchart TD
+    Start((Start)) --> Input[User Input in UI]
+    Input --> Processing{Command Type?}
+    Processing -->|Slash Command| SC[Handle Slash Command]
+    Processing -->|Normal Input| PT[processTurn]
+    SC --> Done((End))
+    PT --> LLM[Send to LLM]
+    LLM --> ToolCall{Tool Requested?}
+    ToolCall -->|No| Display[Display Assistant Message]
+    ToolCall -->|Yes| Confirm[Ask for Confirmation]
+    Confirm --> Decision{Decision}
+    Decision -->|Accept| Exec[Execute Tool]
+    Decision -->|Decline| Skip[Skip Execution]
+    Exec --> Result[Return Tool Result]
+    Skip --> Done
+    Result --> Done
+    Display --> Done
+```
+
+---
+
+### State Machine Diagram
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Processing: User Input
+    Processing --> Awaiting_Confirmation: Tool Call Needs Approval
+    Awaiting_Confirmation --> Processing: User Accepts
+    Awaiting_Confirmation --> Idle: User Declines
+    Processing --> Completed: Task Completed
+    Processing --> Interrupted: User Interrupt
+    Completed --> Idle
+    Interrupted --> Idle
+```
+
+---
+
+### Deployment Diagram
+```mermaid
+graph TD
+    CLI[CLI (BluMa)] --> LocalFS[(Local File System)]
+    CLI --> AzureOpenAI[(Azure OpenAI API)]
+    CLI --> GitHubAPI[(GitHub API)]
+    CLI --> NotionAPI[(Notion API)]
+    CLI --> OtherAPIs[(Other External APIs)]
+    CLI --> MCPServer[(MCP Server / Plugins)]
+```
+
+---
+
+### Data Flow Diagram
+```mermaid
+flowchart LR
+    U[User] --> UI[UI Layer]
+    UI --> Agent[Agent]
+    Agent --> Core[BluMaAgent]
+    Core --> MCP[MCPClient]
+    Core --> Sub[SubAgents]
+    MCP --> Tools[Native Tools & External APIs]
+    Sub --> Tools
+    Tools --> MCP
+    MCP --> Core
+    Core --> Agent
+    Agent --> UI
+    UI --> U
+```
+
+---
+
+## 💡 Usage Examples
+- **Run Initialization Command**
+```
+/init
+```
+Executes the `init` subagent to prepare the working environment.
+
+- **Confirm an Edit Operation**
+When the system prompts an `edit_tool` operation, review the preview and choose:
+```
+Accept | Decline | Accept Always
+```
+
+- **Live Overlay**
+During a long-running task, you can send hints:
+```
+[hint] Prefer small batch edits
+[constraint] Avoid editing src/app/ui/**
+```
+
+---
+
+## 🤝 Contributing
+We welcome contributions! For full details, read [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### 📋 Prerequisites
+- **Node.js** >= 18 and **npm** >= 9 installed
+- Dependencies installed via `npm install`
+- Required environment variables configured (see *Configuration* section)
+
+### 🔄 Contribution Workflow
+1. **Fork** the repository
+2. **Clone** your fork locally
+3. Create a feature branch named according to [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat/add-logging`)
+4. Commit changes with meaningful messages
+5. Push to your fork and open a Pull Request
+
+### 🛠 Code Standards
+- Follow TypeScript strict mode guidelines
+- Maintain style via ESLint and Prettier (`npm run lint`)
+- Keep functions short, modular, and documented with JSDoc
+- All business logic must have unit tests
+
+### 🧪 Testing Requirements
+- Run `npm test` and ensure all tests pass
+- Include new tests for any new functionality or bug fix
+- Validate integration tests when adding new tools or APIs
+
+### 🔍 Code Review Process
+- Minimum of 1 maintainer approval before merge
+- Resolve all review comments and passing CI before merge
+
+### 📄 Documentation
+- Update README.md or relevant Wiki pages when adding/removing features
+- Add or update CHANGELOG.md for notable changes
+
+---
+
+## ⚠️ Limitations / Next Steps
+- Current LLM integration optimised for Azure OpenAI; add more providers.
+- Logging verbosity could be made configurable.
+- Potential for richer plugin lifecycle (install/remove at runtime).
+- Improve error reporting in subagents.
+
+---
+
+## 🔒 Security Notes
+
+---
+
+## 🛠 Error Handling & Recovery Flows
+BluMa handles different classes of errors gracefully:
+- **Network/API Errors**: Retry logic with exponential backoff.
+- **Authentication Failures**: Immediate notification to user, requires updating environment variables.
+- **Tool Execution Errors**: Displayed with detailed message; execution can be retried or skipped.
+- **LLM/API Exceptions**: Fall back to safe mode and keep context intact.
+- **Session/History Save Failures**: Warn user and continue without losing core functionality.
+
+---
+
+## 📈 Metrics & Observability
+- **Performance Metrics**: Average response time, tokens used per request, tool execution times.
+- **Usage Tracking**: Number of commands executed, tool calls, sessions created.
+- **Logging**: Structured logs for all events.
+- Integration-ready with Prometheus/Grafana or external observability platforms.
+
+---
+
+## 🔐 Advanced Security Practices
+- Use secret management tools (Vault, AWS Secrets Manager) to store environment variables.
+- Apply principle of least privilege for API keys.
+- Validate and sanitize all user inputs to avoid prompt injection attacks.
+- Regularly rotate API keys.
+
+---
+
+## 🚀 Performance & Scalability
+- Optimize context window by pruning irrelevant history.
+- Batch related operations to reduce LLM calls.
+- Support for distributed execution or remote agent hosting.
+- Cache static responses where possible.
+
+---
+
+## 🔄 Development Cycle & CI/CD
+- **Testing**: `npm test` and `npm run test:watch` for development.
+- **Linting**: Enforce coding standards with ESLint/Prettier.
+- **CI/CD**: Recommended GitHub Actions or similar to run tests/build on push.
+- **Deployment**: Automatic packaging to npm or internal registry.
+
+---
+
+## 🗺 Roadmap & Release Notes
+**Upcoming:**
+- Multi-LLM provider support.
+- Web-based dashboard.
+- Richer subagent plugin APIs.
+
+**Release Notes**:
+- Follow [CHANGELOG.md](CHANGELOG.md) for version history.
+
+---
+
+## 🎯 Advanced Use Cases
+- Chain multiple tools with complex decision-making.
+- Build custom subagents for domain-specific automation.
+- Integrate with CI pipelines for automated code review and refactoring.
+
+---
+
+## 📏 Code Standards & Contribution Guidelines
+- Follow TypeScript strict mode.
+- Commit messages must follow Conventional Commits (`feat:`, `fix:`, `chore:`).
+- Keep functions short, modular and documented.
+- Add unit tests for all business logic.
+
+---
+- Protect your API keys: never commit `.env` files.
+- `edit_tool` can modify files — review previews before accepting.
+- Use restricted permissions for API tokens wherever possible.
+- If using on shared systems, ensure `.bluma-cli` config is private.
