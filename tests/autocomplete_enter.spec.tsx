@@ -42,7 +42,7 @@ describe('autocomplete Enter integration', () => {
     stdin.write('i');
 
     // Press Enter
-    stdin.write('');
+    stdin.write('\n');
 
     // Allow event loop to process
     await new Promise((r) => setTimeout(r, 10));

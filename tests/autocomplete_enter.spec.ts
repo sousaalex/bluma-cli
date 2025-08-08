@@ -37,7 +37,8 @@ describe('autocomplete Enter integration', () => {
     stdin.write('f');
     stdin.write('i');
 
-    stdin.write('');
+    stdin.write('
+');
 
     await new Promise((r) => setTimeout(r, 10));
 
