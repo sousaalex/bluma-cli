@@ -64,9 +64,15 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
     }
     case 'SET': {
       const t = action.payload.text.replace(/(||)/gm, "");
-      const moveToEnd = action.payload.moveCursorToEnd ?? true;
+      let newCursorPosition: number;
+      if (typeof action.payload.cursorPosition === 'number') {
+        newCursorPosition = Math.min(action.payload.cursorPosition, t.length);
+      } else if (action.payload.moveCursorToEnd ?? true) {
+        newCursorPosition = t.length;
+      } else {
+        newCursorPosition = Math.min(state.cursorPosition, t.length);
+      }
       const newText = t;
-      const newCursorPosition = moveToEnd ? newText.length : Math.min(state.cursorPosition, newText.length);
       const newViewStart = adjustView(newCursorPosition, 0);
       return { text: newText, cursorPosition: newCursorPosition, viewStart: newViewStart };
     }

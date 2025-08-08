@@ -132,6 +132,14 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
 
   // 2) RENDERIZAÇÃO: EVITAR EARLY RETURN QUE ALTERE ORDEM DE HOOKS
 
+  // --- Forçar cursor no final se flag global estiver setada ---
+  useEffect(() => {
+    if ((globalThis as any).__BLUMA_FORCE_CURSOR_END__) {
+      setText(text, text.length);
+      delete (globalThis as any).__BLUMA_FORCE_CURSOR_END__;
+    }
+  }, [text, setText]);
+
   // --- Path Autocomplete Integration ---
   const cwd = process.cwd();
   const pathAutocomplete = useAtCompletion({ cwd, text, cursorPosition, setText });
@@ -156,6 +164,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
           if (m) {
             (globalThis as any).__BLUMA_SUPPRESS_SUBMIT__ = true; // ensure input hook won't submit
             pathAutocomplete.insertAtSelection();
+            return; // garante que não prossegue para submit ou reset de cursor
           }
         }
         return;

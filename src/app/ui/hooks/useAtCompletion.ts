@@ -140,14 +140,19 @@ export function useAtCompletion({ cwd, text,
     // normalize chosen to POSIX and strip control chars
 chosen = chosen.replace(/\\/g, '/').replace(/\|/g, '');
 
-    // If chosen contains parent segments (e.g. 'src/app'), we only want the final segment for insertion
-    let insertVal = chosen;
-    if (insertVal.includes('/')) {
-      // remove any trailing slash for segment extraction
-      insertVal = insertVal.replace(/\/+$/g, '');
-      const parts = insertVal.split('/');
-      insertVal = parts[parts.length - 1];
+    // Preserve entire relative path from the current pattern position
+    let insertVal = chosen.replace(/\/+$/g, '');
+    const currentPattern = res.pattern || '';
+    if (currentPattern.length > 0) {
+      // Remove from chosen the common prefix with pattern (ignoring trailing slash)
+      const normalizedPattern = currentPattern.replace(/\/+$/g, '');
+      if (insertVal.startsWith(normalizedPattern)) {
+        insertVal = insertVal.slice(normalizedPattern.length);
+        insertVal = insertVal.replace(/^\/+/, '');
+      }
     }
+    // Ensure POSIX style
+    insertVal = insertVal.split('\\').join('/');
     // Ensure directories end with '/'
     if (isDir && !insertVal.endsWith('/')) insertVal = insertVal + '/';
 
@@ -160,12 +165,18 @@ chosen = chosen.replace(/\\/g, '/').replace(/\|/g, '');
     const after = text.slice(cursorPosition);
     const newText = before + insertVal + after;
     // Move cursor to end of inserted text (setText moveCursorToEnd = true)
-    setText(newText + (isDir ? '' : ' '), true); // se arquivo, insere espaço após, se dir, só path
+    // Usa undefined para manter cursor no final conforme API tipada, ou calcula posição
+    const finalText = newText + ' ';
+    setText(finalText, finalText.length); // sempre com espaço e cursor no final
+    // Marca para que InputPrompt force deslocamento de cursor no próximo render
+    (globalThis as any).__BLUMA_FORCE_CURSOR_END__ = true;
+    // Garantir sincronização imediata do cursor antes de qualquer reabertura de autocomplete
+    update(finalText, finalText.length);
     if (isDir) {
       setOpen(false); setSuggestions([]);
       setTimeout(() => {
         setOpen(true);
-        update(newText, newText.length); // sempre cursor no final após inserir dir
+        update(finalText, finalText.length); // sempre cursor no final após inserir dir
       }, 0);
     } else { // arquivo
       setOpen(false);
