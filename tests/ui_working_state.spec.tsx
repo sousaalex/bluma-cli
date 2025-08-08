@@ -15,7 +15,7 @@ describe('UI working state for /init', () => {
 
     // Envia comando /init
     stdin.write('/init');
-    stdin.write('');
+    stdin.write('\n');
 
     // Deve exibir o WorkingTimer (procura por "Working" no frame)
     const frame1 = lastFrame() || '';
