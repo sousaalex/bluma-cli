@@ -3,7 +3,7 @@
   "version": "0.0.36",
   "description": "BluMa independent agent for automation and advanced software engineering.",
   "author": "Alex Fonseca",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bin": {
     "bluma": "dist/main.js"
   },

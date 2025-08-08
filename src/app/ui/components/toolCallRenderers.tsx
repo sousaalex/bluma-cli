@@ -67,7 +67,7 @@ export const renderLsTool = ({ args }: RenderProps): React.ReactElement => {
       <Box>
         <Text bold>
           <Text color="green">● </Text>
-          ls Tool
+          ls
         </Text>
       </Box>
 
@@ -142,7 +142,7 @@ export const renderReadFileLines = ({
       <Box>
         <Text bold>
           <Text color="green">● </Text>
-          Read File Lines Tool
+          Read File
         </Text>
       </Box>
       {/* Detalhes indentados */}

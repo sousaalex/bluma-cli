@@ -80,7 +80,7 @@ export const renderLsTool = ({ toolCall }: RenderProps): React.ReactElement => {
         <Text bold>
           {/* <Text color="magenta">? </Text> */}
           {/* {toolCall.function.name} */}
-          ls Tool
+          ls
         </Text>
       </Box>
 

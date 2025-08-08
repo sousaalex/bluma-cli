@@ -198,7 +198,7 @@ ${editData.error.display}`;
       this.history.push(message);
 
       if (message.tool_calls) {
-        const autoApprovedTools = ['agent_end_task', 'message_notify_user', 'reasoning_nootebook'];
+        const autoApprovedTools = ['agent_end_task', 'message_notify_user', 'reasoning_nootebook', 'ls_tool', 'count_file_lines', 'read_file_lines'];
         const toolToCall = message.tool_calls[0];
         const isSafeTool = autoApprovedTools.some((safeTool) => toolToCall.function.name.includes(safeTool));
 

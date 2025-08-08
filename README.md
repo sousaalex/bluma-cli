@@ -1,7 +1,7 @@
 # BluMa CLI
 
 [![npm version](https://img.shields.io/npm/v/bluma.svg?style=flat-square)](https://www.npmjs.com/package/bluma)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://shields.io/)
 
 <p align="center">
@@ -264,6 +264,6 @@ Advanced config files are located in `src/app/agent/config/`.
 ---
 
 ## <a name="license"></a>License
-MIT. Made by Alex Fonseca and NomadEngenuity contributors.
+Apache-2.0. Made by Alex Fonseca and NomadEngenuity contributors.
 
 Enjoy, hack, and—if possible—contribute!
