@@ -43,7 +43,7 @@ export const SimpleDiff = ({ text, maxHeight }: SimpleDiffProps) => {
         } else if (line.startsWith('-')) {
           color = "red";
         } else if (line.startsWith('@@')) {
-          color = "cyan";
+          color = "magenta";
         }
 
         return (

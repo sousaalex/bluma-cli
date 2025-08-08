@@ -51,11 +51,11 @@ const InteractiveMenuComponent = ({ onDecision }: InteractiveMenuProps) => {
       return (
         // Adicionando um pequeno espaçamento vertical entre cada opção também
         <Box key={option.value} paddingLeft={1} paddingY={0}> 
-          <Text color={isSelected ? 'blue' : 'gray'}>
+          <Text color={isSelected ? 'magenta' : 'gray'}>
             {isSelected ? '❯ ' : '  '}
           </Text>
           <Text
-            color={isSelected ? 'blue' : 'white'}
+            color={isSelected ? 'magenta' : 'white'}
             bold={isSelected}
             dimColor={!isSelected}
           >

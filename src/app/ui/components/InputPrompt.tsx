@@ -117,7 +117,9 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
         setSlashOpen(false);
         // Insere o comando completo no input buffer em vez de submeter imediatamente
         try {
-          setText(`${cmd} `, true);
+          // useCustomInput.setText expects an optional numeric cursor position as the 2nd arg.
+          // Omitting the 2nd argument moves the cursor to the end (desired behavior here).
+          setText(`${cmd} `);
         } catch (e) {
           // Se o hook não expor setText por algum motivo, fallback para submissão direta (compatibilidade)
           permissiveOnSubmit(`${cmd} `);
@@ -188,7 +190,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
         <>
           <Box borderStyle="round" borderColor="gray" borderDimColor>
             <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
-              <Text color="white">{">"} </Text>
+              <Text color="white">{"❯"} </Text>
               <Text dimColor>ctrl+c to exit</Text>
             </Box>
           </Box>
@@ -197,7 +199,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
         <>
           <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly}>
             <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
-              <Text color="white">{">"} </Text>
+              <Text color="white">{"❯"} </Text>
               {/* 1. Texto antes do cursor */}
               <Text>{textBeforeCursor}</Text>
               {/* 2. Cursor sempre visível */}
@@ -221,16 +223,16 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
             if (start + VISIBLE > total) start = Math.max(0, total - VISIBLE);
             const windowItems = pathAutocomplete.suggestions.slice(start, start + VISIBLE);
             return (
-              <Box flexDirection="column" marginTop={1} height={Math.min(VISIBLE, total)} overflowY="auto">
+              <Box flexDirection="column" marginTop={1} height={Math.min(VISIBLE, total)} >
                 {windowItems.map((s, idx) => {
                   const realIdx = start + idx;
                   const isSelected = realIdx === pathAutocomplete.selected;
                   return (
                     <Box key={s.fullPath} paddingLeft={1} paddingY={0}>
-                      <Text color={isSelected ? "cyan" : "gray"}>
+                      <Text color={isSelected ? "magenta" : "gray"}>
                         {isSelected ? "❯ " : "  "}
                       </Text>
-                      <Text color={isSelected ? "cyan" : "white"} bold={isSelected} dimColor={!isSelected}>
+                      <Text color={isSelected ? "magenta" : "white"} bold={isSelected} dimColor={!isSelected}>
                         {s.label}
                       </Text>
                     </Box>
@@ -246,10 +248,10 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
                 const isSelected = idx === slashIndex;
                 return (
                   <Box key={s.name} paddingLeft={1} paddingY={0}>
-                    <Text color={isSelected ? "blue" : "gray"}>
+                    <Text color={isSelected ? "magenta" : "gray"}>
                       {isSelected ? "❯ " : "  "}
                     </Text>
-                    <Text color={isSelected ? "blue" : "white"} bold={isSelected} dimColor={!isSelected}>
+                    <Text color={isSelected ? "magenta" : "white"} bold={isSelected} dimColor={!isSelected}>
                       {s.name} <Text color="gray">- {s.description}</Text>
                     </Text>
                   </Box>

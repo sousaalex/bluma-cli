@@ -39,7 +39,7 @@ export const renderShellCommand = ({
       <Box marginLeft={2} paddingX={1}>
         <Text>
           <Text color="gray">↳ </Text>
-          <Text color="cyan">{command}</Text>
+          <Text color="magenta">{command}</Text>
         </Text>
       </Box>
     </Box>
@@ -74,7 +74,7 @@ export const renderLsTool = ({ args }: RenderProps): React.ReactElement => {
       <Box marginLeft={2} paddingX={1}>
         <Text>
           <Text color="gray">↳ </Text>
-          <Text color="cyan">{finalDirectoryName}</Text>
+          <Text color="magenta">{finalDirectoryName}</Text>
         </Text>
       </Box>
     </Box>
@@ -110,7 +110,7 @@ export const renderCountFilesLines = ({
       <Box marginLeft={2} paddingX={1}>
         <Text>
           <Text color="gray">↳ </Text>
-          <Text color="cyan">{finalDirectoryName}</Text>
+          <Text color="magenta">{finalDirectoryName}</Text>
         </Text>
       </Box>
     </Box>
@@ -151,7 +151,7 @@ export const renderReadFileLines = ({
         <Box marginLeft={2} paddingX={1}>
           <Text>
             <Text color="gray">↳ </Text>
-            <Text color="cyan">{finalFileName}</Text>
+            <Text color="magenta">{finalFileName}</Text>
           </Text>
         </Box>
         {/* Detalhe das linhas */}
@@ -159,9 +159,9 @@ export const renderReadFileLines = ({
           <Text>
             <Text color="gray">↳ </Text>
             <Text dimColor>lines </Text>
-            <Text color="cyan">{startLine}</Text>
+            <Text color="magenta">{startLine}</Text>
             <Text dimColor> to </Text>
-            <Text color="cyan">{endLine}</Text>
+            <Text color="magenta">{endLine}</Text>
           </Text>
         </Box>
       </Box>
@@ -243,8 +243,8 @@ export const renderBlumaNotebook = ({
   } catch (e) {
     // O fallback continua útil para casos de erro de parse
     return (
-      <Box borderStyle="round" borderColor="blue" paddingX={1}>
-        <Text color="blue" bold>
+      <Box borderStyle="round" borderColor="magenta" paddingX={1}>
+        <Text color="magenta" bold>
           Thinking (Error)
         </Text>
         <Text color="gray">{JSON.stringify(args, null, 2)}</Text>
@@ -278,7 +278,7 @@ export const renderEditToolCall = ({
       <Box marginLeft={2} paddingX={1}>
         <Text>
           <Text color="gray">↳ </Text>
-          <Text color="cyan">{finalFileName}</Text>
+          <Text color="magenta">{finalFileName}</Text>
         </Text>
       </Box>
 

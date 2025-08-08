@@ -15,7 +15,8 @@ type InputAction =
   | { type: 'MOVE_CURSOR'; direction: 'left' | 'right' }
   | { type: 'BACKSPACE' }
   | { type: 'SUBMIT' }
-  | { type: 'SET'; payload: { text: string; moveCursorToEnd?: boolean } };
+  | { type: 'SET'; payload: { text: string; moveCursorToEnd?: boolean; cursorPosition?: number } }
+  | { type: 'SET_CURSOR'; payload: number };
 
 // O Reducer (inalterado)
 function inputReducer(state: InputState, action: InputAction, viewWidth: number): InputState {

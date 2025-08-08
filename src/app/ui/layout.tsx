@@ -3,9 +3,9 @@ import { Box, Text } from "ink";
 // Estilizado: Header ASCII animado universal
 import BigText from "ink-big-text";
 const BRAND_COLORS = {
-  main: "cyan",
-  accent: "magenta",
-  shadow: "blue",
+  main: "magenta",
+  accent: "blue",
+  shadow: "magenta",
   greydark: "#444",
 };
 
@@ -29,11 +29,11 @@ export const Header = () => {
           2. Be as clear and specific as possible to get accurate responses.
         </Text>
         <Text>
-          3. Run <Text color="cyan">/init</Text> to create a{" "}
-          <Text color="cyan">BluMa.md</Text>, file with instructions for BluMa.
+          3. Run <Text color="magenta">/init</Text> to create a{" "}
+          <Text color="magenta">BluMa.md</Text>, file with instructions for BluMa.
         </Text>
         <Text>
-          4. Type <Text color="cyan">/help</Text> to explore available commands
+          4. Type <Text color="magenta">/help</Text> to explore available commands
           and features.
         </Text>
       </Box>
@@ -91,7 +91,7 @@ export const SessionInfo = ({
       {/* <Text>
             <Text color="magenta">↳</Text> 
             <Text color="gray">Tools: </Text>
-            <Text color="cyan">
+            <Text color="magenta">
            
                 {toolsCount !== null ? toolsCount : 'loading...'}
             </Text>

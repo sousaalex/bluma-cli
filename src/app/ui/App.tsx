@@ -137,7 +137,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               {/* Um único Text que contém tudo */}
               <Text color="white" dimColor>
                 {/* O prompt e o texto são renderizados como um bloco contínuo */}
-                <Text color="white">{">"} </Text>
+                <Text color="white">{"❯"} </Text>
                 {displayText}
               </Text>
             </Box>
@@ -323,7 +323,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
           newComponent = (
             <Box marginBottom={1}>
               <Text color="gray">
-                <Text color="blue">{">"} </Text>
+                <Text color="magenta">{"❯"} </Text>
                 {parsed.payload}
               </Text>
             </Box>

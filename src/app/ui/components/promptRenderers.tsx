@@ -48,7 +48,7 @@ export const renderShellCommand = ({
       <Box paddingX={2}>
         <Text>
           {/* <Text color="gray">↳ </Text> */}
-          <Text color="cyan">{command}</Text>
+          <Text color="magenta">{command}</Text>
         </Text>
       </Box>
     </Box>
@@ -78,7 +78,7 @@ export const renderLsTool = ({ toolCall }: RenderProps): React.ReactElement => {
       {/* Linha de título para a ferramenta */}
       <Box>
         <Text bold>
-          {/* <Text color="blue">? </Text> */}
+          {/* <Text color="magenta">? </Text> */}
           {/* {toolCall.function.name} */}
           ls Tool
         </Text>
@@ -99,7 +99,7 @@ export const renderLsTool = ({ toolCall }: RenderProps): React.ReactElement => {
   <Box paddingX={2}>
     <Text>
       {/* <Text color="gray">↳ </Text> */}
-      <Text color="cyan">{finalDirectoryName}</Text>
+      <Text color="magenta">{finalDirectoryName}</Text>
     </Text>
   </Box>
 
@@ -128,7 +128,7 @@ export const renderCountFilesLinesTool = ({ toolCall }: RenderProps): React.Reac
         {/* Linha de título para a ferramenta */}
         <Box>
           <Text bold>
-            {/* <Text color="blue">? </Text> */}
+            {/* <Text color="magenta">? </Text> */}
             {/* {toolCall.function.name} */}
             Count File Lines
           </Text>
@@ -149,7 +149,7 @@ export const renderCountFilesLinesTool = ({ toolCall }: RenderProps): React.Reac
     <Box paddingX={2}>
       <Text>
         <Text color="gray">↳ </Text>
-        <Text color="cyan">{finalDirectoryName}</Text>
+        <Text color="magenta">{finalDirectoryName}</Text>
       </Text>
     </Box>
   
@@ -199,7 +199,7 @@ export const renderReadFileLines = ({ toolCall }: RenderProps): React.ReactEleme
           <Box>
             <Text>
               {/* <Text color="gray">↳ </Text> */}
-              <Text color="cyan">{finalFileName}</Text>
+              <Text color="magenta">{finalFileName}</Text>
             </Text>
           </Box>
           {/* Detalhe das linhas */}
@@ -207,9 +207,9 @@ export const renderReadFileLines = ({ toolCall }: RenderProps): React.ReactEleme
             <Text>
               <Text color="gray">↳ </Text>
               <Text dimColor>lines </Text>
-              <Text color="cyan">{startLine}</Text>
+              <Text color="magenta">{startLine}</Text>
               <Text dimColor> to </Text>
-              <Text color="cyan">{endLine}</Text>
+              <Text color="magenta">{endLine}</Text>
             </Text>
           </Box>
         </Box>
@@ -237,7 +237,7 @@ export const renderReadFileLines = ({ toolCall }: RenderProps): React.ReactEleme
         <Box>
           <Text bold>
             {/* <Text color="red">? </Text> */}
-            Edit <Text color="cyan">{finalFileName}</Text>
+            Edit <Text color="magenta">{finalFileName}</Text>
           </Text>
         </Box>
         

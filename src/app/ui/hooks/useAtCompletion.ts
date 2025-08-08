@@ -91,14 +91,15 @@ export interface UseAtCompletionHook {
   open: boolean;
   suggestions: AtSuggestion[];
   selected: number;
-  setSelected: (idx: number) => void;
+  // Accept either a number or a functional updater (like React's setState)
+  setSelected: (idx: number | ((prev: number) => number)) => void;
   insertAtSelection: () => void;
   close: () => void;
   update: (txt: string, cursor: number) => void;
 }
 
 export function useAtCompletion({ cwd, text,
- cursorPosition, setText }:{ cwd:string, text:string, cursorPosition:number, setText:(t:string, moveCursorToEnd?: boolean)=>void }): UseAtCompletionHook {
+ cursorPosition, setText }:{ cwd:string, text:string, cursorPosition:number, setText:(t:string, pos?: number)=>void }): UseAtCompletionHook {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(0);
   const [suggestions, setSuggestions] = useState<AtSuggestion[]>([]);

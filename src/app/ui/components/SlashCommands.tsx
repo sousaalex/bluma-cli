@@ -28,7 +28,7 @@ export const SlashCommands: React.FC<SlashCommandsProps> = ({ input, setHistory,
       const cmds = getSlashCommands();
       return outBox(
         <>
-          <Text color="cyan" bold>Available commands</Text>
+          <Text color="magenta" bold>Available commands</Text>
           {cmds.map((c, i) => (
             <Text key={i} color="gray">{c.name} - {c.description}</Text>
           ))}
@@ -73,7 +73,7 @@ export const SlashCommands: React.FC<SlashCommandsProps> = ({ input, setHistory,
 
       return outBox(
         <>
-          <Text color="cyan" bold>MCP Tools</Text>
+          <Text color="magenta" bold>MCP Tools</Text>
           <Text color="gray">Total MCP: {tools.length}{term ? `  |  Filter: "${term}"  |  Showing: ${filtered.length}` : ''}</Text>
           {filtered.length === 0 ? (
             <Text color="yellow">No MCP tools to display.</Text>
@@ -114,7 +114,7 @@ export const SlashCommands: React.FC<SlashCommandsProps> = ({ input, setHistory,
 
       return outBox(
         <>
-          <Text color="cyan" bold>Native Tools</Text>
+          <Text color="magenta" bold>Native Tools</Text>
           <Text color="gray">Total Native: {tools.length}{term ? `  |  Filter: "${term}"  |  Showing: ${filtered.length}` : ''}</Text>
           {filtered.length === 0 ? (
             <Text color="yellow">No native tools to display.</Text>
