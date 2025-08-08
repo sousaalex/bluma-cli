@@ -95,6 +95,7 @@ export class ToolInvoker {
     // para que o invoker não retorne um erro de "ferramenta não encontrada".
     // A lógica de realmente encerrar a tarefa será tratada pelo Agente.
     this.toolImplementations.set('agent_end_task', async () => ({ success: true, message: "Task ended by agent." }));
+
   }
 
   /**
