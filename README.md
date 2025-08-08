@@ -320,20 +320,20 @@ sequenceDiagram
 ### Component Diagram
 ```mermaid
 flowchart TD
-    subgraph UI[UI Layer]
-        M[main.ts]
-        A[App.tsx]
+    subgraph UI["UI Layer"]
+        M["main.ts"]
+        A["App.tsx"]
     end
-    subgraph AG[Agent Layer]
-        AGN[Agent (Orchestrator)]
-        CORE[BluMaAgent (Core Loop)]
+    subgraph AG["Agent Layer"]
+        AGN["Agent (Orchestrator)"]
+        CORE["BluMaAgent (Core Loop)"]
     end
-    subgraph TOOLS[Tools & Integration]
-        MCP[MCPClient]
-        NT[Native Tools]
-        SA[SubAgents]
+    subgraph TOOLS["Tools & Integration"]
+        MCP["MCPClient"]
+        NT["Native Tools"]
+        SA["SubAgents"]
     end
-    EXT[External APIs & FS]
+    EXT["External APIs & FS"]
 
     M --> A --> AGN --> CORE --> MCP --> NT
     CORE --> SA
