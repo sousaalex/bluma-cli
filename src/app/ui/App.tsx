@@ -422,8 +422,17 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
   const lastEditToolId = useRef<number | null>(null);
 
   useInput((input, key) => {
-    if (key.ctrl && input.toLowerCase() === 'r' && lastEditToolId.current !== null) {
-      toggleExpansion(lastEditToolId.current);
+    if (key.ctrl && input.toLowerCase() === 'e') {
+      setHistory((prev) => [
+        ...prev,
+        {
+          id: prev.length,
+          component: <Text color="cyan">CTRL + E detectado ({lastEditToolId.current ?? 'sem ID'})</Text>,
+        },
+      ]);
+      if (lastEditToolId.current !== null) {
+        toggleExpansion(lastEditToolId.current);
+      }
     }
   });
 

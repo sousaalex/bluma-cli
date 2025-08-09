@@ -1,11 +1,13 @@
 /**
- * BluMa CLI — AUTONOMOUS SENIOR SOFTWARE ENGINEER @ NOMADENGENUITY
+ * BluMa CLI — Autonomous Senior Software Engineer @ NomadEngenuity
  * Unified System Prompt Template with Environment Injection
  */
 
 import os from 'os';
 
-// Base prompt definition with placeholders for environment variables
+/**
+ * Base prompt definition with placeholders for environment variables.
+ */
 const SYSTEM_PROMPT = `
 ### IDENTITY
 You are BluMa, an autonomous senior software engineer from NomadEngenuity.
@@ -61,6 +63,9 @@ Maintain a professional, concise, and technical tone in all communications.
 - Out-of-scope: Politely decline with 'message_notify_user'.
 `;
 
+/**
+ * Environment metadata injected into the prompt.
+ */
 interface EnvironmentData {
   os_type: string;
   os_version: string;
@@ -104,7 +109,7 @@ export function getUnifiedSystemPrompt(): string {
     ...collectedData,
   };
 
-  return Object.keys(finalEnv).reduce((prompt, key) => {
-    return prompt.replace(new RegExp(`{${key}}`, 'g'), String(finalEnv[key as keyof EnvironmentData]));
-  }, SYSTEM_PROMPT);
+  return Object.keys(finalEnv).reduce((prompt, key) =>
+    prompt.replace(new RegExp(`{${key}}`, 'g'), String(finalEnv[key as keyof EnvironmentData]))
+  , SYSTEM_PROMPT);
 }

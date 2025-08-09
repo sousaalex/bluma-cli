@@ -225,7 +225,7 @@ export const renderBlumaNotebook = ({
         {thinkingData.task_checklist &&
           thinkingData.task_checklist.length > 0 && (
             <Box marginTop={1} flexDirection="column">
-              <Text color="white" bold>To Do:</Text>
+              <Text color="white" bold>Todos:</Text>
               {/* Mapeamos cada tarefa, usando a seta `↳` para consistência */}
               {thinkingData.task_checklist.map((task, index) => (
                 <Box key={index} marginLeft={2}>
@@ -308,7 +308,7 @@ export const renderEditToolCall = ({
         <Box marginTop={1}>
           <SimpleDiff text={preview} maxHeight={maxHeight} />
           {!isExpanded && (
-            <Text color="gray">Press Ctrl+R to expand</Text>
+            <Text color="gray">Press Ctrl+E to expand</Text>
           )}
         </Box>
       )}
