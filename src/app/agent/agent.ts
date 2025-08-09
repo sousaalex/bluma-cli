@@ -112,17 +112,7 @@ export class Agent {
 
     // Configuração de cliente OpenAI (OpenRouter)
 
-    // const apiKey = "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";
-    // const modelName = 'openrouter/horizon-beta';
-    // if (!apiKey || !modelName) throw new Error('Chave de API ou nome do modelo do OpenRouter não encontrados.');
-    // this.deploymentName = modelName;
 
-    // const openai = new OpenAI({
-    //   apiKey,
-    //   baseURL: 'https://openrouter.ai/api/v1',
-    //   defaultHeaders: { 'HTTP-Referer': 'http://localhost:3000', 'X-Title': 'Bluma CLI Agent' },
-    // });
-    // this.llm = new OpenAIAdapter(openai);
 
     // Instancia o núcleo BluMaAgent que cuidará do loop/estado
     this.core = new BluMaAgent(
