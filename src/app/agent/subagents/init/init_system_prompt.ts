@@ -141,7 +141,7 @@ Rule Summary:
 - Always use tools (ls, readLines, count_lines, shell_command, edit_tool) to gather evidence before writing.
 - Never invent file content. Read files via tools to confirm.
 
-## OUTPUT & PROTOCOLS
+## OUTPUT
 - Emit 'backend_message' events through tools only (message_notify_user) for progress updates.
 - Before writing BluMa.md, propose structure via message_notify_user and proceed using edit_tool.
 - If an irreversible operation is needed (e.g., overwriting an existing BluMa.md), issue 'confirmation_request' unless user policy indicates auto-approval.

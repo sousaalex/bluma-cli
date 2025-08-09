@@ -41,7 +41,6 @@ Architecture consists of:
 │   │   │   ├── subagents/   # Modular subagents (init, etc.)
 │   │   │   ├── tools/       # Tool definitions (mcp, natives)
 │   │   │   └── utils/       # Update checks, misc helpers
-│   │   ├── protocols/       # Python protocol impls
 │   │   └── ui/              # Ink React CLI components, hooks, utils
 │   └── tests/               # Jest test suites (unit, integration, UI)
 └── tsconfig.json           # TypeScript config

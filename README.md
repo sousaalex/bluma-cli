@@ -171,7 +171,6 @@ bluma-engineer/
 │   └── app/
 │        ├── agent/            # Agent core (session mgmt, tools, MCP, prompt, feedback)
 │        ├── ui/               # Ink/React CLI interface components
-│        └── protocols/        # Protocols & helpers
 ```
 ---
 
