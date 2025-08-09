@@ -32,7 +32,7 @@ function renderTokens(tokens: any[]): React.ReactNode[] {
 			case 'paragraph': {
 				const p = token as any;
 				out.push(
-					<Box key={out.length} marginBottom={1} flexDirection="column">
+					<Box key={out.length} marginBottom={1} flexDirection="row">
 						{renderInline(p.text)}
 					</Box>
 				);
@@ -125,12 +125,13 @@ function renderInline(text: string): React.ReactNode {
 			parts.push(<Text italic key={parts.length}>{m[3]}</Text>);
 		} else if (token.startsWith('`')) {
 			parts.push(
-				<Text
-					backgroundColor="#eaeef2"
-					color="black"
-					key={parts.length}
-				>{` ${m[4]} `}</Text>
-			);
+  <Text key={parts.length}>
+    <Text backgroundColor="#eaeef2" color="black">
+      {` ${m[4]} `}
+    </Text>
+  </Text>
+);
+
 		} else if (token.startsWith('[')) {
 			parts.push(
 				<Text underline color="#0969da" key={parts.length}>
