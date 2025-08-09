@@ -1,4 +1,7 @@
 // Ficheiro: src/components/promptRenderers.tsx
+// Este módulo define funções responsáveis por renderizar visualmente pré-visualizações (previews)
+// de chamadas de ferramentas (tool calls) na interface de linha de comando construída com Ink.
+// Cada função abaixo é específica para um tipo de ferramenta, com renderização customizada
 import React from "react";
 import { Box, Text} from "ink"; 
 import path from "path";

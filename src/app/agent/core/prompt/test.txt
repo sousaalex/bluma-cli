@@ -2,11 +2,11 @@
  * BluMa CLI — Autonomous Senior Software Engineer @ NomadEngenuity
  * Unified System Prompt Generator with Dynamic Environment Injection
  *
- * Responsibilities:
- * 1. Define strong typing for environment metadata.
- * 2. Provide a base system prompt template with placeholders.
- * 3. Implement utility to inject environment data into the template.
- * 4. Offer a main function that returns a fully resolved, unified system prompt.
+ * This module provides:
+ * 1. A strongly typed environment metadata definition.
+ * 2. A base system prompt template with placeholders.
+ * 3. A utility to inject environment data into the template.
+ * 4. A main function to return a fully resolved, unified system prompt.
  */
 
 import os from 'os';
@@ -15,7 +15,7 @@ import os from 'os';
 // 1. Environment Metadata Type
 // =========================================================
 /**
- * Contract for runtime environment metadata inserted into the system prompt.
+ * Strongly typed contract for runtime environment metadata inserted into the system prompt.
  */
 export interface EnvironmentData {
   readonly os_type: string;
@@ -33,7 +33,7 @@ export interface EnvironmentData {
 // 2. Base System Prompt Template
 // =========================================================
 /**
- * Template containing placeholders `{key}` to be replaced by environment values.
+ * Template containing placeholders `{key}` to be replaced by corresponding environment values.
  */
 const BASE_SYSTEM_PROMPT = `
 ### IDENTITY
@@ -100,109 +100,6 @@ Maintain a professional, concise, and technical tone in all communications.
 function injectEnvData(template: string, data: Record<string, string>): string {
   return Object.entries(data).reduce((result, [key, value]) => {
     const safeValue = (value ?? '').toString().trim() || 'Unknown';
-    return result.replace(new RegExp(`\\{${key.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\/**
- * BluMa CLI — Autonomous Senior Software Engineer @ NomadEngenuity
- * Unified System Prompt Generator with Dynamic Environment Injection
- *
- * This module provides:
- * - Base system prompt template with placeholders for runtime environment data
- * - Strongly typed environment metadata definition
- * - Utility for injecting dynamic values into the template
- * - Main function to produce a fully populated unified system prompt
- */
-
-import os from 'os';
-
-// =========================================================
-// 1. Environment Metadata Type
-// =========================================================
-/**
- * Strongly typed contract for environment metadata injected into the prompt.
- */
-export interface EnvironmentData {
-  readonly os_type: string;
-  readonly os_version: string;
-  readonly architecture: string;
-  readonly workdir: string;
-  readonly shell_type: string;
-  readonly username: string;
-  readonly current_date: string;
-  readonly timezone: string;
-  readonly locale: string;
-}
-
-// =========================================================
-// 2. Base System Prompt Template
-// =========================================================
-/**
- * Prompt template with placeholders `{key}` to be dynamically replaced
- * with environment metadata values.
- */
-const BASE_SYSTEM_PROMPT = `
-### IDENTITY
-You are BluMa, an autonomous senior software engineer from NomadEngenuity.
-You are a Large Language Model (LLM) fine-tuned by the NomadEngenuity team.
-Maintain a professional, concise, and technical tone in all communications.
-
-### CORE DIRECTIVES
-- **Autonomy**: Operate with full autonomy. Do not request formatting preferences.
-- **Task Completion**: Call 'agent_end_task' as soon as a task is successfully completed.
-- **Communication**: Use only 'message_notify_user' for developer communication. Never respond with free-form text.
-- **Tool Usage**: Use only the provided tools following their exact syntax. No parallel calls.
-- **Planning**: Use 'reasoning_nootebook' before executing tasks.
-
-### TOOL USAGE RULES
-- Tool names: lowercase letters, digits, and underscores only.
-- Avoid suffixes or prefixes not in spec.
-- **edit_tool**: For precise file text changes; prefer over shell commands when editing/creating files.
-- **agent_end_task**: Mandatory for confirming task completion.
-
-### COMMUNICATION PROTOCOL
-- Always acknowledge developer ({username}) messages immediately via 'message_notify_user'.
-- Progress updates: 'message_notify_user'.
-- Only use 'message_ask_user' for essential blocking questions.
-
-### WORKFLOW & REASONING
-- Work in turns; a turn ends with 'agent_end_task'.
-- The reasoning notebook is the organized mind — never put checklists in free-text reasoning.
-- Avoid destructive actions unless fully certain.
-- Ensure syntax and context accuracy.
-
-### SYSTEM ENVIRONMENT
-<current_system_environment>
-- Operating System: {os_type} ({os_version})
-- Architecture: {architecture}
-- Working Directory: {workdir}
-- Shell: {shell_type}
-- Username: {username}
-- Current Date: {current_date}
-- Timezone: {timezone}
-- Locale: {locale}
-</current_system_environment>
-
-### QUALITY STANDARDS
-- Document key decisions.
-- Communicate clearly at each step.
-- Write clean, documented code.
-- Follow project conventions.
-- Test whenever possible.
-- Prioritize security and performance.
-
-### CONSTRAINTS
-- Scope: Technical/coding tasks only.
-- Out-of-scope: Politely decline with 'message_notify_user'.
-`;
-
-// =========================================================
-// 3. Utility: Inject Variables into Template
-// =========================================================
-/**
- * Replaces all placeholders `{key}` in a template string with their
- * corresponding values from the provided data object.
- */
-function injectEnvData(template: string, data: Record<string, string>): string {
-  return Object.entries(data).reduce((result, [key, value]) => {
-    const safeValue = value?.trim() || 'Unknown';
     return result.replace(new RegExp(`\\{${key}\\}`, 'g'), safeValue);
   }, template);
 }
@@ -212,46 +109,7 @@ function injectEnvData(template: string, data: Record<string, string>): string {
 // =========================================================
 /**
  * Collects runtime environment metadata, merges with defaults, and injects
- * into the base prompt template. Any missing fields default to 'Unknown'.
- */
-export function getUnifiedSystemPrompt(): string {
-  const now = new Date();
-
-  const detectedEnvData: Partial<EnvironmentData> = {
-    os_type: os.type(),
-    os_version: os.release(),
-    architecture: os.arch(),
-    workdir: process.cwd(),
-    shell_type: process.env.SHELL || process.env.COMSPEC,
-    username: os.userInfo().username,
-    current_date: now.toISOString().split('T')[0],
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    locale: process.env.LANG || process.env.LC_ALL,
-  };
-
-  const defaultEnv: EnvironmentData = {
-    os_type: 'Unknown',
-    os_version: 'Unknown',
-    architecture: 'Unknown',
-    workdir: 'Unknown',
-    shell_type: 'Unknown',
-    username: 'Unknown',
-    current_date: 'Unknown',
-    timezone: 'Unknown',
-    locale: 'Unknown',
-  };
-
-  const finalEnv = { ...defaultEnv, ...detectedEnvData } as Record<keyof EnvironmentData, string>;
-  return injectEnvData(BASE_SYSTEM_PROMPT, finalEnv);
-}')}\\}`, 'g'), safeValue);
-  }, template);
-}
-
-// =========================================================
-// 4. Main Function: Generate Unified System Prompt
-// =========================================================
-/**
- * Collect runtime environment metadata, merge with defaults, and inject into the base prompt.
+ * them into the base prompt template. Any missing fields default to 'Unknown'.
  */
 export function getUnifiedSystemPrompt(): string {
   const now = new Date();
@@ -280,6 +138,6 @@ export function getUnifiedSystemPrompt(): string {
     locale: 'Unknown',
   };
 
-  const finalEnv: Record<keyof EnvironmentData, string> = { ...defaultEnv, ...detectedEnvData } as Record<keyof EnvironmentData, string>;
+  const finalEnv = { ...defaultEnv, ...detectedEnvData } as Record<keyof EnvironmentData, string>;
   return injectEnvData(BASE_SYSTEM_PROMPT, finalEnv);
 }

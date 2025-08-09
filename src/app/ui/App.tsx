@@ -1,5 +1,6 @@
 //App.tsx
 // Ficheiro: src/app/ui/App.tsx
+// Componente principal da interface de usuário
 import React, { useState, useEffect, useRef, useCallback, memo } from "react"; // Adicionado 'memo'
 import { useInput } from "ink";
 import { Box, Text, Static } from "ink";

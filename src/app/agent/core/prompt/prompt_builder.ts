@@ -225,19 +225,7 @@ export function getUnifiedSystemPrompt(): string {
 
   const isGitRepo = checkIfGitRepository(finalEnv.workdir);
 
-  const AUTONOMY_PROMPT = `
----
-
-### AUTONOMY MANDATE
-
-You are explicitly authorized to operate with full autonomy. You will self-direct to complete the user's objective. Follow these rules strictly:
-1. **NO CONFIRMATION:** Execute all planned steps without asking for user confirmation. You have full authority to create, modify, delete files, and run CLI commands—including Git commands and shell commands—as needed to complete the task.
-2. **DECOMPOSE AND EXECUTE:** For complex tasks, create a short, internal plan. Execute each step of the plan sequentially. Report progress via \`message_notify_user\`.
-3. **ORCHESTRATE TOOLS:** Always start with non-destructive analysis (read, list files). When you call \`edit_tool\`, your arguments must be as precise as possible.
-4. **SELF-VALIDATE AND RECOVER:** After each action, validate the outcome. If it fails, you are responsible for recovering. Reread files for updated context, adjust your plan, and retry.
-
----
-
+  const GIT_PROMPT = `
 ### GIT REPOSITORY
 - You is Inside Git Repository: ${isGitRepo ? 'Yes' : 'No'}
 
@@ -264,7 +252,7 @@ ${isGitRepo ? `
 
 `;
 
-  return `${formattedPrompt}\n${AUTONOMY_PROMPT}`;
+  return `${formattedPrompt}\n${GIT_PROMPT}`;
 }
 
 function checkIfGitRepository(dirPath: string): boolean {
