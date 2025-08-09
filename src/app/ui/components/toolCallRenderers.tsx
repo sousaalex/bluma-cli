@@ -280,9 +280,8 @@ export const renderEditToolCall = ({
 
   // Garantir foco e atualizar último ID ao focar
   useEffect(() => {
-    if (isFocused) {
-      setLastId(id);
-    } else {
+    setLastId(id); // Garante sempre atualização do último ID
+    if (!isFocused) {
       focus(String(id));
     }
   }, [isFocused, id, setLastId, focus]);

@@ -1,12 +1,16 @@
 /**
  * BluMa CLI — Autonomous Senior Software Engineer @ NomadEngenuity
- * Unified System Prompt Template with Environment Injection
+ * Unified System Prompt Template with Dynamic Environment Injection
  */
 
 import os from 'os';
 
+// =============================
+// 1. System Prompt Base Template
+// =============================
 /**
  * Base prompt definition with placeholders for environment variables.
+ * Each `{placeholder}` will be dynamically replaced with collected environment metadata.
  */
 const SYSTEM_PROMPT = `
 ### IDENTITY
@@ -63,28 +67,36 @@ Maintain a professional, concise, and technical tone in all communications.
 - Out-of-scope: Politely decline with 'message_notify_user'.
 `;
 
+// =============================
+// 2. Environment Metadata Types
+// =============================
 /**
- * Environment metadata injected into the prompt.
+ * Strongly typed structure for environment data injection.
  */
 interface EnvironmentData {
-  os_type: string;
-  os_version: string;
-  workdir: string;
-  shell_type: string;
-  username: string;
-  architecture: string;
-  current_date: string;
-  timezone: string;
-  locale: string;
+  readonly os_type: string;
+  readonly os_version: string;
+  readonly workdir: string;
+  readonly shell_type: string;
+  readonly username: string;
+  readonly architecture: string;
+  readonly current_date: string;
+  readonly timezone: string;
+  readonly locale: string;
 }
 
+// =============================
+// 3. Prompt Generation Function
+// =============================
 /**
  * Collects environment metadata and injects it into the system prompt.
+ * Ensures all placeholders `{key}` in SYSTEM_PROMPT are replaced with actual values.
  */
 export function getUnifiedSystemPrompt(): string {
   const now = new Date();
 
-  const collectedData: Partial<EnvironmentData> = {
+  // Raw environment collection from system and process
+  const detectedEnvData: Partial<EnvironmentData> = {
     os_type: os.type(),
     os_version: os.release(),
     architecture: os.arch(),
@@ -96,7 +108,8 @@ export function getUnifiedSystemPrompt(): string {
     locale: process.env.LANG || process.env.LC_ALL || 'Unknown',
   };
 
-  const finalEnv: EnvironmentData = {
+  // Fallback default values merged with detected environment data
+  const finalEnv: Record<keyof EnvironmentData, string> = {
     os_type: 'Unknown',
     os_version: 'Unknown',
     workdir: 'Unknown',
@@ -106,10 +119,11 @@ export function getUnifiedSystemPrompt(): string {
     current_date: 'Unknown',
     timezone: 'Unknown',
     locale: 'Unknown',
-    ...collectedData,
-  };
+    ...detectedEnvData,
+  } as Record<keyof EnvironmentData, string>;
 
-  return Object.keys(finalEnv).reduce((prompt, key) =>
-    prompt.replace(new RegExp(`{${key}}`, 'g'), String(finalEnv[key as keyof EnvironmentData]))
-  , SYSTEM_PROMPT);
+  // Replace placeholders in prompt with actual values
+  return Object.entries(finalEnv).reduce((prompt, [key, value]) => {
+    return prompt.replace(new RegExp(`{${key}}`, 'g'), String(value));
+  }, SYSTEM_PROMPT);
 }
