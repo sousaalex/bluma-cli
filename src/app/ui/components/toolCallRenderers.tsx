@@ -1,8 +1,10 @@
 // Ficheiro: src/components/toolCallRenderers.tsx
 import React from "react";
 import { Box, Text } from "ink";
-import path from "path";
 import { SimpleDiff } from "./SimpleDiff.js";
+import { useEditToolCallContext } from "../context/EditToolCallContext.js";
+import { useRef, useEffect } from "react";
+import { useFocus } from "ink";
 
 // --- Props que todas as funções de renderização receberão ---
 interface RenderProps {
@@ -212,7 +214,7 @@ export const renderBlumaNotebook = ({
 
         {/* Seção do "Pensamento" */}
         <Box flexDirection="column">
-          <Text bold>Thought:</Text>
+          <Text color="white" bold>Reasoning:</Text>
           {/* O pensamento em si, com uma leve indentação e cor neutra */}
           <Box marginLeft={2}>
             <Text color="gray">{thinkingData.thought}</Text>
@@ -223,7 +225,7 @@ export const renderBlumaNotebook = ({
         {thinkingData.task_checklist &&
           thinkingData.task_checklist.length > 0 && (
             <Box marginTop={1} flexDirection="column">
-              <Text dimColor>Remaining Tasks:</Text>
+              <Text color="white" bold>To Do:</Text>
               {/* Mapeamos cada tarefa, usando a seta `↳` para consistência */}
               {thinkingData.task_checklist.map((task, index) => (
                 <Box key={index} marginLeft={2}>
@@ -231,7 +233,7 @@ export const renderBlumaNotebook = ({
                     {/* <Text color="gray">↳ </Text> */}
                     {/* Damos uma cor diferente para tarefas concluídas (●) vs. pendentes ([ ]) */}
                     <Text
-                      color={task.startsWith("🗹") ? "green" : "yellow"}
+                      color={task.startsWith("🗹") ? "gray" : "white"}
                       strikethrough={task.startsWith("🗹")}
                     >
                       {task}
@@ -256,8 +258,7 @@ export const renderBlumaNotebook = ({
   }
 };
 
-import { useEditToolCallContext } from "../context/EditToolCallContext.js";
-import { useRef, useEffect } from "react";
+
 
 export const renderEditToolCall = ({
   args,
@@ -275,10 +276,16 @@ export const renderEditToolCall = ({
   }
   const finalFileName = filepath;
 
-  // Guardar último id renderizado
-  useEffect(()=>{
-    setLastId(id);
-  },[id,setLastId]);
+  const { isFocused, focus } = useFocus({ id: String(id), autoFocus: true });
+
+  // Garantir foco e atualizar último ID ao focar
+  useEffect(() => {
+    if (isFocused) {
+      setLastId(id);
+    } else {
+      focus(String(id));
+    }
+  }, [isFocused, id, setLastId, focus]);
 
   const isExpanded = expandedIds.has(id);
   const maxHeight = isExpanded ? Infinity : 20;

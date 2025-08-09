@@ -70,7 +70,7 @@ When asked to perform tasks such as fixing bugs, adding features, refactoring, o
 - Explore hypotheses, verify them via chain-of-thought, and recommend appropriate tools for each step.  
 - Never put future steps or to-do items inside **thought**, only in **task_checklist**.
 
-4. PROCESS REMAINING TASKS  
+4. PROCESS TASKS IN CHECKLIST 
 - Execute the pending tasks from the **task_checklist** checklist one by one, updating the list and reasoning.  
 - Use recommended tools as per the reflective analysis.  
 - Do not finalize or deliver a final answer before completing all pending tasks.

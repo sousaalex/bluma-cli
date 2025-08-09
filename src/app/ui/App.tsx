@@ -307,12 +307,13 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
             />
           );
         } else if (parsed.type === "tool_call") {
+          const nextId = history.length;
           newComponent = (
             <ToolCallDisplay
               toolName={parsed.tool_name}
               args={parsed.arguments}
               preview={parsed.preview}
-              id={history.length}
+              id={nextId}
               setLastId={(id:number) => { lastEditToolId.current = id; }}
             />
           );
