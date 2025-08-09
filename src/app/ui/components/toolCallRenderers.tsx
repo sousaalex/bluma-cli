@@ -286,7 +286,8 @@ export const renderEditToolCall = ({
     }
   }, [isFocused, id, setLastId, focus]);
 
-  const isExpanded = expandedIds.has(id);
+  // Começa sempre expandido por padrão
+  const isExpanded = !expandedIds.has(id);
   const maxHeight = isExpanded ? Infinity : 20;
 
   return (

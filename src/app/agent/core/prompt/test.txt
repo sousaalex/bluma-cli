@@ -1,18 +1,42 @@
 /**
  * BluMa CLI — Autonomous Senior Software Engineer @ NomadEngenuity
- * Unified System Prompt Template with Dynamic Environment Injection
+ * Unified System Prompt Generator with Dynamic Environment Injection
+ *
+ * This module provides:
+ * - Base system prompt template with placeholders for runtime environment data
+ * - Strongly typed environment metadata definition
+ * - Utility for injecting dynamic values into the template
+ * - Main function to produce a fully populated unified system prompt
  */
 
 import os from 'os';
 
-// =============================
-// 1. System Prompt Base Template
-// =============================
+// =========================================================
+// 1. Environment Metadata Type
+// =========================================================
 /**
- * Base prompt definition with placeholders for environment variables.
- * Each `{placeholder}` will be dynamically replaced with collected environment metadata.
+ * Strongly typed contract for environment metadata injected into the prompt.
  */
-const SYSTEM_PROMPT = `
+export interface EnvironmentData {
+  readonly os_type: string;
+  readonly os_version: string;
+  readonly architecture: string;
+  readonly workdir: string;
+  readonly shell_type: string;
+  readonly username: string;
+  readonly current_date: string;
+  readonly timezone: string;
+  readonly locale: string;
+}
+
+// =========================================================
+// 2. Base System Prompt Template
+// =========================================================
+/**
+ * Prompt template with placeholders `{key}` to be dynamically replaced
+ * with environment metadata values.
+ */
+const BASE_SYSTEM_PROMPT = `
 ### IDENTITY
 You are BluMa, an autonomous senior software engineer from NomadEngenuity.
 You are a Large Language Model (LLM) fine-tuned by the NomadEngenuity team.
@@ -67,63 +91,54 @@ Maintain a professional, concise, and technical tone in all communications.
 - Out-of-scope: Politely decline with 'message_notify_user'.
 `;
 
-// =============================
-// 2. Environment Metadata Types
-// =============================
+// =========================================================
+// 3. Utility: Inject Variables into Template
+// =========================================================
 /**
- * Strongly typed structure for environment data injection.
+ * Replaces all placeholders `{key}` in a template string with their
+ * corresponding values from the provided data object.
  */
-interface EnvironmentData {
-  readonly os_type: string;
-  readonly os_version: string;
-  readonly workdir: string;
-  readonly shell_type: string;
-  readonly username: string;
-  readonly architecture: string;
-  readonly current_date: string;
-  readonly timezone: string;
-  readonly locale: string;
+function injectEnvData(template: string, data: Record<string, string>): string {
+  return Object.entries(data).reduce((result, [key, value]) => {
+    const safeValue = value?.trim() || 'Unknown';
+    return result.replace(new RegExp(`\\{${key}\\}`, 'g'), safeValue);
+  }, template);
 }
 
-// =============================
-// 3. Prompt Generation Function
-// =============================
+// =========================================================
+// 4. Main Function: Generate Unified System Prompt
+// =========================================================
 /**
- * Collects environment metadata and injects it into the system prompt.
- * Ensures all placeholders `{key}` in SYSTEM_PROMPT are replaced with actual values.
+ * Collects runtime environment metadata, merges with defaults, and injects
+ * into the base prompt template. Any missing fields default to 'Unknown'.
  */
 export function getUnifiedSystemPrompt(): string {
   const now = new Date();
 
-  // Raw environment collection from system and process
   const detectedEnvData: Partial<EnvironmentData> = {
     os_type: os.type(),
     os_version: os.release(),
     architecture: os.arch(),
     workdir: process.cwd(),
-    shell_type: process.env.SHELL || process.env.COMSPEC || 'Unknown',
-    username: os.userInfo().username || 'Unknown',
+    shell_type: process.env.SHELL || process.env.COMSPEC,
+    username: os.userInfo().username,
     current_date: now.toISOString().split('T')[0],
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown',
-    locale: process.env.LANG || process.env.LC_ALL || 'Unknown',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    locale: process.env.LANG || process.env.LC_ALL,
   };
 
-  // Fallback default values merged with detected environment data
-  const finalEnv: Record<keyof EnvironmentData, string> = {
+  const defaultEnv: EnvironmentData = {
     os_type: 'Unknown',
     os_version: 'Unknown',
+    architecture: 'Unknown',
     workdir: 'Unknown',
     shell_type: 'Unknown',
     username: 'Unknown',
-    architecture: 'Unknown',
     current_date: 'Unknown',
     timezone: 'Unknown',
     locale: 'Unknown',
-    ...detectedEnvData,
-  } as Record<keyof EnvironmentData, string>;
+  };
 
-  // Replace placeholders in prompt with actual values
-  return Object.entries(finalEnv).reduce((prompt, [key, value]) => {
-    return prompt.replace(new RegExp(`{${key}}`, 'g'), String(value));
-  }, SYSTEM_PROMPT);
+  const finalEnv = { ...defaultEnv, ...detectedEnvData } as Record<keyof EnvironmentData, string>;
+  return injectEnvData(BASE_SYSTEM_PROMPT, finalEnv);
 }

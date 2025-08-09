@@ -307,13 +307,13 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
             />
           );
         } else if (parsed.type === "tool_call") {
-          const uniqueId = Date.now() + Math.random();
+          const nextId = history.length;
           newComponent = (
             <ToolCallDisplay
               toolName={parsed.tool_name}
               args={parsed.arguments}
               preview={parsed.preview}
-              id={uniqueId}
+              id={nextId}
               setLastId={(id:number) => { lastEditToolId.current = id; }}
             />
           );
@@ -425,10 +425,10 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
     if (key.ctrl && input.toLowerCase() === 'e') {
       setHistory((prev) => [
         ...prev,
-        {
-          id: prev.length,
-          component: <Text color="cyan">CTRL + E detectado ({lastEditToolId.current ?? 'sem ID'})</Text>,
-        },
+        // {
+        //   id: prev.length,
+        //   component: <Text color="cyan">CTRL + E detectado ({lastEditToolId.current ?? 'sem ID'})</Text>,
+        // },
       ]);
       if (lastEditToolId.current !== null) {
         toggleExpansion(lastEditToolId.current);

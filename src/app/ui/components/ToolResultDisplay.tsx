@@ -2,6 +2,7 @@
 
 import React, { memo } from 'react';
 import { Box, Text } from 'ink';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ToolResultDisplayProps {
   toolName: string;
@@ -24,12 +25,11 @@ const ToolResultDisplayComponent = ({ toolName, result }: ToolResultDisplayProps
     // Verifica se a estrutura esperada (content.body) existe no JSON
     if (parsed.content && parsed.content.body) {
       const bodyText = parsed.content.body.trim();
+      // Renderiza usando o nosso MarkdownRenderer otimizado para Ink
+
       return (
-        <Box marginBottom={1} paddingX={1}>
-          <Text>
-            {/*  <Text color="white">● </Text> */}
-            {bodyText}
-          </Text>
+        <Box marginBottom={1} paddingX={1} flexDirection="column">
+          <MarkdownRenderer markdown={bodyText} />
         </Box>
       );
     }
