@@ -2,6 +2,108 @@
  * BluMa CLI — Autonomous Senior Software Engineer @ NomadEngenuity
  * Unified System Prompt Generator with Dynamic Environment Injection
  *
+ * Responsibilities:
+ * 1. Define strong typing for environment metadata.
+ * 2. Provide a base system prompt template with placeholders.
+ * 3. Implement utility to inject environment data into the template.
+ * 4. Offer a main function that returns a fully resolved, unified system prompt.
+ */
+
+import os from 'os';
+
+// =========================================================
+// 1. Environment Metadata Type
+// =========================================================
+/**
+ * Contract for runtime environment metadata inserted into the system prompt.
+ */
+export interface EnvironmentData {
+  readonly os_type: string;
+  readonly os_version: string;
+  readonly architecture: string;
+  readonly workdir: string;
+  readonly shell_type: string;
+  readonly username: string;
+  readonly current_date: string;
+  readonly timezone: string;
+  readonly locale: string;
+}
+
+// =========================================================
+// 2. Base System Prompt Template
+// =========================================================
+/**
+ * Template containing placeholders `{key}` to be replaced by environment values.
+ */
+const BASE_SYSTEM_PROMPT = `
+### IDENTITY
+You are BluMa, an autonomous senior software engineer from NomadEngenuity.
+You are a Large Language Model (LLM) fine-tuned by the NomadEngenuity team.
+Maintain a professional, concise, and technical tone in all communications.
+
+### CORE DIRECTIVES
+- **Autonomy**: Operate with full autonomy. Do not request formatting preferences.
+- **Task Completion**: Call 'agent_end_task' as soon as a task is successfully completed.
+- **Communication**: Use only 'message_notify_user' for developer communication; never respond with free-form text.
+- **Tool Usage**: Use provided tools only, following exact syntax. No parallel calls.
+- **Planning**: Always use 'reasoning_nootebook' before executing tasks.
+
+### TOOL USAGE RULES
+- Tool names: lowercase letters, digits, and underscores only.
+- Avoid non-specified suffixes/prefixes.
+- **edit_tool**: For precise file text changes; prefer over shell commands for edits/creation.
+- **agent_end_task**: Mandatory for confirming task completion.
+
+### COMMUNICATION PROTOCOL
+- Always acknowledge developer ({username}) messages immediately via 'message_notify_user'.
+- Progress updates: use 'message_notify_user'.
+- Only use 'message_ask_user' for essential blocking questions.
+
+### WORKFLOW & REASONING
+- Work in turns; a turn ends with 'agent_end_task'.
+- The reasoning notebook is your organized mind — never include checklists in free reasoning text.
+- Avoid destructive actions unless completely certain.
+- Ensure syntax and context accuracy.
+
+### SYSTEM ENVIRONMENT
+<current_system_environment>
+- Operating System: {os_type} ({os_version})
+- Architecture: {architecture}
+- Working Directory: {workdir}
+- Shell: {shell_type}
+- Username: {username}
+- Current Date: {current_date}
+- Timezone: {timezone}
+- Locale: {locale}
+</current_system_environment>
+
+### QUALITY STANDARDS
+- Document key decisions.
+- Communicate clearly at each step.
+- Write clean, documented code.
+- Follow project conventions.
+- Test whenever possible.
+- Prioritize security and performance.
+
+### CONSTRAINTS
+- Scope: Technical/coding tasks only.
+- Out-of-scope: Politely decline with 'message_notify_user'.
+`;
+
+// =========================================================
+// 3. Utility: Inject Variables into Template
+// =========================================================
+/**
+ * Replace all `{key}` placeholders in the template with corresponding values.
+ * Falls back to 'Unknown' if a value is null/undefined/blank.
+ */
+function injectEnvData(template: string, data: Record<string, string>): string {
+  return Object.entries(data).reduce((result, [key, value]) => {
+    const safeValue = (value ?? '').toString().trim() || 'Unknown';
+    return result.replace(new RegExp(`\\{${key.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\/**
+ * BluMa CLI — Autonomous Senior Software Engineer @ NomadEngenuity
+ * Unified System Prompt Generator with Dynamic Environment Injection
+ *
  * This module provides:
  * - Base system prompt template with placeholders for runtime environment data
  * - Strongly typed environment metadata definition
@@ -140,5 +242,44 @@ export function getUnifiedSystemPrompt(): string {
   };
 
   const finalEnv = { ...defaultEnv, ...detectedEnvData } as Record<keyof EnvironmentData, string>;
+  return injectEnvData(BASE_SYSTEM_PROMPT, finalEnv);
+}')}\\}`, 'g'), safeValue);
+  }, template);
+}
+
+// =========================================================
+// 4. Main Function: Generate Unified System Prompt
+// =========================================================
+/**
+ * Collect runtime environment metadata, merge with defaults, and inject into the base prompt.
+ */
+export function getUnifiedSystemPrompt(): string {
+  const now = new Date();
+
+  const detectedEnvData: Partial<EnvironmentData> = {
+    os_type: os.type(),
+    os_version: os.release(),
+    architecture: os.arch(),
+    workdir: process.cwd(),
+    shell_type: process.env.SHELL || process.env.COMSPEC || 'Unknown',
+    username: os.userInfo().username,
+    current_date: now.toISOString().split('T')[0],
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    locale: process.env.LANG || process.env.LC_ALL || 'Unknown',
+  };
+
+  const defaultEnv: EnvironmentData = {
+    os_type: 'Unknown',
+    os_version: 'Unknown',
+    architecture: 'Unknown',
+    workdir: 'Unknown',
+    shell_type: 'Unknown',
+    username: 'Unknown',
+    current_date: 'Unknown',
+    timezone: 'Unknown',
+    locale: 'Unknown',
+  };
+
+  const finalEnv: Record<keyof EnvironmentData, string> = { ...defaultEnv, ...detectedEnvData } as Record<keyof EnvironmentData, string>;
   return injectEnvData(BASE_SYSTEM_PROMPT, finalEnv);
 }

@@ -7,12 +7,11 @@ import { ToolRenderDisplay, renderGenericToolCall } from './toolCallRenderers.js
 interface ToolCallDisplayProps {
   toolName: string;
   args: any;
+  // V--- ADICIONE A NOVA PROP OPCIONAL ---V
   preview?: string;
-  id: number;
-  setLastId: (id:number) => void;
 }
 
-const ToolCallDisplayComponent = ({ toolName, args, preview, id, setLastId }: ToolCallDisplayProps) => {
+const ToolCallDisplayComponent = ({ toolName, args, preview }: ToolCallDisplayProps) => {
   if (toolName.includes("message_notify_user") || toolName.includes("agent_end_task")) {
     return null;
   }
@@ -22,7 +21,7 @@ const ToolCallDisplayComponent = ({ toolName, args, preview, id, setLastId }: To
   return (
     <Box marginBottom={1}>
       {/* V--- PASSE O PREVIEW PARA O RENDERIZADOR ---V */}
-      <Renderer toolName={toolName} args={args} preview={preview} id={id} setLastId={setLastId} />
+      <Renderer toolName={toolName} args={args} preview={preview} />
     </Box>
   );
 };

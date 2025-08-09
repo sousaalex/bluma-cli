@@ -2,9 +2,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { SimpleDiff } from "./SimpleDiff.js";
-import { useEditToolCallContext } from "../context/EditToolCallContext.js";
-import { useRef, useEffect } from "react";
-import { useFocus } from "ink";
+import path from "path";
 
 // --- Props que todas as funções de renderização receberão ---
 interface RenderProps {
@@ -263,10 +261,7 @@ export const renderBlumaNotebook = ({
 export const renderEditToolCall = ({
   args,
   preview,
-  id,
-  setLastId,
-}: RenderProps & { id: number; setLastId: (id:number)=>void }): React.ReactElement => {
-  const { expandedIds } = useEditToolCallContext();
+}: RenderProps): React.ReactElement => {
   let filepath = "[path not specified]";
   try {
     const parsedArgs = typeof args === "string" ? JSON.parse(args) : args;
@@ -276,22 +271,9 @@ export const renderEditToolCall = ({
   }
   const finalFileName = filepath;
 
-  const { isFocused, focus } = useFocus({ id: String(id), autoFocus: true });
-
-  // Garantir foco e atualizar último ID ao focar
-  useEffect(() => {
-    setLastId(id); // Garante sempre atualização do último ID
-    if (!isFocused) {
-      focus(String(id));
-    }
-  }, [isFocused, id, setLastId, focus]);
-
-  // Começa sempre expandido por padrão
-  const isExpanded = !expandedIds.has(id);
-  const maxHeight = isExpanded ? Infinity : 20;
-
   return (
     <Box flexDirection="column" paddingX={1} borderStyle="round" borderColor="gray" borderDimColor>
+      {/* Cabeçalho com o 'check' verde */}
       <Box>
         <Text bold>
           <Text color="green">● </Text>
@@ -304,12 +286,12 @@ export const renderEditToolCall = ({
           <Text color="magenta">{finalFileName}</Text>
         </Text>
       </Box>
+
+      {/* Renderiza o diff COMPLETO, se existir */}
       {preview && (
         <Box marginTop={1}>
-          <SimpleDiff text={preview} maxHeight={maxHeight} />
-          {!isExpanded && (
-            <Text color="gray">Press Ctrl+E to expand</Text>
-          )}
+          {/* Aqui não passamos maxHeight, então ele mostra tudo */}
+          <SimpleDiff text={preview} maxHeight={Infinity} />
         </Box>
       )}
     </Box>

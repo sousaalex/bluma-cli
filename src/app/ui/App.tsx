@@ -2,7 +2,6 @@
 // Ficheiro: src/app/ui/App.tsx
 import React, { useState, useEffect, useRef, useCallback, memo } from "react"; // Adicionado 'memo'
 import { useInput } from "ink";
-import { EditToolCallProvider, useEditToolCallContext } from "./context/EditToolCallContext.js";
 import { Box, Text, Static } from "ink";
 import { EventEmitter } from "events";
 
@@ -313,8 +312,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
               toolName={parsed.tool_name}
               args={parsed.arguments}
               preview={parsed.preview}
-              id={nextId}
-              setLastId={(id:number) => { lastEditToolId.current = id; }}
+            
             />
           );
         } else if (parsed.type === "tool_result") {
@@ -377,7 +375,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
 
   // --- Lógica de Renderização Unificada ---
 
-  const renderInteractiveComponent = () => {
+   const renderInteractiveComponent = () => {
     if (mcpStatus !== "connected") {
       return (
         <Box borderStyle="round" borderColor="black">
@@ -418,47 +416,15 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
     );
   };
 
-  const { expandedIds, toggleExpansion } = useEditToolCallContext();
-  const lastEditToolId = useRef<number | null>(null);
-
-  useInput((input, key) => {
-    if (key.ctrl && input.toLowerCase() === 'e') {
-      setHistory((prev) => [
-        ...prev,
-        // {
-        //   id: prev.length,
-        //   component: <Text color="cyan">CTRL + E detectado ({lastEditToolId.current ?? 'sem ID'})</Text>,
-        // },
-      ]);
-      if (lastEditToolId.current !== null) {
-        toggleExpansion(lastEditToolId.current);
-      }
-    }
-  });
-
   return (
-    <EditToolCallProvider>
-      <Box flexDirection="column">
-        <Static items={history}>
-          {(item) => <Box key={item.id}>{item.component}</Box>}
-        </Static>
-        {/* Render expansão fora do Static */}
-        {[...expandedIds].map(id => {
-          const histItem = history[id];
-          if (!histItem) return null;
-          return <Box key={`expanded-${id}`}>{histItem.component}</Box>;
-        })}
-        {renderInteractiveComponent()}
-      </Box>
-    </EditToolCallProvider>
+    <Box flexDirection="column">
+      <Static items={history}>
+        {(item) => <Box key={item.id}>{item.component}</Box>}
+      </Static>
+      {renderInteractiveComponent()}
+    </Box>
   );
 };
 
-const AppWithProvider = (props: AppProps) => (
-  <EditToolCallProvider>
-    <AppComponent {...props} />
-  </EditToolCallProvider>
-);
-
-export const App = memo(AppWithProvider);
+export const App = memo(AppComponent);
 export default App;
