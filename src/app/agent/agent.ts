@@ -110,10 +110,6 @@ export class Agent {
     });
     this.llm = new OpenAIAdapter(openai);
 
-    // Configuração de cliente OpenAI (OpenRouter)
-
-
-
     // Instancia o núcleo BluMaAgent que cuidará do loop/estado
     this.core = new BluMaAgent(
       this.sessionId,

@@ -90,9 +90,9 @@ CRITICAL: Your laptop (reasoning_nootebook) is your ORGANIZED MIND
 - Jumping between unrelated subtasks
 
 Important rule:
-Do not include future steps/to-dos in thought; put them strictly in remaining_tasks, using the mandated checklist markers.
+Do not include future steps/to-dos in thought; put them strictly in task_checklist, using the mandated checklist markers.
 
-- remaining_tasks: Checklist list of high-level upcoming tasks.
+- task_checklist: Checklist list of high-level upcoming tasks.
   Format is mandatory:
   - "🗸" → for tasks not yet done (pending)
   - "[ ]" → for tasks already completed

@@ -179,7 +179,7 @@ export const renderBlumaNotebook = ({
   // --- Definição da Interface para o nosso dado (para segurança do TypeScript) ---
   interface ThinkingData {
     thought: string;
-    remaining_tasks?: string[];
+    task_checklist?: string[];
   }
 
   try {
@@ -220,12 +220,12 @@ export const renderBlumaNotebook = ({
         </Box>
 
         {/* Seção das "Tarefas Restantes" */}
-        {thinkingData.remaining_tasks &&
-          thinkingData.remaining_tasks.length > 0 && (
+        {thinkingData.task_checklist &&
+          thinkingData.task_checklist.length > 0 && (
             <Box marginTop={1} flexDirection="column">
               <Text dimColor>Remaining Tasks:</Text>
               {/* Mapeamos cada tarefa, usando a seta `↳` para consistência */}
-              {thinkingData.remaining_tasks.map((task, index) => (
+              {thinkingData.task_checklist.map((task, index) => (
                 <Box key={index} marginLeft={2}>
                   <Text>
                     {/* <Text color="gray">↳ </Text> */}
@@ -256,10 +256,16 @@ export const renderBlumaNotebook = ({
   }
 };
 
+import { useEditToolCallContext } from "../context/EditToolCallContext.js";
+import { useRef, useEffect } from "react";
+
 export const renderEditToolCall = ({
   args,
   preview,
-}: RenderProps): React.ReactElement => {
+  id,
+  setLastId,
+}: RenderProps & { id: number; setLastId: (id:number)=>void }): React.ReactElement => {
+  const { expandedIds } = useEditToolCallContext();
   let filepath = "[path not specified]";
   try {
     const parsedArgs = typeof args === "string" ? JSON.parse(args) : args;
@@ -267,12 +273,18 @@ export const renderEditToolCall = ({
   } catch (e) {
     filepath = "Error parsing arguments";
   }
-  // const finalFileName = path.basename(filepath);
   const finalFileName = filepath;
 
+  // Guardar último id renderizado
+  useEffect(()=>{
+    setLastId(id);
+  },[id,setLastId]);
+
+  const isExpanded = expandedIds.has(id);
+  const maxHeight = isExpanded ? Infinity : 20;
+
   return (
-    <Box flexDirection="column" paddingX={1}>
-      {/* Cabeçalho com o 'check' verde */}
+    <Box flexDirection="column" paddingX={1} borderStyle="round" borderColor="gray" borderDimColor>
       <Box>
         <Text bold>
           <Text color="green">● </Text>
@@ -285,12 +297,12 @@ export const renderEditToolCall = ({
           <Text color="magenta">{finalFileName}</Text>
         </Text>
       </Box>
-
-      {/* Renderiza o diff COMPLETO, se existir */}
       {preview && (
         <Box marginTop={1}>
-          {/* Aqui não passamos maxHeight, então ele mostra tudo */}
-          <SimpleDiff text={preview} maxHeight={Infinity} />
+          <SimpleDiff text={preview} maxHeight={maxHeight} />
+          {!isExpanded && (
+            <Text color="gray">Press Ctrl+R to expand</Text>
+          )}
         </Box>
       )}
     </Box>
@@ -343,7 +355,7 @@ export const renderGenericToolCall = ({
 
 // --- O Registro/Mapa de Renderizadores ---
 export const ToolRenderDisplay: {
-  [key: string]: (props: RenderProps) => React.ReactElement;
+  [key: string]: (props: any) => React.ReactElement;
 } = {
   shell_command: renderShellCommand,
   ls_tool: renderLsTool,

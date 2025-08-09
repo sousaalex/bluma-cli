@@ -7,8 +7,9 @@ import { ToolRenderDisplay, renderGenericToolCall } from './toolCallRenderers.js
 interface ToolCallDisplayProps {
   toolName: string;
   args: any;
-  // V--- ADICIONE A NOVA PROP OPCIONAL ---V
   preview?: string;
+  id: number;
+  setLastId: (id:number) => void;
 }
 
 const ToolCallDisplayComponent = ({ toolName, args, preview }: ToolCallDisplayProps) => {
@@ -21,7 +22,7 @@ const ToolCallDisplayComponent = ({ toolName, args, preview }: ToolCallDisplayPr
   return (
     <Box marginBottom={1}>
       {/* V--- PASSE O PREVIEW PARA O RENDERIZADOR ---V */}
-      <Renderer toolName={toolName} args={args} preview={preview} />
+      <Renderer toolName={toolName} args={args} preview={preview} id={0} setLastId={() => {}} />
     </Box>
   );
 };
