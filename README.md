@@ -5,7 +5,7 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://shields.io/)
 
 <p align="center">
-  <img src="https://pharmaseedevsa.blob.core.windows.net/pharmassee-dev-storage/bluma.png" alt="Tela inicial BluMa CLI" width="1000"/>
+  <img src="https://pharmaseedevsa.blob.core.windows.net/pharmassee-dev-storage/bluma.png" alt="Screenshot BluMa CLI" width="1000"/>
 </p>
 
 BluMa CLI is an independent agent for automation and advanced software engineering. The project is a conversational assistant that interacts via terminal (CLI), built with React/Ink, supporting smart agents (LLM, OpenAI Azure), tool execution, persistent history, session management, and extensibility through external plugins/tools.
@@ -99,7 +99,7 @@ Add to your `~/.bashrc`, `~/.zshrc`, or equivalent:
 ```sh
 export AZURE_OPENAI_ENDPOINT="https://..."
 export AZURE_OPENAI_API_KEY="your_key"
-export AZURE_OPENAI_API_VERSION="2024-06-01"
+export AZURE_OPENAI_API_VERSION="2025-01-01-preview"
 export AZURE_OPENAI_DEPLOYMENT="bluma-gpt"
 export GITHUB_PERSONAL_ACCESS_TOKEN="..."
 export NOTION_API_TOKEN="..."
@@ -113,7 +113,7 @@ source ~/.bashrc # or whichever file you edited
 ```cmd
 setx AZURE_OPENAI_ENDPOINT "https://..."
 setx AZURE_OPENAI_API_KEY "your_key"
-setx AZURE_OPENAI_API_VERSION "2024-06-01"
+setx AZURE_OPENAI_API_VERSION "2025-01-01-preview"
 setx AZURE_OPENAI_DEPLOYMENT "bluma-gpt"
 setx GITHUB_PERSONAL_ACCESS_TOKEN "..."
 setx NOTION_API_TOKEN "..."
@@ -124,7 +124,7 @@ setx NOTION_API_TOKEN "..."
 ```powershell
 [Environment]::SetEnvironmentVariable("AZURE_OPENAI_ENDPOINT", "https://...", "Machine")
 [Environment]::SetEnvironmentVariable("AZURE_OPENAI_API_KEY", "your_key", "Machine")
-[Environment]::SetEnvironmentVariable("AZURE_OPENAI_API_VERSION", "2024-06-01", "Machine")
+[Environment]::SetEnvironmentVariable("AZURE_OPENAI_API_VERSION", "2025-01-01-preview", "Machine")
 [Environment]::SetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT", "bluma-gpt", "Machine")
 [Environment]::SetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN", "...", "Machine")
 [Environment]::SetEnvironmentVariable("NOTION_API_TOKEN", "...", "Machine")
