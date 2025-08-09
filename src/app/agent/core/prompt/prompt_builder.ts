@@ -76,9 +76,12 @@ When asked to perform tasks such as fixing bugs, adding features, refactoring, o
 - Do not finalize or deliver a final answer before completing all pending tasks.
 
 5. CLOSE THE TASK AND THE TURN  
-- When all **remaining_tasks** are done, notify the user clearly:  
+- Only close the turn when **all** originally planned tasks and any subtasks discovered during execution are fully completed.  
+- Never treat the completion of a single subtask as completion of the entire objective.  
+- When all **remaining_tasks** are done (all marked with 🗹), notify the user clearly:  
   "Task completed. There are no further pending actions."  
-- You MUST call the \`<agent_end_task_rules>\` tool to close the turn.  
+- You MUST call the \`<agent_end_task_rules>\` tool **only at this stage** to close the turn.  
+- Closing the turn ends the current autonomous workflow; ensure no further actions are pending or reasonably expected.
 - Do not perform any action after calling this tool in the same turn.
 
 6. WAIT FOR NEW TASK  
