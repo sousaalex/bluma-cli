@@ -17,7 +17,7 @@ export class BluMaAgent {
   private eventBus: EventEmitter;
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
-  private readonly maxContextTurns: number = 30;
+  private readonly maxContextTurns: number = 10;
   private isInterrupted: boolean = false;
 
   constructor(
