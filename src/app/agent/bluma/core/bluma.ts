@@ -17,7 +17,7 @@ export class BluMaAgent {
   private eventBus: EventEmitter;
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
-  private readonly maxContextTurns: number = 300;
+  private readonly maxContextTurns: number = 30;
   private isInterrupted: boolean = false;
 
   constructor(
@@ -186,7 +186,7 @@ ${editData.error.display}`;
         tool_choice: 'required',
         reasoning_effort: 'high',
         parallel_tool_calls: false,
-        max_tokens: 512, // Limite de tokens para evitar respostas muito longas
+        // max_tokens: 512, // Limite de tokens para evitar respostas muito longas
       });
 
       if (this.isInterrupted) {
