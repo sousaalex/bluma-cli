@@ -12,7 +12,7 @@ import { exec, ExecException } from 'child_process';
  */
 interface ShellCommandArgs {
   command: string;
-  timeout?: number;
+  timeout: number;
   cwd?: string;
   verbose?: boolean;
 }
