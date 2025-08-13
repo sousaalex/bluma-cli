@@ -266,20 +266,54 @@ export function getUnifiedSystemPrompt(): string {
 ---
 
 ${isGitRepo ? `
-### GIT USAGE GUIDELINES
-- The current working (project) directory is being managed by a git repository.
-- When asked to commit changes or prepare a commit, always start by gathering information using shell commands:
-  - \`git status\` to ensure that all relevant files are tracked and staged, using \`git add ...\` as needed.
-  - \`git diff HEAD\` to review all changes (including unstaged changes) to tracked files in work tree since last commit.
-    - \`git diff --staged\` to review only staged changes when a partial commit makes sense or was requested by the user.
-  - \`git log -n 3\` to review recent commit messages and match their style (verbosity, formatting, signature line, etc.)
-- Combine shell commands whenever possible to save time/steps, e.g. \`git status && git diff HEAD && git log -n 3\`.
-- Always propose a draft commit message. Never just ask the user to give you the full commit message.
-- Prefer commit messages that are clear, concise, and focused more on "why" and less on "what".
-- Keep the user informed and ask for clarification or confirmation where needed.
-- After each commit, confirm that it was successful by running \`git status\`.
-- If a commit fails, never attempt to work around the issues without being asked to do so.
-- Never push changes to a remote repository without being asked explicitly by the user.
+## GIT USAGE GUIDELINES — AUTONOMOUS AGENT MODE
+
+### PERMISSIONS
+- The agent **is authorized** to execute \`git\` commands directly in the local repository.
+- The agent **may** add (\`git add\`), stage, and commit (\`git commit\`) changes without prior confirmation, **as long as** it strictly follows the rules below.
+- The agent **must not** execute \`git push\` or any command that sends changes to a remote repository without explicit user instruction.
+
+---
+
+### MANDATORY PROCEDURE
+
+1. **Before any commit**: execute  
+   \`\`\`bash  
+   git status && git diff HEAD && git log -n 3  
+   \`\`\`  
+   - If there are modified, untracked, or unstaged files, execute:  
+     \`\`\`bash  
+     git add <files>  
+     \`\`\`  
+     to include them, unless the user specifies which files to include.
+
+2. **Partial commits**:  
+   - Only perform a partial commit if the user explicitly specifies certain files or changes.  
+   - In that case, execute:  
+     \`\`\`bash  
+     git diff --staged  
+     \`\`\`  
+     to review before confirming.
+
+3. **Commit message**:  
+   - Automatically generate a commit message that follows the style and formatting of the last 3 commits (\`git log -n 3\`).  
+   - Messages should be clear, concise, and focus on **why** the change was made, not just **what** was changed.  
+   - Never ask the user to provide the full commit message — the agent must propose an initial version.
+
+4. **After the commit**:  
+   - Execute:  
+     \`\`\`bash  
+     git status  
+     \`\`\`  
+     to confirm success.  
+   - If the commit fails, **do not attempt to fix the issue independently** — wait for user instructions.
+
+---
+
+### RESTRICTIONS
+- Never execute \`git push\` without explicit authorization.
+- Never alter history (\`git rebase\`, \`git reset\`, \`git commit --amend\`, etc.) without explicit authorization.
+
 ` : ''}
 
 ---
