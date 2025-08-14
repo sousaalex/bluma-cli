@@ -179,7 +179,7 @@ export const renderBlumaNotebook = ({
   // --- Definição da Interface para o nosso dado (para segurança do TypeScript) ---
   interface ThinkingData {
     thought: string;
-    task_checklist?: string[];
+    to_do?: string[];
   }
 
   try {
@@ -220,12 +220,12 @@ export const renderBlumaNotebook = ({
         </Box>
 
         {/* Seção das "Tarefas Restantes" */}
-        {thinkingData.task_checklist &&
-          thinkingData.task_checklist.length > 0 && (
+        {thinkingData.to_do &&
+          thinkingData.to_do.length > 0 && (
             <Box marginTop={1} flexDirection="column">
               <Text color="white" bold>Todos:</Text>
               {/* Mapeamos cada tarefa, usando a seta `↳` para consistência */}
-              {thinkingData.task_checklist.map((task, index) => (
+              {thinkingData.to_do.map((task, index) => (
                 <Box key={index} marginLeft={2}>
                   <Text>
                     {/* <Text color="gray">↳ </Text> */}
