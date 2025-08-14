@@ -1,200 +1,206 @@
 {
-    "nativeTools": [
-        {
-            "type": "function",
-            "function": {
-                "name": "shell_command",
-                "description": "Executes a terminal command in a robust and Windows/Linux compatible way.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "command": {
-                            "type": "string",
-                            "description": "Shell command to execute"
-                        },
-                        "timeout": {
-                            "type": "integer",
-                            "description": "Maximum execution time in seconds",
-                            "default": 20
-                        },
-                        "cwd": {
-                            "type": "string",
-                            "description": "Working directory for command execution (must use absolute path)"
-                        },
-                        "verbose": {
-                            "type": "boolean",
-                            "description": "If True, returns detailed report; if False, only main output",
-                            "default": false
-                        }
-                    },
-                    "required": [
-                        "command", 
-                        "timeout"
-                    ]
-                }
-            }
-        },
-          {
-              "type": "function",
-              "function": {
-                  "name": "edit_tool",
-                  "description": "Safely and precisely replaces text in a file, or creates a new file. The tool is resilient to common formatting issues but performs best with precise input.\n\n**Best Practices for Success:**\n1.  **Use a read tool first:** Always read the file to get the exact content before generating the `old_string`.\n2.  **Provide Context:** For `old_string`, provide a unique, multi-line segment of the file. Including 3+ lines of context around the target change is highly recommended to ensure precision.\n3.  **Create New Files:** To create a new file, provide the full `file_path` and an empty string for `old_string`.",
-                  "parameters": {
-                      "type": "object",
-                      "properties": {
-                          "file_path": {
-                              "type": "string",
-                              "description": "The absolute or relative path to the file. The tool will correctly resolve the path for the current operating system."
-                          },
-                          "old_string": {
-                              "type": "string",
-                              "description": "The exact text to be replaced. To ensure accuracy, this should be a unique, multi-line segment from the file, including all original indentation and whitespace. Do not manually escape newlines (use literal newlines, not '\\n'). For creating a new file, this must be an empty string."
-                          },
-                          "new_string": {
-                              "type": "string",
-                              "description": "The new text that will replace `old_string`. Match the indentation and formatting of the surrounding code to maintain code quality. Do not manually escape newlines."
-                          },
-                          "expected_replacements": {
-                              "type": "integer",
-                              "description": "Optional. The number of occurrences to replace. Defaults to 1. If you expect to replace multiple instances of `old_string`, set this value accordingly.",
-                              "default": 1
-                          }
-                      },
-                      "required": [
-                          "file_path",
-                          "old_string",
-                          "new_string"
-                      ]
-                  }
-              }
-          },
-        {
-            "type": "function",
-            "function": {
-                "name": "agent_end_turn",
-                "description": "Signal to the system that the agent has completed its work Turn.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "message_notify_user",
-                "description": "Send a message to user without requiring a response. Use for acknowledging receipt of messages, providing progress updates, reporting task completion, or explaining changes in approach.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "message": {
-                            "type": "string",
-                            "description": "The body of the message in Markdown format."
-                        }
-                    },
-                    "required": [
-                        "message"
-                    ]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-              "name": "ls_tool",
-              "description": "Lists files and subdirectories with advanced support for pagination and filtering. Automatically ignores common unnecessary files/directories like '.venv', 'node_modules', etc.",
-              "parameters": {
-                "type": "object",
-                "properties": {
-                  "directory_path": {
-                    "type": "string",
-                    "description": "Path of the directory to list. Defaults to '.' (current directory).",
-                    "default": "."
-                  },
-                  "recursive": {
-                    "type": "boolean",
-                    "description": "If True, lists recursively all subdirectories.",
-                    "default": false
-                  },
-                  "ignore_patterns": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Additional patterns to ignore (beyond defaults). E.g., ['test_*', '*.tmp']"
-                  },
-                  "start_index": {
-                    "type": "integer",
-                    "description": "Starting index for pagination (0-based).",
-                    "default": 0
-                  },
-                  "end_index": {
-                    "type": "integer",
-                    "description": "Ending index for pagination (exclusive). If not provided, lists everything from start_index."
-                  },
-                  "show_hidden": {
-                    "type": "boolean",
-                    "description": "If True, shows files/directories starting with '.'.",
-                    "default": false
-                  },
-                  "file_extensions": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "List of extensions to filter (e.g., ['.ts', '.js', '.md']). If not provided, shows all file types."
-                  },
-                  "max_depth": {
-                    "type": "integer",
-                    "description": "Maximum depth for recursive listing. If not provided, there is no limit."
-                  }
-                },
-                "required": []
-              }
+  "nativeTools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "shell_command",
+        "description": "Executes a terminal command in a robust and Windows/Linux compatible way.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Shell command to execute"
+            },
+            "timeout": {
+              "type": "integer",
+              "description": "Maximum execution time in seconds",
+              "default": 20
+            },
+            "cwd": {
+              "type": "string",
+              "description": "Working directory for command execution (must use absolute path)"
+            },
+            "verbose": {
+              "type": "boolean",
+              "description": "If True, returns detailed report; if False, only main output",
+              "default": false
             }
           },
-          {
-            "type": "function",
-            "function": {
-              "name": "count_file_lines",
-              "description": "Counts and returns the total number of lines in a text file. Useful for quickly determining file size or checking if a file is empty before reading it.",
-              "parameters": {
-                "type": "object",
-                "properties": {
-                  "filepath": {
-                    "type": "string",
-                    "description": "Path to the file to count lines from. Can be relative or absolute."
-                  }
-                },
-                "required": ["filepath"]
-              }
+          "required": [
+            "command",
+            "timeout"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "edit_tool",
+        "description": "Safely and precisely replaces text in a file, or creates a new file. The tool is resilient to common formatting issues but performs best with precise input.\n\n**Best Practices for Success:**\n1.  **Use a read tool first:** Always read the file to get the exact content before generating the `old_string`.\n2.  **Provide Context:** For `old_string`, provide a unique, multi-line segment of the file. Including 3+ lines of context around the target change is highly recommended to ensure precision.\n3.  **Create New Files:** To create a new file, provide the full `file_path` and an empty string for `old_string`.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "file_path": {
+              "type": "string",
+              "description": "The absolute or relative path to the file. The tool will correctly resolve the path for the current operating system."
+            },
+            "old_string": {
+              "type": "string",
+              "description": "The exact text to be replaced. To ensure accuracy, this should be a unique, multi-line segment from the file, including all original indentation and whitespace. Do not manually escape newlines (use literal newlines, not '\\n'). For creating a new file, this must be an empty string."
+            },
+            "new_string": {
+              "type": "string",
+              "description": "The new text that will replace `old_string`. Match the indentation and formatting of the surrounding code to maintain code quality. Do not manually escape newlines."
+            },
+            "expected_replacements": {
+              "type": "integer",
+              "description": "Optional. The number of occurrences to replace. Defaults to 1. If you expect to replace multiple instances of `old_string`, set this value accordingly.",
+              "default": 1
             }
           },
-          {
-            "type": "function",
-            "function": {
-              "name": "read_file_lines",
-              "description": "Reads and returns content between specific line numbers from a text file. Ideal for efficiently reading portions of large files.",
-              "parameters": {
-                "type": "object",
-                "properties": {
-                  "filepath": {
-                    "type": "string",
-                    "description": "Path to the file to read from."
-                  },
-                  "start_line": {
-                    "type": "integer",
-                    "description": "Starting line number (1-based index). Must be >= 1."
-                  },
-                  "end_line": {
-                    "type": "integer",
-                    "description": "Ending line number (1-based index, inclusive). Must be >= start_line."
-                  }
-                },
-                "required": ["filepath", "start_line", "end_line"]
-              }
+          "required": [
+            "file_path",
+            "old_string",
+            "new_string"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "agent_end_turn",
+        "description": "Signal to the system that the agent has completed its work Turn.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "message_notify_user",
+        "description": "Send a message to user without requiring a response. Use for acknowledging receipt of messages, providing progress updates, reporting task completion, or explaining changes in approach.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "description": "The body of the message in Markdown format."
             }
-          }
-    ]
+          },
+          "required": [
+            "message"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "ls_tool",
+        "description": "Lists files and subdirectories with advanced support for pagination and filtering. Automatically ignores common unnecessary files/directories like '.venv', 'node_modules', etc.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "directory_path": {
+              "type": "string",
+              "description": "Path of the directory to list. Defaults to '.' (current directory).",
+              "default": "."
+            },
+            "recursive": {
+              "type": "boolean",
+              "description": "If True, lists recursively all subdirectories.",
+              "default": false
+            },
+            "ignore_patterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Additional patterns to ignore (beyond defaults). E.g., ['test_*', '*.tmp']"
+            },
+            "start_index": {
+              "type": "integer",
+              "description": "Starting index for pagination (0-based).",
+              "default": 0
+            },
+            "end_index": {
+              "type": "integer",
+              "description": "Ending index for pagination (exclusive). If not provided, lists everything from start_index."
+            },
+            "show_hidden": {
+              "type": "boolean",
+              "description": "If True, shows files/directories starting with '.'.",
+              "default": false
+            },
+            "file_extensions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of extensions to filter (e.g., ['.ts', '.js', '.md']). If not provided, shows all file types."
+            },
+            "max_depth": {
+              "type": "integer",
+              "description": "Maximum depth for recursive listing. If not provided, there is no limit."
+            }
+          },
+          "required": []
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "count_file_lines",
+        "description": "Counts and returns the total number of lines in a text file. Useful for quickly determining file size or checking if a file is empty before reading it.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "filepath": {
+              "type": "string",
+              "description": "Path to the file to count lines from. Can be relative or absolute."
+            }
+          },
+          "required": [
+            "filepath"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "read_file_lines",
+        "description": "Reads and returns content between specific line numbers from a text file. Ideal for efficiently reading portions of large files.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "filepath": {
+              "type": "string",
+              "description": "Path to the file to read from."
+            },
+            "start_line": {
+              "type": "integer",
+              "description": "Starting line number (1-based index). Must be >= 1."
+            },
+            "end_line": {
+              "type": "integer",
+              "description": "Ending line number (1-based index, inclusive). Must be >= start_line."
+            }
+          },
+          "required": [
+            "filepath",
+            "start_line",
+            "end_line"
+          ]
+        }
+      }
+    }
+  ]
 }
