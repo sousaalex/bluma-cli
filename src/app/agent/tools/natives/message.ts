@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 interface MessageNotifyuserArgs {
-  text_markdown: string;
+  message: string;
 }
 
 interface Notification {
@@ -22,7 +22,7 @@ interface Notification {
  * @returns A Promise that resolves to the notification object.
  */
 export function messageNotifyuser(args: MessageNotifyuserArgs): Promise<Notification> {
-  const { text_markdown } = args;
+  const { message } = args;
 
   const notification: Notification = {
     type: 'message_notify_user',
@@ -30,7 +30,7 @@ export function messageNotifyuser(args: MessageNotifyuserArgs): Promise<Notifica
     timestamp: new Date().toISOString(),
     content: {
       format: 'markdown',
-      body: text_markdown,
+      body: message,
     },
     success: true,
     delivered: true,

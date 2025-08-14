@@ -197,7 +197,7 @@ This tool is mandatory, but MUST only be called when all tasks in \`task_checkli
 Rules:
 1. Never call this tool before all tasks are completed.
 2. It is strictly forbidden to call \`agent_end_task\` if there are any pending tasks in \`task_checklist\`.
-3. Before calling, always send a final message summarizing the completed work.
+3. Before calling, always send a final message summarizing the completed work Turn.
 4. Verify that every task in the \`task_checklist\` array has a "completed" status before calling.
 </agent_end_task_rules>
 
