@@ -181,7 +181,7 @@ ${editData.error.display}`;
       const response = await this.llm.chatCompletion({
         model: this.deploymentName,
         messages: contextWindow as any,
-        temperature: 0.2,
+        temperature: 0.0,
         tools: this.mcpClient.getAvailableTools() as any,
         tool_choice: 'required',
         reasoning: { effort: "high" },
