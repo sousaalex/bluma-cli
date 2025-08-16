@@ -184,7 +184,7 @@ ${editData.error.display}`;
         temperature: 0.2,
         tools: this.mcpClient.getAvailableTools() as any,
         tool_choice: 'required',
-        reasoning_effort: 'high',
+        reasoning: { effort: "high" },
         parallel_tool_calls: false,
         // max_tokens: 512, // Limite de tokens para evitar respostas muito longas
       });
