@@ -66,7 +66,7 @@ export class BluMaAgent {
 
     if (this.history.length === 0) {
       const systemPrompt = getUnifiedSystemPrompt();
-      this.history.push({ role: 'system', content: systemPrompt });
+      this.history.push({ role: 'developer', content: systemPrompt });
       await saveSessionHistory(this.sessionFile, this.history);
     }
   }
@@ -221,7 +221,7 @@ ${editData.error.display}`;
           details: { violationContent: message.content },
         });
         this.eventBus.emit('backend_message', { type: 'protocol_violation', message: feedback.message, content: message.content });
-        this.history.push({ role: 'system', content: feedback.correction });
+        this.history.push({ role: 'developer', content: feedback.correction });
         await this._continueConversation();
       } else {
         this.eventBus.emit('backend_message', { type: 'info', message: 'Agent is thinking... continuing reasoning cycle.' });

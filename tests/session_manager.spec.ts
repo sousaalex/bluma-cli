@@ -23,7 +23,7 @@ describe('session_manager safe save', () => {
     expect(Array.isArray(history0)).toBe(true);
 
     const newHistory = [
-      { role: 'system', content: 'hello' },
+      { role: 'developer', content: 'hello' },
       { role: 'user', content: 'world' },
     ];
     await saveSessionHistory(file, newHistory);
