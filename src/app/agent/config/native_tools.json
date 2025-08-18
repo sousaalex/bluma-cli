@@ -72,7 +72,7 @@
       "type": "function",
       "function": {
         "name": "agent_end_task",
-        "description": "Signal to the system that the agent has completed its work Tak.",
+        "description": "End the current agent task",
         "parameters": {
           "type": "object",
           "properties": {},
