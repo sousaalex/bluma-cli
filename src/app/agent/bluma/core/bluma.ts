@@ -138,7 +138,7 @@ export class BluMaAgent {
 
       this.eventBus.emit('backend_message', { type: 'tool_result', tool_name: toolName, result: toolResultContent });
 
-      if (toolName.includes('agent_end_turn')) {
+      if (toolName.includes('agent_end_task')) {
         shouldContinueConversation = false;
         this.eventBus.emit('backend_message', { type: 'done', status: 'completed' });
       }
@@ -198,7 +198,7 @@ ${editData.error.display}`;
       this.history.push(message);
 
       if (message.tool_calls) {
-        const autoApprovedTools = ['agent_end_turn', 'message_notify_user', 'reasoning_nootebook', 'ls_tool', 'count_file_lines', 'read_file_lines'];
+        const autoApprovedTools = ['agent_end_task', 'message_notify_user', 'reasoning_nootebook', 'ls_tool', 'count_file_lines', 'read_file_lines'];
         const toolToCall = message.tool_calls[0];
         const isSafeTool = autoApprovedTools.some((safeTool) => toolToCall.function.name.includes(safeTool));
 

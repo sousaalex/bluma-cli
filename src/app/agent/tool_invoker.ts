@@ -91,10 +91,10 @@ export class ToolInvoker {
     this.toolImplementations.set('count_file_lines', countLines);
     this.toolImplementations.set('read_file_lines', readLines)
     
-    // A ferramenta 'agent_end_turn' é especial. Ela não faz nada, mas precisa ser registrada
+    // A ferramenta 'agent_end_task' é especial. Ela não faz nada, mas precisa ser registrada
     // para que o invoker não retorne um erro de "ferramenta não encontrada".
     // A lógica de realmente encerrar a tarefa será tratada pelo Agente.
-    this.toolImplementations.set('agent_end_turn', async () => ({ success: true, message: "Task ended by agent." }));
+    this.toolImplementations.set('agent_end_task', async () => ({ success: true, message: "Task ended by agent." }));
 
   }
 

@@ -88,7 +88,7 @@ ${(editData as any).error.display}`;
         
         const lastToolName = message.tool_calls[0].function.name;
         // Continua o loop de conversação, a menos que a tarefa tenha terminado ou sido interrompida.
-        if (!lastToolName.includes('agent_end_turn') && !this.isInterrupted) {
+        if (!lastToolName.includes('agent_end_task') && !this.isInterrupted) {
           await this._continueConversation();
         }
         // -----------------------------
@@ -156,7 +156,7 @@ ${(editData as any).error.display}`;
 
       this.emitEvent('tool_result', { tool_name: toolName, result: toolResultContent });
 
-      if (toolName.includes('agent_end_turn')) {
+      if (toolName.includes('agent_end_task')) {
         this.emitEvent('done', { status: 'completed' });
       }
     } else {

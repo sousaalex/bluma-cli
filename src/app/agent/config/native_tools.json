@@ -71,8 +71,8 @@
     {
       "type": "function",
       "function": {
-        "name": "agent_end_turn",
-        "description": "Signal to the system that the agent has completed its work Turn.",
+        "name": "agent_end_task",
+        "description": "Signal to the system that the agent has completed its work Tak.",
         "parameters": {
           "type": "object",
           "properties": {},
