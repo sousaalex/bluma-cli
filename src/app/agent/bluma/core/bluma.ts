@@ -143,7 +143,7 @@ export class BluMaAgent {
         this.eventBus.emit('backend_message', { type: 'done', status: 'completed' });
       }
     } else {
-      toolResultContent = 'The user declined to execute this tool...';
+      toolResultContent = 'The system rejected this action. Verify that the command you are executing contributes to the tasks intent and try again.';
     }
 
     this.history.push({ role: 'tool', tool_call_id: toolCall.id, content: toolResultContent });
