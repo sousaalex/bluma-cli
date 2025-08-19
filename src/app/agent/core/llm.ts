@@ -15,7 +15,6 @@ export interface ChatCompletionParams {
   tools?: ToolSpec[];
   tool_choice?: ChatCompletionCreateParams['tool_choice'];
   temperature?: number; // Added temperature for flexibility
-  reasoning_effort?: 'high' | 'medium' | 'low' | null; // Added reasoning_effort
   reasoning?: { effort: 'high' | 'medium' | 'low' }; // Added reasoning object support
   parallel_tool_calls?: boolean;
   max_tokens?: number; // Optional, to limit response length
