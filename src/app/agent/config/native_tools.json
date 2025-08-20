@@ -71,18 +71,6 @@
     {
       "type": "function",
       "function": {
-        "name": "agent_end_turn",
-        "description": "End the current agent turn. This tool is a especial tool that is used to signal the end of the agent's turn. It does not require any parameters and does not return any value.",
-        "parameters": {
-          "type": "object",
-          "properties": {},
-          "required": []
-        }
-      }
-    },
-    {
-      "type": "function",
-      "function": {
         "name": "message_notify_user",
         "description": "This tool allows the agent to send structured messages to the user for confirming task start, replying to messages from name:'user_overlay' (continuing or integrating into the flow), giving short initial responses, notifying about method or strategy changes, providing progress updates, and concluding tasks with a final confirmation or result.",
         "parameters": {
@@ -199,6 +187,18 @@
             "start_line",
             "end_line"
           ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "agent_end_turn",
+        "description": "This tool MUST be used to signal the system that the agent has ended its turn and should switch to idle mode. It takes no parameters.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
         }
       }
     }

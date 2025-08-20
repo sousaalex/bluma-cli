@@ -17,7 +17,7 @@ export class BluMaAgent {
   private eventBus: EventEmitter;
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
-  private readonly maxContextTurns: number = 25; // Limite de turns no contexto da API
+  private readonly maxContextTurns: number = 20; // Limite de turns no contexto da API
   private todoListState: string[] = [];
   private isInterrupted: boolean = false;
 

@@ -23,6 +23,8 @@ interface Notification {
  */
 export function messageNotifyuser(args: MessageNotifyuserArgs): Promise<Notification> {
   const { message } = args;
+  
+    // const result = 'Message sended successfully!';
 
   const notification: Notification = {
     type: 'message_notify_user',
