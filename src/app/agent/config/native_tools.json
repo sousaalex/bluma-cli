@@ -84,7 +84,7 @@
       "type": "function",
       "function": {
         "name": "message_notify_user",
-        "description": "Send a message to user without requiring a response. Use for acknowledging receipt of messages, providing progress updates, reporting task completion, or explaining changes in approach.",
+        "description": "This tool allows the agent to send structured messages to the user for confirming task start, replying to messages from name:'user_overlay' (continuing or integrating into the flow), giving short initial responses, notifying about method or strategy changes, providing progress updates, and concluding tasks with a final confirmation or result.",
         "parameters": {
           "type": "object",
           "properties": {
