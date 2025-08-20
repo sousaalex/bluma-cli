@@ -217,30 +217,7 @@ export const renderBlumaNotebook = ({
           <Box marginLeft={2}>
             <Text color="gray">{thinkingData.thought}</Text>
           </Box>
-        </Box>
-
-        {/* Seção das "Tarefas Restantes" */}
-        {thinkingData.to_do &&
-          thinkingData.to_do.length > 0 && (
-            <Box marginTop={1} flexDirection="column">
-              <Text color="white" bold>Todos:</Text>
-              {/* Mapeamos cada tarefa, usando a seta `↳` para consistência */}
-              {thinkingData.to_do.map((task, index) => (
-                <Box key={index} marginLeft={2}>
-                  <Text>
-                    {/* <Text color="gray">↳ </Text> */}
-                    {/* Damos uma cor diferente para tarefas concluídas (●) vs. pendentes ([ ]) */}
-                    <Text
-                      color={task.startsWith("🗹") ? "gray" : "white"}
-                      strikethrough={task.startsWith("🗹")}
-                    >
-                      {task}
-                    </Text>
-                  </Text>
-                </Box>
-              ))}
-            </Box>
-          )}
+        </Box>       
       </Box>
     );
   } catch (e) {
@@ -298,6 +275,58 @@ export const renderEditToolCall = ({
   );
 };
 
+export const renderTodoTool = ({ args }: RenderProps): React.ReactElement => {
+  try {
+    const parsedArgs = typeof args === "string" ? JSON.parse(args) : args;
+    const action = parsedArgs.action;
+    let detailText = "";
+
+    // Criamos uma descrição útil com base na ação
+    switch (action) {
+      case 'add':
+        const items = parsedArgs.items_to_add || [];
+        const itemCount = items.length;
+        detailText = `Adding ${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+        break;
+      case 'complete':
+        detailText = `Completing item #${parsedArgs.index}`;
+        break;
+      case 'remove':
+        detailText = `Removing item #${parsedArgs.index}`;
+        break;
+      case 'list':
+        detailText = `Listing all tasks...`;
+        break;
+      default:
+        detailText = `Executing action: ${action}`;
+        break;
+    }
+
+    return (
+      <Box flexDirection="column">
+        <Box>
+          <Text bold>
+            <Text color="green">● </Text>
+            To Do
+          </Text>
+        </Box>
+
+        <Box marginLeft={2} paddingX={1}>
+          <Text>
+            <Text color="gray">↳ </Text>
+            <Text color="magenta">{detailText}</Text>
+          </Text>
+        </Box>
+      </Box>
+    );
+  } catch (error) {
+    return (
+      <Box borderStyle="round" borderColor="red" paddingX={1}>
+        <Text color="red">Error parsing To-Do arguments</Text>
+      </Box>
+    );
+  }
+};
 // --- Renderizador Genérico (Fallback) ---
 export const renderGenericToolCall = ({
   toolName,
@@ -352,4 +381,5 @@ export const ToolRenderDisplay: {
   count_file_lines: renderCountFilesLines,
   read_file_lines: renderReadFileLines,
   edit_tool: renderEditToolCall,
+  todo: renderTodoTool,
 };

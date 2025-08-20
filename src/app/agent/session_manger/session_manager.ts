@@ -14,10 +14,16 @@ export type HistoryMessage = ChatCompletionMessageParam;
 
 // Define a estrutura completa do arquivo de sessão JSON
 interface SessionData {
+  current_turn?: {
+    id: string;
+    to_do: string[];
+  };
   session_id: string;
   created_at: string;
   last_updated?: string;
   conversation_history: HistoryMessage[];
+  todo_list?: string[]; // <--- ADICIONE ESTA LINHA
+
 }
 
 // Mutex simples por arquivo (em memória) para evitar concorrência de gravações
@@ -100,7 +106,10 @@ async function ensureSessionDir(): Promise<string> {
  * @param sessionId O ID da sessão a ser carregada ou criada.
  * @returns Uma tupla contendo o caminho do arquivo da sessão e o histórico da conversa.
  */
-export async function loadOrcreateSession(sessionId: string): Promise<[string, HistoryMessage[]]> {
+export async function loadOrcreateSession(
+  sessionId: string
+  // A função agora retorna uma tupla com 3 elementos
+): Promise<[string, HistoryMessage[], string[]]> { 
   const sessionDir = await ensureSessionDir();
   const sessionFile = path.join(sessionDir, `${sessionId}.json`);
 
@@ -108,25 +117,31 @@ export async function loadOrcreateSession(sessionId: string): Promise<[string, H
     await fs.access(sessionFile);
     const fileContent = await fs.readFile(sessionFile, 'utf-8');
     const sessionData: SessionData = JSON.parse(fileContent);
-    return [sessionFile, sessionData.conversation_history || []];
+    // Retorna o histórico E a lista de tarefas (ou um array vazio se não existir)
+    return [sessionFile, sessionData.conversation_history || [], sessionData.todo_list || []];
   } catch (error) {
     const newSessionData: SessionData = {
       session_id: sessionId,
       created_at: new Date().toISOString(),
       conversation_history: [],
+      todo_list: [], // Garante que uma nova sessão comece com uma lista vazia
     };
     await fs.writeFile(sessionFile, JSON.stringify(newSessionData, null, 2), 'utf-8');
-    return [sessionFile, []];
+    // Retorna os valores para uma nova sessão
+    return [sessionFile, [], []];
   }
-}
-
+} 
 /**
  * Salva o histórico da conversa no arquivo de sessão correspondente de forma robusta
  * (safe-save + retry/backoff no Windows + fallback copy+unlink), prevenindo corrupção.
  * @param sessionFile O caminho completo para o arquivo da sessão.
  * @param history O array de histórico da conversa a ser salvo.
  */
-export async function saveSessionHistory(sessionFile: string, history: HistoryMessage[]): Promise<void> {
+export async function saveSessionHistory(
+  sessionFile: string,
+  history: HistoryMessage[],
+  todoList: string[] // <--- ADICIONE O NOVO PARÂMETRO
+): Promise<void> {
   await withFileLock(sessionFile, async () => {
     let sessionData: SessionData;
 
@@ -153,6 +168,7 @@ export async function saveSessionHistory(sessionFile: string, history: HistoryMe
         session_id: sessionId,
         created_at: new Date().toISOString(),
         conversation_history: [],
+        todo_list: [], 
       };
       // Cria o ficheiro base quando não existir
       try {
@@ -161,6 +177,7 @@ export async function saveSessionHistory(sessionFile: string, history: HistoryMe
     }
 
     sessionData.conversation_history = history;
+    sessionData.todo_list = todoList; // <--- SALVA A LISTA DE TAREFAS NO OBJETO
     sessionData.last_updated = new Date().toISOString();
 
     const tempSessionFile = `${sessionFile}.${Date.now()}.tmp`;

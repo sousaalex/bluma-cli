@@ -9,7 +9,7 @@ import type { ChatCompletionMessageToolCall } from 'openai/resources/chat/comple
  * 1.  Sempre inclui todas as mensagens 'system' do início do histórico.
  * 2.  Inclui os últimos N 'turnos completos' do histórico.
  * 3.  Um turno começa com uma mensagem 'user' e consideramos que termina
- *     quando uma chamada à ferramenta 'agent_end_task' é feita.
+ *     quando uma chamada à ferramenta 'agent_end_turn' é feita.
  * 4.  Sempre inclui o turno ATUAL (o mais recente), mesmo que esteja em andamento.
  *
  * @param fullHistory O histórico completo da sessão.
@@ -51,10 +51,10 @@ export function createApiContextWindow(
     const msg = conversationHistory[i];
     currentTurn.unshift(msg); // Adiciona a mensagem no início do turno atual
 
-    // Regra: um turno termina quando uma chamada de ferramenta para 'agent_end_task' é feita
+    // Regra: um turno termina quando uma chamada de ferramenta para 'agent_end_turn' é feita
     const endsWithAgentEnd = (
       msg.role === 'assistant' &&
-      (msg as any).tool_calls?.some((tc: ChatCompletionMessageToolCall) => tc.function.name === 'agent_end_task')
+      (msg as any).tool_calls?.some((tc: ChatCompletionMessageToolCall) => tc.function.name === 'agent_end_turn')
     );
 
     if (endsWithAgentEnd) {
@@ -77,7 +77,7 @@ export function createApiContextWindow(
     const prev = conversationHistory[i - 1];
     if (msg.role === 'user' && !isDevOverlay(msg)) {
       // Se o próximo mais recente (prev) for um assistant sem end_task, tratamos como fronteira macia.
-      if (prev && prev.role === 'assistant' && !(prev as any).tool_calls?.some((tc: ChatCompletionMessageToolCall) => tc.function.name === 'agent_end_task')) {
+      if (prev && prev.role === 'assistant' && !(prev as any).tool_calls?.some((tc: ChatCompletionMessageToolCall) => tc.function.name === 'agent_end_turn')) {
         // Fechamos este turno apenas se já temos conteúdo significativo (não só overlays)
         const hasNonOverlay = currentTurn.some(m => m.role !== 'user' || !isDevOverlay(m));
         if (hasNonOverlay) {

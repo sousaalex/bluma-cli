@@ -12,7 +12,7 @@ interface ToolCallDisplayProps {
 }
 
 const ToolCallDisplayComponent = ({ toolName, args, preview }: ToolCallDisplayProps) => {
-  if (toolName.includes("message_notify_user") || toolName.includes("agent_end_task")) {
+  if (toolName.includes("message_notify_user") || toolName.includes("agent_end_turn")) {
     return null;
   }
 

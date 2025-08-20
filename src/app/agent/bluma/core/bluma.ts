@@ -18,6 +18,7 @@ export class BluMaAgent {
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
   private readonly maxContextTurns: number = 25; // Limite de turns no contexto da API
+  private todoListState: string[] = [];
   private isInterrupted: boolean = false;
 
   constructor(
@@ -48,7 +49,7 @@ export class BluMaAgent {
       this.eventBus.emit('backend_message', { type: 'user_overlay', payload: clean, ts: data.ts || Date.now() });
       try {
         if (this.sessionFile) {
-          await saveSessionHistory(this.sessionFile, this.history);
+          await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
         }
       } catch (e: any) {
         this.eventBus.emit('backend_message', { type: 'error', message: `Falha ao salvar histórico após user_overlay: ${e.message}` });
@@ -60,14 +61,17 @@ export class BluMaAgent {
     await this.mcpClient.nativeToolInvoker.initialize();
     await this.mcpClient.initialize();
 
-    const [sessionFile, history] = await loadOrcreateSession(this.sessionId);
+    // Carrega o histórico E a lista de tarefas
+    const [sessionFile, history, todoList] = await loadOrcreateSession(this.sessionId);
     this.sessionFile = sessionFile;
     this.history = history;
+    this.todoListState = todoList; // <--- CARREGA O ESTADO NA MEMÓRIA DO AGENTE
 
     if (this.history.length === 0) {
       const systemPrompt = getUnifiedSystemPrompt();
       this.history.push({ role: 'developer', content: systemPrompt });
-      await saveSessionHistory(this.sessionFile, this.history);
+      // Salva o histórico e o estado inicial da lista de tarefas
+      await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
     }
   }
 
@@ -102,7 +106,25 @@ export class BluMaAgent {
 
     if (decisionData.type === 'user_decision_execute') {
       const toolName = toolCall.function.name;
-      const toolArgs = JSON.parse(toolCall.function.arguments);
+      let toolArgs = JSON.parse(toolCall.function.arguments);
+
+       // ===================================================================
+      // ▼▼▼ PONTO CRÍTICO DA NOVA LÓGICA DE GESTÃO DE ESTADO ▼▼▼
+      // ===================================================================
+      if (toolName === 'todo') {
+        // O agente INJETA o estado atual da lista de tarefas nos argumentos.
+        // O LLM não precisa mais enviar a lista, apenas a ação desejada.
+        toolArgs.current_list = this.todoListState;
+
+        // Renomeia o argumento do LLM para maior clareza na ferramenta
+        if (toolArgs.to_do) {
+          toolArgs.items_to_add = toolArgs.to_do;
+          delete toolArgs.to_do;
+        }
+      }
+      // ===================================================================
+      // ▲▲▲ FIM DO BLOCO DA NOVA LÓGICA ▲▲▲
+      // ===================================================================
 
       let previewContent: string | undefined;
       if (toolName === 'edit_tool') {
@@ -124,11 +146,28 @@ export class BluMaAgent {
 
         const result = await this.mcpClient.invoke(toolName, toolArgs);
 
-        let finalResult = result;
-        if (Array.isArray(result) && result.length > 0 && result[0].type === 'text' && typeof result[0].text === 'string') {
-          finalResult = result[0].text;
+        
+
+       // ▼▼▼ ATUALIZAÇÃO DE ESTADO E FORMATAÇÃO DO RESULTADO ▼▼▼
+        // ===================================================================
+        if (toolName === 'todo' && result && result.to_do && result._tool_result) {
+            // 1. O agente ATUALIZA seu próprio estado interno com a nova lista.
+            this.todoListState = result.to_do;
+
+            // 2. O conteúdo a ser enviado de volta ao LLM é a versão RENDERIZADA,
+            // que é curta, legível e consome poucos tokens.
+            toolResultContent = result._tool_result.render;
+        } else {
+            // Lógica de fallback para todas as outras ferramentas
+            let finalResult = result;
+            if (Array.isArray(result) && result.length > 0 && result[0].type === 'text' && typeof result[0].text === 'string') {
+                finalResult = result[0].text;
+            }
+            toolResultContent = typeof finalResult === 'string' ? finalResult : JSON.stringify(finalResult);
         }
-        toolResultContent = typeof finalResult === 'string' ? finalResult : JSON.stringify(finalResult);
+        // ===================================================================
+        // ▲▲▲ FIM DO BLOCO DE ATUALIZAÇÃO ▲▲▲
+        // ===================================================================
       } catch (error: any) {
         toolResultContent = JSON.stringify({
           error: `Tool execution failed: ${error.message}`,
@@ -138,7 +177,7 @@ export class BluMaAgent {
 
       this.eventBus.emit('backend_message', { type: 'tool_result', tool_name: toolName, result: toolResultContent });
 
-      if (toolName.includes('agent_end_task')) {
+      if (toolName.includes('agent_end_turn')) {
         shouldContinueConversation = false;
         this.eventBus.emit('backend_message', { type: 'done', status: 'completed' });
       }
@@ -147,7 +186,7 @@ export class BluMaAgent {
     }
 
     this.history.push({ role: 'tool', tool_call_id: toolCall.id, content: toolResultContent });
-    await saveSessionHistory(this.sessionFile, this.history);
+    await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
 
     if (shouldContinueConversation && !this.isInterrupted) {
       await this._continueConversation();
@@ -198,7 +237,7 @@ ${editData.error.display}`;
       this.history.push(message);
 
       if (message.tool_calls) {
-        const autoApprovedTools = ['agent_end_task', 'message_notify_user', 'reasoning_nootebook', 'ls_tool', 'count_file_lines', 'read_file_lines'];
+        const autoApprovedTools = ['agent_end_turn', 'message_notify_user', 'reasoning_nootebook', 'ls_tool', 'count_file_lines', 'read_file_lines', 'todo'];
         const toolToCall = message.tool_calls[0];
         const isSafeTool = autoApprovedTools.some((safeTool) => toolToCall.function.name.includes(safeTool));
 
@@ -231,7 +270,7 @@ ${editData.error.display}`;
       const errorMessage = error instanceof Error ? error.message : 'An unknown API error occurred.';
       this.eventBus.emit('backend_message', { type: 'error', message: errorMessage });
     } finally {
-      await saveSessionHistory(this.sessionFile, this.history);
+      await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
     }
   }
 }

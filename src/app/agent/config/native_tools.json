@@ -71,8 +71,8 @@
     {
       "type": "function",
       "function": {
-        "name": "agent_end_task",
-        "description": "End the current agent task",
+        "name": "agent_end_turn",
+        "description": "End the current agent turn. This tool is a especial tool that is used to signal the end of the agent's turn. It does not require any parameters and does not return any value.",
         "parameters": {
           "type": "object",
           "properties": {},
