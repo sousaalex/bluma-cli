@@ -199,7 +199,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
         <>
           <Box borderStyle="round" borderColor="gray" borderDimColor>
             <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
-              <Text color="white">{"❯"} </Text>
+              <Text color="white">{">"} </Text>
               <Text dimColor>ctrl+c to exit</Text>
             </Box>
           </Box>
@@ -208,7 +208,7 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
         <>
           <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly}>
             <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
-              <Text color="white">{"❯"} </Text>
+              <Text color="white">{">"} </Text>
               {/* 1. Texto antes do cursor */}
               <Text>{textBeforeCursor}</Text>
               {/* 2. Cursor sempre visível */}

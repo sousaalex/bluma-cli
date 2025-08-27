@@ -249,7 +249,7 @@ export const renderEditToolCall = ({
   const finalFileName = filepath;
 
   return (
-    <Box flexDirection="column" paddingX={1} borderStyle="round" borderColor="gray" borderDimColor>
+    <Box flexDirection="column" paddingX={1}>
       {/* Cabeçalho com o 'check' verde */}
       <Box>
         <Text bold>
