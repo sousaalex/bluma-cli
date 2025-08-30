@@ -179,7 +179,7 @@ export const renderBlumaNotebook = ({
   // --- Definição da Interface para o nosso dado (para segurança do TypeScript) ---
   interface ThinkingData {
     thought: string;
-    to_do?: string[];
+
   }
 
   try {

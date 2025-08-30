@@ -108,24 +108,6 @@ export class BluMaAgent {
       const toolName = toolCall.function.name;
       let toolArgs = JSON.parse(toolCall.function.arguments);
 
-       // ===================================================================
-      // ▼▼▼ PONTO CRÍTICO DA NOVA LÓGICA DE GESTÃO DE ESTADO ▼▼▼
-      // ===================================================================
-      if (toolName === 'todo') {
-        // O agente INJETA o estado atual da lista de tarefas nos argumentos.
-        // O LLM não precisa mais enviar a lista, apenas a ação desejada.
-        toolArgs.current_list = this.todoListState;
-
-        // Renomeia o argumento do LLM para maior clareza na ferramenta
-        if (toolArgs.to_do) {
-          toolArgs.items_to_add = toolArgs.to_do;
-          delete toolArgs.to_do;
-        }
-      }
-      // ===================================================================
-      // ▲▲▲ FIM DO BLOCO DA NOVA LÓGICA ▲▲▲
-      // ===================================================================
-
       let previewContent: string | undefined;
       if (toolName === 'edit_tool') {
         previewContent = await this._generateEditPreview(toolArgs);
@@ -147,27 +129,11 @@ export class BluMaAgent {
         const result = await this.mcpClient.invoke(toolName, toolArgs);
 
         
-
-       // ▼▼▼ ATUALIZAÇÃO DE ESTADO E FORMATAÇÃO DO RESULTADO ▼▼▼
-        // ===================================================================
-        if (toolName === 'todo' && result && result.to_do && result._tool_result) {
-            // 1. O agente ATUALIZA seu próprio estado interno com a nova lista.
-            this.todoListState = result.to_do;
-
-            // 2. O conteúdo a ser enviado de volta ao LLM é a versão RENDERIZADA,
-            // que é curta, legível e consome poucos tokens.
-            toolResultContent = result._tool_result.render;
-        } else {
-            // Lógica de fallback para todas as outras ferramentas
-            let finalResult = result;
-            if (Array.isArray(result) && result.length > 0 && result[0].type === 'text' && typeof result[0].text === 'string') {
-                finalResult = result[0].text;
-            }
-            toolResultContent = typeof finalResult === 'string' ? finalResult : JSON.stringify(finalResult);
-        }
-        // ===================================================================
-        // ▲▲▲ FIM DO BLOCO DE ATUALIZAÇÃO ▲▲▲
-        // ===================================================================
+      let finalResult = result;
+      if (Array.isArray(result) && result.length > 0 && result[0].type === 'text' && typeof result[0].text === 'string') {
+          finalResult = result[0].text;
+      }
+      toolResultContent = typeof finalResult === 'string' ? finalResult : JSON.stringify(finalResult);
       } catch (error: any) {
         toolResultContent = JSON.stringify({
           error: `Tool execution failed: ${error.message}`,

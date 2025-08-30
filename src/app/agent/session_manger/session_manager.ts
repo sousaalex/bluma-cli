@@ -16,13 +16,13 @@ export type HistoryMessage = ChatCompletionMessageParam;
 interface SessionData {
   current_turn?: {
     id: string;
-    to_do: string[];
+
   };
   session_id: string;
   created_at: string;
   last_updated?: string;
   conversation_history: HistoryMessage[];
-  todo_list?: string[]; // <--- ADICIONE ESTA LINHA
+
 
 }
 
@@ -118,13 +118,13 @@ export async function loadOrcreateSession(
     const fileContent = await fs.readFile(sessionFile, 'utf-8');
     const sessionData: SessionData = JSON.parse(fileContent);
     // Retorna o histórico E a lista de tarefas (ou um array vazio se não existir)
-    return [sessionFile, sessionData.conversation_history || [], sessionData.todo_list || []];
+    return [sessionFile, [], []];  
   } catch (error) {
     const newSessionData: SessionData = {
       session_id: sessionId,
       created_at: new Date().toISOString(),
       conversation_history: [],
-      todo_list: [], // Garante que uma nova sessão comece com uma lista vazia
+
     };
     await fs.writeFile(sessionFile, JSON.stringify(newSessionData, null, 2), 'utf-8');
     // Retorna os valores para uma nova sessão
@@ -168,7 +168,7 @@ export async function saveSessionHistory(
         session_id: sessionId,
         created_at: new Date().toISOString(),
         conversation_history: [],
-        todo_list: [], 
+
       };
       // Cria o ficheiro base quando não existir
       try {
@@ -177,7 +177,6 @@ export async function saveSessionHistory(
     }
 
     sessionData.conversation_history = history;
-    sessionData.todo_list = todoList; // <--- SALVA A LISTA DE TAREFAS NO OBJETO
     sessionData.last_updated = new Date().toISOString();
 
     const tempSessionFile = `${sessionFile}.${Date.now()}.tmp`;
