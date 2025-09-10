@@ -17,7 +17,7 @@ export class BluMaAgent {
   private eventBus: EventEmitter;
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
-  private readonly maxContextTurns: number = 20; // Limite de turns no contexto da API
+  private readonly maxContextTurns: number = 30; // Limite de turns no contexto da API
   private todoListState: string[] = [];
   private isInterrupted: boolean = false;
 
@@ -69,7 +69,7 @@ export class BluMaAgent {
 
     if (this.history.length === 0) {
       const systemPrompt = getUnifiedSystemPrompt();
-      this.history.push({ role: 'developer', content: systemPrompt });
+      this.history.push({ role: 'system', content: systemPrompt });
       // Salva o histórico e o estado inicial da lista de tarefas
       await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
     }
@@ -226,7 +226,7 @@ ${editData.error.display}`;
           details: { violationContent: message.content },
         });
         this.eventBus.emit('backend_message', { type: 'protocol_violation', message: feedback.message, content: message.content });
-        this.history.push({ role: 'developer', content: feedback.correction });
+        this.history.push({ role: 'system', content: feedback.correction });
         await this._continueConversation();
       } else {
         this.eventBus.emit('backend_message', { type: 'info', message: 'Agent is thinking... continuing reasoning cycle.' });

@@ -34,7 +34,7 @@ export abstract class BaseLLMSubAgent implements SubAgent {
     if (this.history.length === 0) {
       // Carrega o prompt do sistema exclusivamente do arquivo apontado por systemPromptPath
       this.history.push({
-        role: 'developer',
+        role: 'system',
         content: systemPromptContent,
       });
       await saveSessionHistory(this.sessionFile, this.history);
