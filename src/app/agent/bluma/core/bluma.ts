@@ -17,7 +17,7 @@ export class BluMaAgent {
   private eventBus: EventEmitter;
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
-  private readonly maxContextTurns: number = 30; // Limite de turns no contexto da API
+  private readonly maxContextTurns: number = 10; // Limite de turns no contexto da API
   private todoListState: string[] = [];
   private isInterrupted: boolean = false;
 
@@ -189,9 +189,7 @@ ${editData.error.display}`;
         temperature: 0.0,
         tools: this.mcpClient.getAvailableTools() as any,
         tool_choice: 'required',
-        reasoning: { effort: "high" },
         parallel_tool_calls: false,
-        // max_tokens: 512, // Limite de tokens para evitar respostas muito longas
       });
 
       if (this.isInterrupted) {
