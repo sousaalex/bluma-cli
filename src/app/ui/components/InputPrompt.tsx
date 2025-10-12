@@ -1,4 +1,4 @@
-// Ficheiro: InputPrompt.tsx - PASTE SEM REDRAW
+// Ficheiro: InputPrompt.tsx - CORRIGIDO SEM ALTERAR APP.TSX
 import { Box, Text, useStdout, useInput } from "ink";
 import { useCustomInput } from "../utils/useSimpleInputBuffer.js";
 import { useEffect, useMemo, useState, useRef, memo } from "react";
@@ -16,7 +16,7 @@ interface InputPromptProps {
   disableWhileProcessing?: boolean;
 }
 
-// Componente memoizado ULTRA-ESTÁVEL para renderizar uma linha
+// Componente memoizado para renderizar uma linha
 const TextLine = memo(({ 
   line, 
   lineIndex,
@@ -36,7 +36,6 @@ const TextLine = memo(({
     return <Text>{line}</Text>;
   }
 
-  // Linha com cursor
   const before = line.slice(0, cursorCol);
   const char = line[cursorCol] || " ";
   const after = line.slice(cursorCol + 1);
@@ -49,31 +48,19 @@ const TextLine = memo(({
     </Text>
   );
 }, (prev, next) => {
-  // Comparação ULTRA-AGRESSIVA
-  // Só re-renderiza se REALMENTE necessário
-  
-  // 1. Se a linha mudou
   if (prev.line !== next.line) return false;
-  
-  // 2. Se showCursor mudou
   if (prev.showCursor !== next.showCursor) return false;
   
-  // 3. Se o cursor estava ou está nesta linha
   const prevIsCursorLine = prev.lineIndex === prev.cursorLine;
   const nextIsCursorLine = next.lineIndex === next.cursorLine;
   
-  // Se cursor entrou ou saiu desta linha
   if (prevIsCursorLine !== nextIsCursorLine) return false;
-  
-  // Se cursor está nesta linha E a posição mudou
   if (nextIsCursorLine && prev.cursorCol !== next.cursorCol) return false;
   
-  // Caso contrário, SKIP render
   return true;
 });
 TextLine.displayName = "TextLine";
 
-// Componente memoizado para sugestões de path
 const PathSuggestions = memo(({ 
   suggestions, 
   selected 
@@ -109,7 +96,6 @@ const PathSuggestions = memo(({
 });
 PathSuggestions.displayName = "PathSuggestions";
 
-// Componente memoizado para sugestões de slash commands
 const SlashSuggestions = memo(({ 
   suggestions, 
   selectedIndex 
@@ -135,17 +121,18 @@ const SlashSuggestions = memo(({
 ));
 SlashSuggestions.displayName = "SlashSuggestions";
 
-// Componente memoizado para o footer
 const Footer = memo(({ isReadOnly }: { isReadOnly: boolean }) => (
   <Box paddingX={1} justifyContent="center">
     <Text color="gray" dimColor>
-      ctrl+c to exit | Enter to submit | Shift+Enter for new line | /help commands | esc interrupt
+      {isReadOnly 
+        ? "ctrl+c to exit | Enter to send message | Shift+Enter for new line | esc interrupt"
+        : "ctrl+c to exit | Enter to submit | Shift+Enter for new line | /help commands | esc interrupt"
+      }
     </Text>
   </Box>
 ));
 Footer.displayName = "Footer";
 
-// Componente interno que renderiza as linhas - ISOLADO do container principal
 const TextLinesRenderer = memo(({ 
   lines,
   cursorLine,
@@ -201,18 +188,21 @@ export const InputPrompt = memo(({
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashIndex, setSlashIndex] = useState(0);
 
+  // IMPORTANTE: permissiveOnSubmit respeita o comportamento original do App.tsx
   const permissiveOnSubmit = (value: string) => {
     const trimmed = (value || "").trim();
+    
     if (isReadOnly) {
+      // Em read-only: envia como user_overlay (comportamento original)
       if (trimmed.length > 0) {
         uiEventBus.emit("user_overlay", { kind: "message", payload: trimmed, ts: Date.now() });
       }
-      return;
+      return; // NÃO chama onSubmit!
     }
+    
+    // Fora de read-only: chama onSubmit normalmente
     onSubmit(value);
   };
-
-  const effectiveReadOnly = isReadOnly;
 
   const { text, cursorPosition, setText } = useCustomInput({
     onSubmit: (value: string) => {
@@ -221,15 +211,13 @@ export const InputPrompt = memo(({
       permissiveOnSubmit(value);
     },
     viewWidth,
-    isReadOnly: effectiveReadOnly,
+    isReadOnly: isReadOnly,
     onInterrupt,
   });
 
-  // Calcula linhas e posição do cursor - SEM KEY INSTÁVEL
   const linesData = useMemo(() => {
     const lines = text.split('\n');
     
-    // Calcula linha e coluna do cursor
     let remainingChars = cursorPosition;
     let cursorLine = 0;
     let cursorCol = 0;
@@ -249,12 +237,7 @@ export const InputPrompt = memo(({
       }
     }
 
-    return {
-      lines,
-      cursorLine,
-      cursorCol,
-      totalLines: lines.length
-    };
+    return { lines, cursorLine, cursorCol, totalLines: lines.length };
   }, [text, cursorPosition]);
 
   const displayData = linesData;
@@ -340,7 +323,6 @@ export const InputPrompt = memo(({
     }
   }, { isActive: true });
 
-  // RENDERIZAÇÃO SEM KEY NO CONTAINER - Evita unmount/remount
   return (
     <Box flexDirection="column">
       {disableWhileProcessing ? (

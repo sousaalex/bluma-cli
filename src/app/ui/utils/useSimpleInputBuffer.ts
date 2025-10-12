@@ -1,15 +1,13 @@
-// Ficheiro: utils/useCustomInput.ts - PASTE ÚNICO RENDER
+// Ficheiro: utils/useCustomInput.ts - CORRIGIDO (onSubmit gerencia user_overlay)
 import { useReducer, useRef, useCallback, useEffect } from 'react';
 import { useInput, type Key } from 'ink';
 
-// O Estado
 interface InputState {
   text: string;
   cursorPosition: number;
   viewStart: number;
 }
 
-// As Ações
 type InputAction =
   | { type: 'INPUT'; payload: string }
   | { type: 'NEWLINE' }
@@ -22,7 +20,6 @@ type InputAction =
   | { type: 'SET'; payload: { text: string; moveCursorToEnd?: boolean; cursorPosition?: number } }
   | { type: 'SET_CURSOR'; payload: number };
 
-// Helper: encontra a posição de início da linha atual
 function getLineStart(text: string, cursorPos: number): number {
   let pos = cursorPos - 1;
   while (pos >= 0 && text[pos] !== '\n') {
@@ -31,7 +28,6 @@ function getLineStart(text: string, cursorPos: number): number {
   return pos + 1;
 }
 
-// Helper: encontra a posição de fim da linha atual
 function getLineEnd(text: string, cursorPos: number): number {
   let pos = cursorPos;
   while (pos < text.length && text[pos] !== '\n') {
@@ -40,7 +36,6 @@ function getLineEnd(text: string, cursorPos: number): number {
   return pos;
 }
 
-// Helper: move cursor para linha acima/abaixo mantendo coluna
 function moveToAdjacentLine(text: string, cursorPos: number, direction: 'up' | 'down'): number {
   const currentLineStart = getLineStart(text, cursorPos);
   const currentLineEnd = getLineEnd(text, cursorPos);
@@ -65,7 +60,6 @@ function moveToAdjacentLine(text: string, cursorPos: number, direction: 'up' | '
   }
 }
 
-// O Reducer
 function inputReducer(state: InputState, action: InputAction, viewWidth: number): InputState {
   const adjustView = (newCursorPos: number, currentViewStart: number): number => {
     if (newCursorPos < currentViewStart) {
@@ -198,7 +192,6 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
   }
 }
 
-// O Hook - COM BATCHING REAL (um único dispatch)
 interface UseCustomInputProps {
   onSubmit: (value: string) => void;
   viewWidth: number;
@@ -212,11 +205,10 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
     { text: '', cursorPosition: 0, viewStart: 0 }
   );
 
-  // NOVA ESTRATÉGIA: Acumular inputs em um buffer e processar APENAS UMA VEZ
+  // Batching de inputs para paste
   const inputBuffer = useRef<string>('');
   const flushScheduled = useRef<boolean>(false);
 
-  // Flush o buffer acumulado - APENAS UM DISPATCH
   const flushInputBuffer = useCallback(() => {
     if (inputBuffer.current.length > 0) {
       const buffered = inputBuffer.current;
@@ -226,7 +218,6 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
     flushScheduled.current = false;
   }, []);
 
-  // Cleanup no unmount
   useEffect(() => {
     return () => {
       if (flushScheduled.current) {
@@ -237,29 +228,29 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
 
   useInput(
     (input, key: Key) => {
-      // Se há buffer pendente e não é input de texto, flush primeiro
+      // Flush buffer se não for input de texto
       if (inputBuffer.current.length > 0 && (key.ctrl || key.meta || key.escape || 
           key.return || key.backspace || key.delete || key.leftArrow || 
-          key.rightArrow || key.upArrow || key.downArrow || key.tab)) {
+          key.rightArrow || key.upArrow || key.downArrow || key.tab || key.shift)) {
         flushInputBuffer();
       }
 
-      // SEMPRE permite que ESC interrompa
+      // ESC sempre interrompe
       if (key.escape) {
         onInterrupt();
         return;
       }
 
-      // Em modo read-only
+      // Em read-only: Enter submete (onSubmit decidirá se é user_overlay ou não)
       if (isReadOnly) {
-        if (key.ctrl && key.return) {
+        if (key.return && !key.shift) {
           if (state.text.trim().length > 0) {
             onSubmit(state.text);
             dispatch({ type: 'SUBMIT' });
           }
           return;
         }
-        if (key.return) {
+        if (key.shift && key.return) {
           dispatch({ type: 'NEWLINE' });
           return;
         }
@@ -271,31 +262,17 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
         if (key.downArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'down' });
         if (key.ctrl || key.meta || key.tab) return;
         
-        // Input normal em read-only: acumula no buffer
+        // Input normal: batching
         inputBuffer.current += input;
         if (!flushScheduled.current) {
           flushScheduled.current = true;
-          // Usa queueMicrotask para processar no próximo tick - CRÍTICO
           queueMicrotask(flushInputBuffer);
         }
         return;
       }
 
-      // Modo editável
-      if (key.ctrl && key.return) {
-        if ((globalThis as any).__BLUMA_AT_OPEN__) return;
-        if ((globalThis as any).__BLUMA_SUPPRESS_SUBMIT__) {
-          (globalThis as any).__BLUMA_SUPPRESS_SUBMIT__ = false;
-          return;
-        }
-        if (state.text.trim().length > 0) {
-          onSubmit(state.text);
-          dispatch({ type: 'SUBMIT' });
-        }
-        return;
-      }
-      
-      if (key.shift && key.return) {
+      // Modo editável: Enter submete, Shift+Enter adiciona linha
+      if (key.return && key.shift) {
         dispatch({ type: 'NEWLINE' });
         return;
       }
@@ -330,14 +307,12 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
         return dispatch({ type: 'MOVE_LINE_END' });
       }
       
-      // Ignora outros ctrl/meta/tab
       if (key.ctrl || key.meta || key.tab) return;
       
-      // Input normal: acumula no buffer
+      // Input normal: batching para paste
       inputBuffer.current += input;
       if (!flushScheduled.current) {
         flushScheduled.current = true;
-        // queueMicrotask garante que todos os inputs de um paste sejam batched
         queueMicrotask(flushInputBuffer);
       }
     },
@@ -349,7 +324,6 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
     cursorPosition: state.cursorPosition,
     viewStart: state.viewStart,
     setText: useCallback((t: string, pos?: number) => {
-      // Flush qualquer input pendente antes de SET
       if (inputBuffer.current.length > 0) {
         flushInputBuffer();
       }
@@ -360,7 +334,6 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
       }
     }, [flushInputBuffer]),
     setCursor: useCallback((pos: number) => {
-      // Flush qualquer input pendente antes de SET_CURSOR
       if (inputBuffer.current.length > 0) {
         flushInputBuffer();
       }
