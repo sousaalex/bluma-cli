@@ -170,6 +170,9 @@ export const renderEditTool = ({ toolCall, preview }: RenderProps): React.ReactE
   );
 };
 
+
+
+
 // =============================================================================
 // GENERIC - Renderizador fallback elegante
 // =============================================================================
@@ -219,7 +222,98 @@ export const renderGeneric = ({ toolCall }: RenderProps): React.ReactElement => 
 };
 
 // =============================================================================
-// REGISTRO DE RENDERIZADORES
+// TODO TOOL - Renderizador de preview (para promptRenderers.tsx)
+// Este renderiza ANTES da execução (preview do tool_call)
+// =============================================================================
+export const renderTodoTool = ({ toolCall }: RenderProps): React.ReactElement => {
+  try {
+    const args = typeof toolCall.function.arguments === "string"
+      ? JSON.parse(toolCall.function.arguments)
+      : toolCall.function.arguments;
+    
+    const tasks = args.tasks || [];
+    
+    if (tasks.length === 0) {
+      return (
+        <Box flexDirection="column" paddingX={1} marginBottom={1}>
+          <Box>
+            <Text color="blue">▸</Text>
+            <Text dimColor> todo</Text>
+          </Box>
+          <Box paddingLeft={2}>
+            <Text color="gray">Empty task list</Text>
+          </Box>
+        </Box>
+      );
+    }
+
+    // Conta tarefas completadas e pendentes
+    const completed = tasks.filter((t: any) => t.isComplete === true).length;
+    const pending = tasks.length - completed;
+
+    return (
+      <Box flexDirection="column" paddingX={1} marginBottom={1}>
+        <Box>
+          <Text color="blue">▸</Text>
+          <Text dimColor> todo</Text>
+        </Box>
+        <Box paddingLeft={2} flexDirection="column">
+          <Text color="magenta">
+            📋 {pending} pending, {completed} completed
+          </Text>
+          
+          {tasks.length > 0 && tasks.length <= 10 && (
+            <Box paddingLeft={2} flexDirection="column" marginTop={1}>
+              {tasks.map((task: any, idx: number) => {
+                const isComplete = task.isComplete === true;
+                const checkbox = isComplete ? '[X]' : '[ ]';
+                const description = task.description || 'No description';
+                const displayText = description.length > 60 
+                  ? description.substring(0, 57) + '...' 
+                  : description;
+                
+                // Cores: verde para completo, amarelo para pendente
+                const color = isComplete ? 'green' : 'yellow';
+                
+                return (
+                  <Text 
+                    key={idx} 
+                    color={color}
+                    strikethrough={isComplete}
+                    dimColor={isComplete}
+                  >
+                    {checkbox} {displayText}
+                  </Text>
+                );
+              })}
+            </Box>
+          )}
+          
+          {tasks.length > 10 && (
+            <Box paddingLeft={2} marginTop={1}>
+              <Text dimColor>({tasks.length} tasks total - showing summary)</Text>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    );
+  } catch (e) {
+    return (
+      <Box flexDirection="column" paddingX={1} marginBottom={1}>
+        <Box>
+          <Text color="blue">▸</Text>
+          <Text dimColor> todo</Text>
+        </Box>
+        <Box paddingLeft={2}>
+          <Text color="red">Error parsing tasks</Text>
+        </Box>
+      </Box>
+    );
+  }
+};
+
+// =============================================================================
+// ADICIONE AO REGISTRO DE RENDERIZADORES (no final do arquivo)
 // =============================================================================
 export const promptRenderers: {
   [key: string]: (props: RenderProps) => React.ReactElement;
@@ -228,5 +322,6 @@ export const promptRenderers: {
   ls_tool: renderLsTool,
   count_file_lines: renderCountFilesLinesTool,
   read_file_lines: renderReadFileLines,
-  edit_tool: renderEditTool, 
+  edit_tool: renderEditTool,
+  todo: renderTodoTool, // <--- ADICIONE ESTA LINHA
 };

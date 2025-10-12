@@ -2,7 +2,6 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { SimpleDiff } from "./SimpleDiff.js";
-import path from "path";
 
 interface RenderProps {
   toolName: string;
@@ -193,32 +192,32 @@ export const renderEditToolCall = ({ args, preview }: RenderProps): React.ReactE
 };
 
 // =============================================================================
-// TODO TOOL - Gerenciamento de tarefas
+// TODO TOOL - Renderizador de resultado (para toolCallRenderers.tsx)
+// Este renderiza DEPOIS da execução (resultado do tool)
+// Substitua a função renderTodoTool existente por esta
 // =============================================================================
 export const renderTodoTool = ({ args }: RenderProps): React.ReactElement => {
   try {
     const parsedArgs = typeof args === "string" ? JSON.parse(args) : args;
-    const action = parsedArgs.action;
-    let detailText = "";
-
-    switch (action) {
-      case 'add':
-        const items = parsedArgs.items_to_add || [];
-        detailText = `Added ${items.length} task${items.length !== 1 ? 's' : ''}`;
-        break;
-      case 'complete':
-        detailText = `Completed task #${parsedArgs.index}`;
-        break;
-      case 'remove':
-        detailText = `Removed task #${parsedArgs.index}`;
-        break;
-      case 'list':
-        detailText = `Listed all tasks`;
-        break;
-      default:
-        detailText = `Action: ${action}`;
-        break;
+    const tasks = parsedArgs.tasks || [];
+    
+    if (tasks.length === 0) {
+      return (
+        <Box flexDirection="column" paddingX={1}>
+          <Box>
+            <Text color="green">✓</Text>
+            <Text dimColor> todo</Text>
+          </Box>
+          <Box paddingLeft={2}>
+            <Text color="gray">No tasks</Text>
+          </Box>
+        </Box>
+      );
     }
+
+    // Conta tarefas completadas e pendentes
+    const completed = tasks.filter((t: any) => t.isComplete === true).length;
+    const pending = tasks.length - completed;
 
     return (
       <Box flexDirection="column" paddingX={1}>
@@ -226,8 +225,43 @@ export const renderTodoTool = ({ args }: RenderProps): React.ReactElement => {
           <Text color="green">✓</Text>
           <Text dimColor> todo</Text>
         </Box>
-        <Box paddingLeft={2}>
-          <Text color="gray">{detailText}</Text>
+        <Box paddingLeft={2} flexDirection="column">
+          <Text color="cyan">
+            📋 {pending} pending, {completed} completed
+          </Text>
+          
+          {tasks.length > 0 && tasks.length <= 10 && (
+            <Box paddingLeft={2} flexDirection="column" marginTop={1}>
+              {tasks.map((task: any, idx: number) => {
+                const isComplete = task.isComplete === true;
+                const checkbox = isComplete ? '[X]' : '[ ]';
+                const description = task.description || 'No description';
+                const displayText = description.length > 60 
+                  ? description.substring(0, 57) + '...' 
+                  : description;
+                
+                // Cores: verde para completo, amarelo para pendente
+                const color = isComplete ? 'green' : 'yellow';
+                
+                return (
+                  <Text 
+                    key={idx} 
+                    color={color}
+                    strikethrough={isComplete}
+                    dimColor={isComplete}
+                  >
+                    {checkbox} {displayText}
+                  </Text>
+                );
+              })}
+            </Box>
+          )}
+          
+          {tasks.length > 10 && (
+            <Box paddingLeft={2} marginTop={1}>
+              <Text dimColor>({tasks.length} tasks total - showing summary)</Text>
+            </Box>
+          )}
         </Box>
       </Box>
     );

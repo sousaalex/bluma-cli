@@ -18,7 +18,6 @@ export class BluMaAgent {
   private mcpClient: MCPClient;
   private feedbackSystem: AdvancedFeedbackSystem;
   private readonly maxContextTurns: number = 10; // Limite de turns no contexto da API
-  private todoListState: string[] = [];
   private isInterrupted: boolean = false;
 
   constructor(
@@ -49,7 +48,7 @@ export class BluMaAgent {
       this.eventBus.emit('backend_message', { type: 'user_overlay', payload: clean, ts: data.ts || Date.now() });
       try {
         if (this.sessionFile) {
-          await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
+          await saveSessionHistory(this.sessionFile, this.history);
         }
       } catch (e: any) {
         this.eventBus.emit('backend_message', { type: 'error', message: `Falha ao salvar histórico após user_overlay: ${e.message}` });
@@ -62,16 +61,15 @@ export class BluMaAgent {
     await this.mcpClient.initialize();
 
     // Carrega o histórico E a lista de tarefas
-    const [sessionFile, history, todoList] = await loadOrcreateSession(this.sessionId);
+    const [sessionFile, history] = await loadOrcreateSession(this.sessionId);
     this.sessionFile = sessionFile;
     this.history = history;
-    this.todoListState = todoList; // <--- CARREGA O ESTADO NA MEMÓRIA DO AGENTE
 
     if (this.history.length === 0) {
       const systemPrompt = getUnifiedSystemPrompt();
       this.history.push({ role: 'system', content: systemPrompt });
       // Salva o histórico e o estado inicial da lista de tarefas
-      await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
+      await saveSessionHistory(this.sessionFile, this.history);
     }
   }
 
@@ -152,7 +150,7 @@ export class BluMaAgent {
     }
 
     this.history.push({ role: 'tool', tool_call_id: toolCall.id, content: toolResultContent });
-    await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
+    await saveSessionHistory(this.sessionFile, this.history);
 
     if (shouldContinueConversation && !this.isInterrupted) {
       await this._continueConversation();
@@ -234,7 +232,7 @@ ${editData.error.display}`;
       const errorMessage = error instanceof Error ? error.message : 'An unknown API error occurred.';
       this.eventBus.emit('backend_message', { type: 'error', message: errorMessage });
     } finally {
-      await saveSessionHistory(this.sessionFile, this.history, this.todoListState);
+      await saveSessionHistory(this.sessionFile, this.history);
     }
   }
 }

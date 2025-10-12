@@ -10,8 +10,8 @@ import { messageNotifyuser } from './tools/natives/message.js';
 import { ls } from './tools/natives/ls.js';
 import { readLines } from './tools/natives/readLines.js'
 import { countLines } from './tools/natives/count_lines.js';
-import { todo } from './tools/natives/todo.js';
 import type { ChatCompletionTool } from 'openai/resources/chat/completions';
+import { todo } from './tools/natives/todo.js';
 
 
 // --- Tipos e Interfaces ---
@@ -91,7 +91,7 @@ export class ToolInvoker {
     this.toolImplementations.set('ls_tool', ls);
     this.toolImplementations.set('count_file_lines', countLines);
     this.toolImplementations.set('read_file_lines', readLines)
-    // this.toolImplementations.set('todo', todo);
+    this.toolImplementations.set('todo', todo);
     
     // A ferramenta 'agent_end_turn' é especial. Ela não faz nada, mas precisa ser registrada
     // para que o invoker não retorne um erro de "ferramenta não encontrada".

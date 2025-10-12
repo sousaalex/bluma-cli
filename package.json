@@ -1,63 +1,80 @@
 {
-  "name": "@nomad-e/bluma-cli",
-  "version": "0.0.97",
-  "description": "BluMa independent agent for automation and advanced software engineering.",
-  "author": "Alex Fonseca",
-  "license": "Apache-2.0",
-  "bin": {
-    "bluma": "dist/main.js"
-  },
-  "devDependencies": {
-    "@babel/preset-env": "^7.28.0",
-    "@babel/preset-react": "^7.27.1",
-    "@babel/preset-typescript": "^7.27.1",
-    "@types/diff": "^7.0.2",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^20.14.2",
-    "@types/react": "^18.3.3",
-    "@types/update-notifier": "^6.0.8",
-    "@types/uuid": "^9.0.8",
-    "babel-jest": "^30.0.5",
-    "esbuild": "^0.21.4",
-    "esbuild-plugin-node-externals": "^1.0.1",
-    "ink-testing-library": "^4.0.0",
-    "jest": "^30.0.5",
-    "nodemon": "^3.1.10",
-    "react": "^18.3.1",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.4.5"
-  },
-  "type": "module",
-  "main": "dist/main.js",
-  "scripts": {
-    "build": "node scripts/build.js",
-    "start": "node dist/main.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "prepack": "npm run build"
-  },
-  "keywords": [],
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.0",
-    "chalk": "^5.5.0",
-    "cli-highlight": "^2.1.11",
-    "diff": "^8.0.2",
-    "dotenv": "^16.4.5",
-    "ink": "^5.2.1",
-    "ink-big-text": "^2.0.0",
-    "ink-spinner": "^5.0.0",
-    "ink-text-input": "^6.0.0",
-    "marked": "^16.1.2",
-    "openai": "^4.47.3",
-    "react-devtools-core": "^4.28.5",
-    "read-package-up": "^11.0.0",
-    "update-notifier": "^7.0.0",
-    "uuid": "^9.0.1"
-  },
-  "files": [
-    "dist/"
-  ],
-  "publishConfig": {
-    "access": "public"
-  }
+	"name": "@nomad-e/bluma-cli",
+	"version": "0.0.98",
+	"description": "BluMa independent agent for automation and advanced software engineering.",
+	"author": "Alex Fonseca",
+	"license": "Apache-2.0",
+	"bin": {
+		"bluma": "dist/main.js"
+	},
+	"devDependencies": {
+		"@babel/preset-env": "^7.28.0",
+		"@babel/preset-react": "^7.27.1",
+		"@babel/preset-typescript": "^7.27.1",
+		"@types/diff": "^7.0.2",
+		"@types/jest": "^30.0.0",
+		"@types/node": "^20.14.2",
+		"@types/react": "^18.3.3",
+		"@types/update-notifier": "^6.0.8",
+		"@types/uuid": "^9.0.8",
+		"babel-jest": "^30.0.5",
+		"esbuild": "^0.21.4",
+		"esbuild-plugin-node-externals": "^1.0.1",
+		"ink-testing-library": "^4.0.0",
+		"jest": "^30.0.5",
+		"nodemon": "^3.1.10",
+		"react": "^18.3.1",
+		"ts-node-dev": "^2.0.0",
+		"typescript": "^5.4.5"
+	},
+	"type": "module",
+	"main": "dist/main.js",
+	"scripts": {
+		"build": "node scripts/build.js",
+		"start": "npm run build && node dist/main.js",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"prepack": "npm run build"
+	},
+	"keywords": [],
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.17.0",
+		"chalk": "^5.5.0",
+		"cli-highlight": "^2.1.11",
+		"diff": "^8.0.2",
+		"dotenv": "^16.4.5",
+		"ink": "^5.2.1",
+		"ink-big-text": "^2.0.0",
+		"ink-spinner": "^5.0.0",
+		"ink-text-input": "^6.0.0",
+		"marked": "^16.1.2",
+		"openai": "^4.47.3",
+		"react-devtools-core": "^4.28.5",
+		"read-package-up": "^11.0.0",
+		"update-notifier": "^7.0.0",
+		"uuid": "^9.0.1"
+	},
+	"files": [
+		"dist/"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"Resources": {
+		"UserPool": {
+			"Type": "AWS::Cognito::UserPool",
+			"Properties": {
+				"AdminCreateUserConfig": {
+					"AllowAdminCreateUserOnly": false
+				},
+				"AliasAttributes": [
+					"email",
+					"preferred_username"
+				],
+				"UserPoolName": {
+					"Fn::Sub": "${AWS::StackName}-UserPool"
+				}
+			}
+		}
+	}
 }

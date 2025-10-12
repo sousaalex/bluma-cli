@@ -34,6 +34,37 @@
         }
       }
     },
+ {
+  "type": "function",
+  "function": {
+    "name": "todo",
+    "description": "Manages a simple task list to plan and track work towards completing objectives. The agent provides an array of tasks with descriptions and completion status. Use this tool to organize work into manageable steps.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "Clear description of the task to be done"
+              },
+              "isComplete": {
+                "type": "boolean",
+                "description": "Whether the task is completed (true) or pending (false)"
+              }
+            },
+            "required": ["description", "isComplete"]
+          },
+          "description": "Array of tasks with their descriptions and completion status. Example: [{\"description\": \"Setup project structure\", \"isComplete\": true}, {\"description\": \"Implement authentication\", \"isComplete\": false}]"
+        }
+      },
+      "required": ["tasks"]
+    }
+  }
+},
     {
       "type": "function",
       "function": {

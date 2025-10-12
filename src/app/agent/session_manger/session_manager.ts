@@ -140,7 +140,6 @@ export async function loadOrcreateSession(
 export async function saveSessionHistory(
   sessionFile: string,
   history: HistoryMessage[],
-  todoList: string[] // <--- ADICIONE O NOVO PARÂMETRO
 ): Promise<void> {
   await withFileLock(sessionFile, async () => {
     let sessionData: SessionData;
