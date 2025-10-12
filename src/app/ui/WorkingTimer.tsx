@@ -3,31 +3,31 @@ import { Box, Text } from "ink";
 
 export const WorkingTimer = () => {
   const [seconds, setSeconds] = useState(0);
-  const [dotIndex, setDotIndex] = useState(1); // Estado separado para os pontos
+  const [frame, setFrame] = useState(0);
 
   useEffect(() => {
-    const secondsTimer = setInterval(() => {
+    const timer = setInterval(() => {
       setSeconds((prev) => prev + 1);
     }, 1000);
-
-    return () => clearInterval(secondsTimer);
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    const dotsTimer = setInterval(() => {
-      setDotIndex((prev) => (prev % 3) + 1); // Cicla entre 1, 2, 3
-    }, 100); // Atualiza os pontos a cada 300ms
-
-    return () => clearInterval(dotsTimer);
+    const animator = setInterval(() => {
+      setFrame((prev) => (prev + 1) % 10);
+    }, 80);
+    return () => clearInterval(animator);
   }, []);
 
-  const dots = ".".repeat(dotIndex).padEnd(3, " ");
+  // Spinner elegante com Unicode
+  const spinners = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+  const spinner = spinners[frame];
 
   return (
-    <Box marginBottom={0.5} paddingX={1}>
-      <Text color="magenta" >
-        {`working${dots}`}{` ${seconds}s`}
-      </Text>
+    <Box paddingX={1} marginBottom={0}>
+      <Text color="magenta">{spinner}</Text>
+      <Text dimColor> thinking</Text>
+      <Text color="gray"> {seconds}s</Text>
     </Box>
   );
 };

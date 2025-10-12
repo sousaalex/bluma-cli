@@ -1,23 +1,33 @@
 // Ficheiro: src/components/InteractiveMenu.tsx
-
 import React, { useState, memo } from 'react';
 import { Box, Text, useInput } from 'ink';
 
-// --- Tipos (sem alterações) ---
 export type Decision = 'accept' | 'decline' | 'accept_always';
 
 interface InteractiveMenuProps {
   onDecision: (decision: Decision) => void;
 }
 
-// --- Componente Lógico (Agora com textos melhorados) ---
 const InteractiveMenuComponent = ({ onDecision }: InteractiveMenuProps) => {
-  // A MUDANÇA ESTÁ AQUI: Melhoramos os 'labels' para serem mais claros e cativantes.
-  // Os 'values' ('accept', 'decline', etc.) permanecem os mesmos.
   const options = [
-    { label: '1. Yes, allow this command to run once', value: 'accept' as const },
-    { label: '2. No, cancel this command', value: 'decline' as const },
-    { label: '3. Always allow this type of command', value: 'accept_always' as const },
+    { 
+      key: 'y',
+      label: 'Accept', 
+      value: 'accept' as const,
+      color: 'green'
+    },
+    { 
+      key: 'n',
+      label: 'Decline', 
+      value: 'decline' as const,
+      color: 'red'
+    },
+    { 
+      key: 'a',
+      label: 'Always Accept', 
+      value: 'accept_always' as const,
+      color: 'yellow'
+    },
   ];
   
   const [selectedOption, setSelectedOption] = useState(0);
@@ -35,44 +45,46 @@ const InteractiveMenuComponent = ({ onDecision }: InteractiveMenuProps) => {
     if (key.return) {
       onDecision(options[selectedOption].value);
     }
+    // Atalhos de teclado diretos
+    const option = options.find(opt => opt.key === input.toLowerCase());
+    if (option) {
+      onDecision(option.value);
+    }
   });
 
   return (
-<Box flexDirection="column">
-  {/* A pergunta agora tem um espaço extra em baixo */}
-  <Box >
-    <Text bold>Do you want to authorize the proposed command?</Text>
-  </Box>
-  
-  {/* A lista de opções agora tem um espaço extra em cima */}
-  <Box flexDirection="column">
-    {options.map((option, index) => {
-      const isSelected = selectedOption === index;
-      return (
-        // Adicionando um pequeno espaçamento vertical entre cada opção também
-        <Box key={option.value} paddingLeft={1} paddingY={0}> 
-          <Text color={isSelected ? 'magenta' : 'gray'}>
-            {isSelected ? '❯ ' : '  '}
-          </Text>
-          <Text
-            color={isSelected ? 'magenta' : 'white'}
-            bold={isSelected}
-            dimColor={!isSelected}
-          >
-            {option.label}
-          </Text>
-        </Box>
-      );
-    })}
-  </Box>
+    <Box flexDirection="column" paddingX={1}>
+      {/* Header clean */}
+      <Box marginBottom={1}>
+        <Text bold>Authorize this action?</Text>
+      </Box>
+      
+      {/* Opções com design minimalista */}
+      <Box flexDirection="column" paddingLeft={1}>
+        {options.map((option, index) => {
+          const isSelected = selectedOption === index;
+          return (
+            <Box key={option.value} marginBottom={0}>
+              <Text color={isSelected ? 'magenta' : 'gray'}>
+                {isSelected ? '▸ ' : '  '}
+              </Text>
+              <Text
+                color={isSelected ? option.color : 'gray'}
+                bold={isSelected}
+              >
+                [{option.key}] {option.label}
+              </Text>
+            </Box>
+          );
+        })}
+      </Box>
 
-  {/* A linha de ajuda também ganha um espaço maior em cima */}
-  {/* <Box marginTop={2} marginLeft={1}>
-    <Text dimColor>(Use ↑/↓ to navigate, Enter to confirm, Esc to cancel)</Text>
-  </Box> */}
-</Box>
+      {/* Hint discreto */}
+      <Box marginTop={1} paddingLeft={1}>
+        <Text dimColor>↑↓ to select • Enter to confirm • Esc to cancel</Text>
+      </Box>
+    </Box>
   );
 };
 
-// --- Exportação Otimizada ---
 export const InteractiveMenu = memo(InteractiveMenuComponent);

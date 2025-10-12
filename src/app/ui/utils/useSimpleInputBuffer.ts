@@ -1,5 +1,5 @@
-// Ficheiro: utils/useCustomInput.ts - VERSÃO MULTI-LINHA CORRIGIDA
-import { useReducer, useRef } from 'react';
+// Ficheiro: utils/useCustomInput.ts - PASTE ÚNICO RENDER
+import { useReducer, useRef, useCallback, useEffect } from 'react';
 import { useInput, type Key } from 'ink';
 
 // O Estado
@@ -40,12 +40,6 @@ function getLineEnd(text: string, cursorPos: number): number {
   return pos;
 }
 
-// Helper: obtém a coluna atual na linha
-function getColumnInLine(text: string, cursorPos: number): number {
-  const lineStart = getLineStart(text, cursorPos);
-  return cursorPos - lineStart;
-}
-
 // Helper: move cursor para linha acima/abaixo mantendo coluna
 function moveToAdjacentLine(text: string, cursorPos: number, direction: 'up' | 'down'): number {
   const currentLineStart = getLineStart(text, cursorPos);
@@ -53,24 +47,20 @@ function moveToAdjacentLine(text: string, cursorPos: number, direction: 'up' | '
   const column = cursorPos - currentLineStart;
 
   if (direction === 'up') {
-    if (currentLineStart === 0) return cursorPos; // já estamos na primeira linha
+    if (currentLineStart === 0) return cursorPos;
     
-    // Encontra início da linha anterior
-    const prevLineEnd = currentLineStart - 1; // o \n antes da linha atual
+    const prevLineEnd = currentLineStart - 1;
     const prevLineStart = getLineStart(text, prevLineEnd);
     const prevLineLength = prevLineEnd - prevLineStart;
     
-    // Mantém a coluna, mas não ultrapassa o comprimento da linha anterior
     return prevLineStart + Math.min(column, prevLineLength);
   } else {
-    if (currentLineEnd === text.length) return cursorPos; // já estamos na última linha
+    if (currentLineEnd === text.length) return cursorPos;
     
-    // Encontra início da próxima linha
-    const nextLineStart = currentLineEnd + 1; // pula o \n
+    const nextLineStart = currentLineEnd + 1;
     const nextLineEnd = getLineEnd(text, nextLineStart);
     const nextLineLength = nextLineEnd - nextLineStart;
     
-    // Mantém a coluna, mas não ultrapassa o comprimento da próxima linha
     return nextLineStart + Math.min(column, nextLineLength);
   }
 }
@@ -96,6 +86,11 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
         state.text.slice(state.cursorPosition);
       const newCursorPosition = state.cursorPosition + cleanInput.length;
       const newViewStart = adjustView(newCursorPosition, state.viewStart);
+      
+      if (newText === state.text && newCursorPosition === state.cursorPosition) {
+        return state;
+      }
+      
       return { text: newText, cursorPosition: newCursorPosition, viewStart: newViewStart };
     }
     
@@ -122,18 +117,28 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
         newCursorPosition = moveToAdjacentLine(state.text, state.cursorPosition, 'down');
       }
       
+      if (newCursorPosition === state.cursorPosition) {
+        return state;
+      }
+      
       const newViewStart = adjustView(newCursorPosition, state.viewStart);
       return { ...state, cursorPosition: newCursorPosition, viewStart: newViewStart };
     }
     
     case 'MOVE_LINE_START': {
       const newCursorPosition = getLineStart(state.text, state.cursorPosition);
+      if (newCursorPosition === state.cursorPosition) {
+        return state;
+      }
       const newViewStart = adjustView(newCursorPosition, state.viewStart);
       return { ...state, cursorPosition: newCursorPosition, viewStart: newViewStart };
     }
     
     case 'MOVE_LINE_END': {
       const newCursorPosition = getLineEnd(state.text, state.cursorPosition);
+      if (newCursorPosition === state.cursorPosition) {
+        return state;
+      }
       const newViewStart = adjustView(newCursorPosition, state.viewStart);
       return { ...state, cursorPosition: newCursorPosition, viewStart: newViewStart };
     }
@@ -181,6 +186,9 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
     
     case 'SET_CURSOR': {
       const newCursorPosition = Math.max(0, Math.min(action.payload, state.text.length));
+      if (newCursorPosition === state.cursorPosition) {
+        return state;
+      }
       const newViewStart = adjustView(newCursorPosition, state.viewStart);
       return { ...state, cursorPosition: newCursorPosition, viewStart: newViewStart };
     }
@@ -190,7 +198,7 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
   }
 }
 
-// O Hook
+// O Hook - COM BATCHING REAL (um único dispatch)
 interface UseCustomInputProps {
   onSubmit: (value: string) => void;
   viewWidth: number;
@@ -204,18 +212,45 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
     { text: '', cursorPosition: 0, viewStart: 0 }
   );
 
+  // NOVA ESTRATÉGIA: Acumular inputs em um buffer e processar APENAS UMA VEZ
+  const inputBuffer = useRef<string>('');
+  const flushScheduled = useRef<boolean>(false);
+
+  // Flush o buffer acumulado - APENAS UM DISPATCH
+  const flushInputBuffer = useCallback(() => {
+    if (inputBuffer.current.length > 0) {
+      const buffered = inputBuffer.current;
+      inputBuffer.current = '';
+      dispatch({ type: 'INPUT', payload: buffered });
+    }
+    flushScheduled.current = false;
+  }, []);
+
+  // Cleanup no unmount
+  useEffect(() => {
+    return () => {
+      if (flushScheduled.current) {
+        flushInputBuffer();
+      }
+    };
+  }, [flushInputBuffer]);
+
   useInput(
     (input, key: Key) => {
+      // Se há buffer pendente e não é input de texto, flush primeiro
+      if (inputBuffer.current.length > 0 && (key.ctrl || key.meta || key.escape || 
+          key.return || key.backspace || key.delete || key.leftArrow || 
+          key.rightArrow || key.upArrow || key.downArrow || key.tab)) {
+        flushInputBuffer();
+      }
+
       // SEMPRE permite que ESC interrompa
       if (key.escape) {
         onInterrupt();
         return;
       }
 
-      // Em modo read-only:
-      // - Ctrl+Enter submete
-      // - Shift+Enter adiciona nova linha
-      // - Enter adiciona nova linha
+      // Em modo read-only
       if (isReadOnly) {
         if (key.ctrl && key.return) {
           if (state.text.trim().length > 0) {
@@ -235,19 +270,20 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
         if (key.upArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'up' });
         if (key.downArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'down' });
         if (key.ctrl || key.meta || key.tab) return;
-        return dispatch({ type: 'INPUT', payload: input });
+        
+        // Input normal em read-only: acumula no buffer
+        inputBuffer.current += input;
+        if (!flushScheduled.current) {
+          flushScheduled.current = true;
+          // Usa queueMicrotask para processar no próximo tick - CRÍTICO
+          queueMicrotask(flushInputBuffer);
+        }
+        return;
       }
 
-      // Modo editável:
-      // - Enter SOZINHO: Se texto tem \n, adiciona linha. Se não tem \n, SUBMETE.
-      // - Shift+Enter: SEMPRE adiciona nova linha
-      // - Ctrl+Enter: SEMPRE submete
-      
+      // Modo editável
       if (key.ctrl && key.return) {
-        // Ctrl+Enter: sempre submete
-        if ((globalThis as any).__BLUMA_AT_OPEN__) {
-          return;
-        }
+        if ((globalThis as any).__BLUMA_AT_OPEN__) return;
         if ((globalThis as any).__BLUMA_SUPPRESS_SUBMIT__) {
           (globalThis as any).__BLUMA_SUPPRESS_SUBMIT__ = false;
           return;
@@ -260,24 +296,17 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
       }
       
       if (key.shift && key.return) {
-        // Shift+Enter: sempre adiciona linha
         dispatch({ type: 'NEWLINE' });
         return;
       }
       
       if (key.return) {
-        // Enter sozinho: SEMPRE SUBMETE (não importa se é multi-linha)
-        // Para adicionar linha, usa Shift+Enter
-        
-        if ((globalThis as any).__BLUMA_AT_OPEN__) {
-          return;
-        }
+        if ((globalThis as any).__BLUMA_AT_OPEN__) return;
         if ((globalThis as any).__BLUMA_SUPPRESS_SUBMIT__) {
           (globalThis as any).__BLUMA_SUPPRESS_SUBMIT__ = false;
           return;
         }
         
-        // Enter sempre submete se há conteúdo
         if (state.text.trim().length > 0) {
           onSubmit(state.text);
           dispatch({ type: 'SUBMIT' });
@@ -293,7 +322,7 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
       if (key.upArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'up' });
       if (key.downArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'down' });
       
-      // Home/End (apenas Ctrl+A / Ctrl+E)
+      // Home/End
       if (key.ctrl && input === 'a') {
         return dispatch({ type: 'MOVE_LINE_START' });
       }
@@ -304,7 +333,13 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
       // Ignora outros ctrl/meta/tab
       if (key.ctrl || key.meta || key.tab) return;
       
-      dispatch({ type: 'INPUT', payload: input });
+      // Input normal: acumula no buffer
+      inputBuffer.current += input;
+      if (!flushScheduled.current) {
+        flushScheduled.current = true;
+        // queueMicrotask garante que todos os inputs de um paste sejam batched
+        queueMicrotask(flushInputBuffer);
+      }
     },
     { isActive: true }
   );
@@ -313,13 +348,23 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
     text: state.text,
     cursorPosition: state.cursorPosition,
     viewStart: state.viewStart,
-    setText: (t: string, pos?: number) => {
+    setText: useCallback((t: string, pos?: number) => {
+      // Flush qualquer input pendente antes de SET
+      if (inputBuffer.current.length > 0) {
+        flushInputBuffer();
+      }
       if (typeof pos === 'number') {
         dispatch({ type: 'SET', payload: { text: t, moveCursorToEnd: false, cursorPosition: pos } });
       } else {
         dispatch({ type: 'SET', payload: { text: t, moveCursorToEnd: true } });
       }
-    },
-    setCursor: (pos: number) => dispatch({ type: 'SET_CURSOR', payload: pos }),
+    }, [flushInputBuffer]),
+    setCursor: useCallback((pos: number) => {
+      // Flush qualquer input pendente antes de SET_CURSOR
+      if (inputBuffer.current.length > 0) {
+        flushInputBuffer();
+      }
+      dispatch({ type: 'SET_CURSOR', payload: pos });
+    }, [flushInputBuffer]),
   };
 };

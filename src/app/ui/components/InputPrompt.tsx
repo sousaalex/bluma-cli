@@ -1,4 +1,4 @@
-// Ficheiro: InputPrompt.tsx - PASTE OTIMIZADO ZERO REDRAW
+// Ficheiro: InputPrompt.tsx - PASTE SEM REDRAW
 import { Box, Text, useStdout, useInput } from "ink";
 import { useCustomInput } from "../utils/useSimpleInputBuffer.js";
 import { useEffect, useMemo, useState, useRef, memo } from "react";
@@ -49,25 +49,26 @@ const TextLine = memo(({
     </Text>
   );
 }, (prev, next) => {
-  // Comparação CUSTOMIZADA para evitar re-render desnecessário
-  // Só re-renderiza se:
-  // 1. A linha mudou
-  // 2. O cursor entrou/saiu desta linha
-  // 3. A posição do cursor mudou DENTRO desta linha
+  // Comparação ULTRA-AGRESSIVA
+  // Só re-renderiza se REALMENTE necessário
   
-  if (prev.line !== next.line) return false; // Precisa re-render
+  // 1. Se a linha mudou
+  if (prev.line !== next.line) return false;
+  
+  // 2. Se showCursor mudou
   if (prev.showCursor !== next.showCursor) return false;
   
-  const wasCursorLine = prev.lineIndex === prev.cursorLine;
-  const isCursorLine = next.lineIndex === next.cursorLine;
+  // 3. Se o cursor estava ou está nesta linha
+  const prevIsCursorLine = prev.lineIndex === prev.cursorLine;
+  const nextIsCursorLine = next.lineIndex === next.cursorLine;
   
-  // Se cursor mudou de linha (entrou ou saiu desta linha)
-  if (wasCursorLine !== isCursorLine) return false;
+  // Se cursor entrou ou saiu desta linha
+  if (prevIsCursorLine !== nextIsCursorLine) return false;
   
-  // Se é linha com cursor e posição mudou
-  if (isCursorLine && prev.cursorCol !== next.cursorCol) return false;
+  // Se cursor está nesta linha E a posição mudou
+  if (nextIsCursorLine && prev.cursorCol !== next.cursorCol) return false;
   
-  // Caso contrário, não precisa re-render
+  // Caso contrário, SKIP render
   return true;
 });
 TextLine.displayName = "TextLine";
@@ -144,6 +145,51 @@ const Footer = memo(({ isReadOnly }: { isReadOnly: boolean }) => (
 ));
 Footer.displayName = "Footer";
 
+// Componente interno que renderiza as linhas - ISOLADO do container principal
+const TextLinesRenderer = memo(({ 
+  lines,
+  cursorLine,
+  cursorCol,
+  showCursor,
+  showPlaceholder,
+  placeholder
+}: {
+  lines: string[];
+  cursorLine: number;
+  cursorCol: number;
+  showCursor: boolean;
+  showPlaceholder: boolean;
+  placeholder: string;
+}) => {
+  return (
+    <>
+      {lines.map((line, idx) => {
+        const isFirstLine = idx === 0;
+        
+        return (
+          <Box key={idx} flexDirection="row" paddingX={1}>
+            {isFirstLine && <Text color="white">{">"} </Text>}
+            {!isFirstLine && <Text color="gray">{"│"} </Text>}
+            
+            {showPlaceholder && isFirstLine && line.length === 0 ? (
+              <Text dimColor>{placeholder}</Text>
+            ) : (
+              <TextLine
+                line={line}
+                lineIndex={idx}
+                cursorLine={cursorLine}
+                cursorCol={cursorCol}
+                showCursor={showCursor}
+              />
+            )}
+          </Box>
+        );
+      })}
+    </>
+  );
+});
+TextLinesRenderer.displayName = "TextLinesRenderer";
+
 export const InputPrompt = memo(({ 
   onSubmit, 
   isReadOnly, 
@@ -154,11 +200,6 @@ export const InputPrompt = memo(({
   const [viewWidth] = useState(() => stdout.columns - 6);
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashIndex, setSlashIndex] = useState(0);
-  
-  // CRÍTICO: Manter histórico de renderizações para evitar flicker em paste
-  const renderCountRef = useRef(0);
-  const lastRenderTextRef = useRef("");
-  const stableKeyRef = useRef(0);
 
   const permissiveOnSubmit = (value: string) => {
     const trimmed = (value || "").trim();
@@ -184,19 +225,8 @@ export const InputPrompt = memo(({
     onInterrupt,
   });
 
-  // Calcula linhas e posição do cursor COM ESTABILIZAÇÃO AGRESSIVA
+  // Calcula linhas e posição do cursor - SEM KEY INSTÁVEL
   const linesData = useMemo(() => {
-    // Incrementa contador de render apenas se texto mudou de verdade
-    if (lastRenderTextRef.current !== text) {
-      renderCountRef.current++;
-      lastRenderTextRef.current = text;
-      
-      // FORÇA key estável: só muda a cada 10 renders ou quando submit
-      if (renderCountRef.current % 10 === 0) {
-        stableKeyRef.current++;
-      }
-    }
-
     const lines = text.split('\n');
     
     // Calcula linha e coluna do cursor
@@ -223,8 +253,7 @@ export const InputPrompt = memo(({
       lines,
       cursorLine,
       cursorCol,
-      totalLines: lines.length,
-      stableKey: stableKeyRef.current // Key estável para Box container
+      totalLines: lines.length
     };
   }, [text, cursorPosition]);
 
@@ -311,9 +340,9 @@ export const InputPrompt = memo(({
     }
   }, { isActive: true });
 
-  // RENDERIZAÇÃO COM KEY ESTÁVEL: Evita unmount/remount completo do container
+  // RENDERIZAÇÃO SEM KEY NO CONTAINER - Evita unmount/remount
   return (
-    <Box flexDirection="column" key={`input-container-${displayData.stableKey}`}>
+    <Box flexDirection="column">
       {disableWhileProcessing ? (
         <Box>
           <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
@@ -324,31 +353,14 @@ export const InputPrompt = memo(({
       ) : (
         <>
           <Box flexDirection="column">
-            {displayData.lines.map((line, idx) => {
-              const isFirstLine = idx === 0;
-              
-              // Key estável por linha: usa índice + hash do conteúdo
-              const lineKey = `line-${idx}-${line.length}`;
-              
-              return (
-                <Box key={lineKey} flexDirection="row" paddingX={1}>
-                  {isFirstLine && <Text color="white">{">"} </Text>}
-                  {!isFirstLine && <Text color="gray">{"│"} </Text>}
-                  
-                  {showPlaceholder && isFirstLine && line.length === 0 ? (
-                    <Text dimColor>{placeholder}</Text>
-                  ) : (
-                    <TextLine
-                      line={line}
-                      lineIndex={idx}
-                      cursorLine={displayData.cursorLine}
-                      cursorCol={displayData.cursorCol}
-                      showCursor={!isReadOnly}
-                    />
-                  )}
-                </Box>
-              );
-            })}
+            <TextLinesRenderer
+              lines={displayData.lines}
+              cursorLine={displayData.cursorLine}
+              cursorCol={displayData.cursorCol}
+              showCursor={!isReadOnly}
+              showPlaceholder={showPlaceholder}
+              placeholder={placeholder}
+            />
           </Box>
 
           {pathAutocomplete.open && pathAutocomplete.suggestions.length > 0 && (

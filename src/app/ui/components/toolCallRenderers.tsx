@@ -4,7 +4,6 @@ import { Box, Text } from "ink";
 import { SimpleDiff } from "./SimpleDiff.js";
 import path from "path";
 
-// --- Props que todas as funções de renderização receberão ---
 interface RenderProps {
   toolName: string;
   args: any;
@@ -22,106 +21,78 @@ const formatArgumentsForDisplay = (args: any): string => {
   return JSON.stringify(args, null, 2);
 };
 
-// --- Renderizador para `shell_command` (NOVO ESTILO DE SUCESSO) ---
-export const renderShellCommand = ({
-  args,
-}: RenderProps): React.ReactElement => {
+// =============================================================================
+// SHELL COMMAND - Resultado de execução
+// =============================================================================
+export const renderShellCommand = ({ args }: RenderProps): React.ReactElement => {
   const command = args.command || "[command not found]";
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" paddingX={1}>
       <Box>
-        <Text bold>
-          <Text color="green">● </Text>
-          Shell Command
-        </Text>
+        <Text color="green">✓</Text>
+        <Text dimColor> shell</Text>
       </Box>
-
-      <Box marginLeft={2} paddingX={1}>
-        <Text>
-          <Text color="gray">↳ </Text>
-          <Text color="magenta">{command}</Text>
-        </Text>
+      <Box paddingLeft={2}>
+        <Text color="gray">{command}</Text>
       </Box>
     </Box>
   );
 };
 
-// --- Renderizador para `ls_tool` (NOVO ESTILO DE SUCESSO) ---
+// =============================================================================
+// LS TOOL - Resultado de listagem
+// =============================================================================
 export const renderLsTool = ({ args }: RenderProps): React.ReactElement => {
   let directoryPath = "[path not found]";
-
-  // A LÓGICA CORRETA: Extrai o caminho diretamente dos argumentos.
   try {
-    // Esta lógica agora lida com o caso de os 'args' já serem um objeto.
     const parsedArgs = typeof args === "string" ? JSON.parse(args) : args;
     directoryPath = parsedArgs.directory_path || "[path not specified]";
   } catch (e) {
     directoryPath = "Error parsing arguments";
   }
 
-  // A função para extrair o nome final continua útil.
-  // const finalDirectoryName = path.basename(directoryPath);
-  const finalDirectoryName = directoryPath;
-
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" paddingX={1}>
       <Box>
-        <Text bold>
-          <Text color="green">● </Text>
-          ls
-        </Text>
+        <Text color="green">✓</Text>
+        <Text dimColor> ls</Text>
       </Box>
-
-      <Box marginLeft={2} paddingX={1}>
-        <Text>
-          <Text color="gray">↳ </Text>
-          <Text color="magenta">{finalDirectoryName}</Text>
-        </Text>
+      <Box paddingLeft={2}>
+        <Text color="gray">{directoryPath}</Text>
       </Box>
     </Box>
   );
 };
-// --- Renderizador para `count_file_lines` (NOVO ESTILO DE SUCESSO) ---
-export const renderCountFilesLines = ({
-  args,
-}: RenderProps): React.ReactElement => {
-  let directoryPath = "[path not found]";
 
-  // A LÓGICA CORRETA: Extrai o caminho diretamente dos argumentos.
+// =============================================================================
+// COUNT FILE LINES - Resultado de contagem
+// =============================================================================
+export const renderCountFilesLines = ({ args }: RenderProps): React.ReactElement => {
+  let filepath = "[path not found]";
   try {
-    // Esta lógica agora lida com o caso de os 'args' já serem um objeto.
     const parsedArgs = typeof args === "string" ? JSON.parse(args) : args;
-    directoryPath = parsedArgs.filepath || "[path not specified]";
+    filepath = parsedArgs.filepath || "[path not specified]";
   } catch (e) {
-    directoryPath = "Error parsing arguments";
+    filepath = "Error parsing arguments";
   }
 
-  // A função para extrair o nome final continua útil.
-  // const finalDirectoryName = path.basename(directoryPath);
-  const finalDirectoryName = directoryPath;
-
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" paddingX={1}>
       <Box>
-        <Text bold>
-          <Text color="green">● </Text>
-          Count File Lines
-        </Text>
+        <Text color="green">✓</Text>
+        <Text dimColor> count lines</Text>
       </Box>
-
-      <Box marginLeft={2} paddingX={1}>
-        <Text>
-          <Text color="gray">↳ </Text>
-          <Text color="magenta">{finalDirectoryName}</Text>
-        </Text>
+      <Box paddingLeft={2}>
+        <Text color="gray">{filepath}</Text>
       </Box>
     </Box>
   );
 };
 
-export const renderReadFileLines = ({
-  args,
-}: RenderProps): React.ReactElement => {
+// =============================================================================
+// READ FILE LINES - Resultado de leitura
+// =============================================================================
+export const renderReadFileLines = ({ args }: RenderProps): React.ReactElement => {
   let filepath = "[path not found]";
   let startLine = 0;
   let endLine = 0;
@@ -135,110 +106,67 @@ export const renderReadFileLines = ({
     filepath = "Error parsing arguments";
   }
 
-  // const finalFileName = path.basename(filepath);
-  const finalFileName = filepath;
-
   return (
-    // A caixa externa com a borda, seguindo o template
-    <Box flexDirection="column">
-      {/* Título com o 'check' verde */}
+    <Box flexDirection="column" paddingX={1}>
       <Box>
-        <Text bold>
-          <Text color="green">● </Text>
-          Read File
-        </Text>
+        <Text color="green">✓</Text>
+        <Text dimColor> read</Text>
       </Box>
-      {/* Detalhes indentados */}
-      <Box marginLeft={2} flexDirection="column">
-        {/* Detalhe do nome do ficheiro */}
-        <Box marginLeft={2} paddingX={1}>
-          <Text>
-            <Text color="gray">↳ </Text>
-            <Text color="magenta">{finalFileName}</Text>
-          </Text>
-        </Box>
-        {/* Detalhe das linhas */}
-        <Box marginLeft={2} paddingX={4}>
-          <Text>
-            <Text color="gray">↳ </Text>
-            <Text dimColor>lines </Text>
-            <Text color="magenta">{startLine}</Text>
-            <Text dimColor> to </Text>
-            <Text color="magenta">{endLine}</Text>
-          </Text>
+      <Box paddingLeft={2} flexDirection="column">
+        <Text color="gray">{filepath}</Text>
+        <Box paddingLeft={2}>
+          <Text dimColor>lines {startLine} to {endLine}</Text>
         </Box>
       </Box>
     </Box>
   );
 };
-// --- Renderizador para `reasoning_nootebook` (Thinking Process) ---
-// Extraído do App.tsx original
-export const renderBlumaNotebook = ({
-  args,
-}: RenderProps): React.ReactElement => {
-  // --- Definição da Interface para o nosso dado (para segurança do TypeScript) ---
+
+// =============================================================================
+// REASONING NOTEBOOK - Pensamento do agente
+// =============================================================================
+export const renderBlumaNotebook = ({ args }: RenderProps): React.ReactElement => {
   interface ThinkingData {
     thought: string;
-
   }
 
   try {
-    // Lógica robusta para fazer o parse dos dados
     let dataToParse: any = args;
     if (args && typeof args === "object") {
       if (args.content) dataToParse = args.content;
       else if (args.data) dataToParse = args.data;
     }
+    
     const thinkingData: ThinkingData =
       typeof dataToParse === "string" ? JSON.parse(dataToParse) : dataToParse;
 
     if (!thinkingData || typeof thinkingData.thought !== "string") {
-      throw new Error("Invalid or missing 'thought' property.");
+      throw new Error("Invalid thought data");
     }
 
     return (
-      // Usamos a mesma estrutura de caixa com borda
-      <Box
-        /* borderStyle="round" borderColor="green" */ flexDirection="column"
-        paddingX={1}
-      >
-        {/* Título da seção */}
-        {/* <Box>
-            <Text bold>
-              <Text color="green">🧠 </Text> 
-              Thinking Process
-            </Text>
-          </Box> */}
-
-        {/* Seção do "Pensamento" */}
-        <Box flexDirection="column">
-          <Text color="white" bold>Reasoning:</Text>
-          {/* O pensamento em si, com uma leve indentação e cor neutra */}
-          <Box marginLeft={2}>
-            <Text color="gray">{thinkingData.thought}</Text>
-          </Box>
-        </Box>       
+      <Box flexDirection="column" paddingX={1} marginBottom={1}>
+        <Box>
+          <Text bold color="cyan">💭 Reasoning</Text>
+        </Box>
+        <Box paddingLeft={2}>
+          <Text color="gray">{thinkingData.thought}</Text>
+        </Box>
       </Box>
     );
   } catch (e) {
-    // O fallback continua útil para casos de erro de parse
     return (
-      <Box borderStyle="round" borderColor="magenta" paddingX={1}>
-        <Text color="magenta" bold>
-          Thinking (Error)
-        </Text>
-        <Text color="gray">{JSON.stringify(args, null, 2)}</Text>
+      <Box paddingX={1}>
+        <Text color="red">Error parsing reasoning</Text>
       </Box>
     );
   }
 };
 
-
-
-export const renderEditToolCall = ({
-  args,
-  preview,
-}: RenderProps): React.ReactElement => {
+// =============================================================================
+// EDIT TOOL - Resultado de edição com diff completo
+// =============================================================================
+export const renderEditToolCall = ({ args, preview }: RenderProps): React.ReactElement => {
   let filepath = "[path not specified]";
   try {
     const parsedArgs = typeof args === "string" ? JSON.parse(args) : args;
@@ -246,28 +174,17 @@ export const renderEditToolCall = ({
   } catch (e) {
     filepath = "Error parsing arguments";
   }
-  const finalFileName = filepath;
 
   return (
     <Box flexDirection="column" paddingX={1}>
-      {/* Cabeçalho com o 'check' verde */}
       <Box>
-        <Text bold>
-          <Text color="green">● </Text>
-          Edit File
-        </Text>
-      </Box>
-      <Box marginLeft={2} paddingX={1}>
-        <Text>
-          <Text color="gray">↳ </Text>
-          <Text color="magenta">{finalFileName}</Text>
-        </Text>
+        <Text color="green">✓</Text>
+        <Text dimColor> edit </Text>
+        <Text color="cyan">{filepath}</Text>
       </Box>
 
-      {/* Renderiza o diff COMPLETO, se existir */}
       {preview && (
         <Box marginTop={1}>
-          {/* Aqui não passamos maxHeight, então ele mostra tudo */}
           <SimpleDiff text={preview} maxHeight={Infinity} />
         </Box>
       )}
@@ -275,103 +192,81 @@ export const renderEditToolCall = ({
   );
 };
 
+// =============================================================================
+// TODO TOOL - Gerenciamento de tarefas
+// =============================================================================
 export const renderTodoTool = ({ args }: RenderProps): React.ReactElement => {
   try {
     const parsedArgs = typeof args === "string" ? JSON.parse(args) : args;
     const action = parsedArgs.action;
     let detailText = "";
 
-    // Criamos uma descrição útil com base na ação
     switch (action) {
       case 'add':
         const items = parsedArgs.items_to_add || [];
-        const itemCount = items.length;
-        detailText = `Adding ${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+        detailText = `Added ${items.length} task${items.length !== 1 ? 's' : ''}`;
         break;
       case 'complete':
-        detailText = `Completing item #${parsedArgs.index}`;
+        detailText = `Completed task #${parsedArgs.index}`;
         break;
       case 'remove':
-        detailText = `Removing item #${parsedArgs.index}`;
+        detailText = `Removed task #${parsedArgs.index}`;
         break;
       case 'list':
-        detailText = `Listing all tasks...`;
+        detailText = `Listed all tasks`;
         break;
       default:
-        detailText = `Executing action: ${action}`;
+        detailText = `Action: ${action}`;
         break;
     }
 
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" paddingX={1}>
         <Box>
-          <Text bold>
-            <Text color="green">● </Text>
-            To Do
-          </Text>
+          <Text color="green">✓</Text>
+          <Text dimColor> todo</Text>
         </Box>
-
-        <Box marginLeft={2} paddingX={1}>
-          <Text>
-            <Text color="gray">↳ </Text>
-            <Text color="magenta">{detailText}</Text>
-          </Text>
+        <Box paddingLeft={2}>
+          <Text color="gray">{detailText}</Text>
         </Box>
       </Box>
     );
   } catch (error) {
     return (
-      <Box borderStyle="round" borderColor="red" paddingX={1}>
-        <Text color="red">Error parsing To-Do arguments</Text>
+      <Box paddingX={1}>
+        <Text color="red">Error parsing todo</Text>
       </Box>
     );
   }
 };
-// --- Renderizador Genérico (Fallback) ---
-export const renderGenericToolCall = ({
-  toolName,
-  args,
-}: RenderProps): React.ReactElement => {
-  // Formata os argumentos para uma leitura fácil
+
+// =============================================================================
+// GENERIC - Renderizador fallback
+// =============================================================================
+export const renderGenericToolCall = ({ toolName, args }: RenderProps): React.ReactElement => {
   const formattedArgs = formatArgumentsForDisplay(args);
 
   return (
-    // A "moldura" padrão de sucesso com a borda cinza
-    <Box flexDirection="column">
-      {/* Cabeçalho com o 'check' verde */}
+    <Box flexDirection="column" paddingX={1}>
       <Box>
-        <Text bold>
-          <Text color="green">● </Text>
-          {toolName}
-        </Text>
+        <Text color="green">✓</Text>
+        <Text dimColor> {toolName}</Text>
       </Box>
 
-      {/* Rótulo e conteúdo dos argumentos */}
       {formattedArgs && formattedArgs !== "{}" && (
-        <Box paddingX={3}>
-          <Text color="gray">↳ </Text>
-          {/* 
-              Os argumentos são renderizados dentro de uma Box com indentação.
-              NÃO há limite de altura aqui.
-            */}
-          <Box flexDirection="column">
-            {/* 
-                Dividimos o JSON em linhas para poder adicionar o prefixo '↳' em cada uma,
-                mantendo a consistência visual.
-              */}
-            {formattedArgs.split("\n").map((line, index) => (
-              <Text key={index} color="gray">
-                {line}
-              </Text>
-            ))}
-          </Box>
+        <Box paddingLeft={2} flexDirection="column">
+          {formattedArgs.split("\n").slice(0, 3).map((line, index) => (
+            <Text key={index} color="gray">{line}</Text>
+          ))}
         </Box>
       )}
     </Box>
   );
 };
 
-// --- O Registro/Mapa de Renderizadores ---
+// =============================================================================
+// REGISTRO DE RENDERIZADORES
+// =============================================================================
 export const ToolRenderDisplay: {
   [key: string]: (props: any) => React.ReactElement;
 } = {
