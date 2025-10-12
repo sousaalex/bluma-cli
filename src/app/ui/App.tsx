@@ -178,7 +178,7 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
   );
 
   useEffect(() => {
-    setHistory([{ id: 0, component: <Header /> }]);
+    setHistory([{ id: 0, component: <Header sessionId={sessionId}  workdir={workdir} /> }]);
 
     const initializeAgent = async () => {
       try {
@@ -238,19 +238,19 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
           setIsProcessing(false);
           setHistory((prev) => {
             const newHistory = [...prev];
-            if (prev.length < 2) {
-              newHistory.push({
-                id: 1,
-                component: (
-                  <SessionInfo
-                    sessionId={sessionId}
-                    toolsCount={parsed.tools}
-                    mcpStatus={"connected"}
-                    workdir={workdir}
-                  />
-                ),
-              });
-            }
+            // if (prev.length < 2) {
+            //   newHistory.push({
+            //     id: 1,
+            //     component: (
+            //       <SessionInfo
+            //         sessionId={sessionId}
+            //         toolsCount={parsed.tools}
+            //         mcpStatus={"connected"}
+            //         workdir={workdir}
+            //       />
+            //     ),
+            //   });
+            // }
             return newHistory;
           });
 
@@ -377,15 +377,16 @@ const AppComponent = ({ eventBus, sessionId }: AppProps) => {
 
    const renderInteractiveComponent = () => {
     if (mcpStatus !== "connected") {
-      return (
-        <Box borderStyle="round" borderColor="black">
-          <SessionInfoConnectingMCP
-            sessionId={sessionId}
-            workdir={workdir}
-            statusMessage={statusMessage}
-          />
-        </Box>
-      );
+      return
+      // return (
+      //   <Box borderStyle="round" borderColor="black">
+      //     <SessionInfoConnectingMCP
+      //       sessionId={sessionId}
+      //       workdir={workdir}
+      //       statusMessage={statusMessage}
+      //     />
+      //   </Box>
+      // );
     }
 
     if (pendingConfirmation) {

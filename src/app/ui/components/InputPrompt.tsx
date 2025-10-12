@@ -1,13 +1,11 @@
-// Ficheiro: InputPrompt.tsx (Versão com cursor sempre visível + modo permissivo de overlays)
+// Ficheiro: InputPrompt.tsx - PASTE OTIMIZADO ZERO REDRAW
 import { Box, Text, useStdout, useInput } from "ink";
 import { useCustomInput } from "../utils/useSimpleInputBuffer.js";
-// Nota: se o hook não expor setText, usamos submissão direta ao escolher o comando
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, memo } from "react";
 import { EventEmitter } from "events";
 import { filterSlashCommands } from "../utils/slashRegistry.js";
 import { useAtCompletion } from "../hooks/useAtCompletion";
-// Pequeno event bus singleton local para emitir overlays
-// Em um app maior, esse EventEmitter deve vir de um provider/context global.
+
 export const uiEventBus: EventEmitter = (global as any).__bluma_ui_eventbus__ || new EventEmitter();
 (global as any).__bluma_ui_eventbus__ = uiEventBus;
 
@@ -15,50 +13,170 @@ interface InputPromptProps {
   onSubmit: (value: string) => void;
   isReadOnly: boolean;
   onInterrupt: () => void;
-  disableWhileProcessing?: boolean; // when true, input fica TOTALMENTE bloqueado
+  disableWhileProcessing?: boolean;
 }
 
-export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhileProcessing = false }: InputPromptProps) => {
-  // 1) HOOKS SEMPRE NO TOPO, SEM RETORNOS ANTES
+// Componente memoizado ULTRA-ESTÁVEL para renderizar uma linha
+const TextLine = memo(({ 
+  line, 
+  lineIndex,
+  cursorLine,
+  cursorCol,
+  showCursor
+}: { 
+  line: string;
+  lineIndex: number;
+  cursorLine: number;
+  cursorCol: number;
+  showCursor: boolean;
+}) => {
+  const isCursorLine = lineIndex === cursorLine;
+  
+  if (!isCursorLine || !showCursor) {
+    return <Text>{line}</Text>;
+  }
+
+  // Linha com cursor
+  const before = line.slice(0, cursorCol);
+  const char = line[cursorCol] || " ";
+  const after = line.slice(cursorCol + 1);
+
+  return (
+    <Text>
+      {before}
+      <Text inverse color="magenta">{char}</Text>
+      {after}
+    </Text>
+  );
+}, (prev, next) => {
+  // Comparação CUSTOMIZADA para evitar re-render desnecessário
+  // Só re-renderiza se:
+  // 1. A linha mudou
+  // 2. O cursor entrou/saiu desta linha
+  // 3. A posição do cursor mudou DENTRO desta linha
+  
+  if (prev.line !== next.line) return false; // Precisa re-render
+  if (prev.showCursor !== next.showCursor) return false;
+  
+  const wasCursorLine = prev.lineIndex === prev.cursorLine;
+  const isCursorLine = next.lineIndex === next.cursorLine;
+  
+  // Se cursor mudou de linha (entrou ou saiu desta linha)
+  if (wasCursorLine !== isCursorLine) return false;
+  
+  // Se é linha com cursor e posição mudou
+  if (isCursorLine && prev.cursorCol !== next.cursorCol) return false;
+  
+  // Caso contrário, não precisa re-render
+  return true;
+});
+TextLine.displayName = "TextLine";
+
+// Componente memoizado para sugestões de path
+const PathSuggestions = memo(({ 
+  suggestions, 
+  selected 
+}: { 
+  suggestions: any[]; 
+  selected: number;
+}) => {
+  const VISIBLE = 7;
+  const total = suggestions.length;
+  const sel = Math.max(0, Math.min(selected, total - 1));
+  let start = Math.max(0, sel - Math.floor(VISIBLE / 2));
+  if (start + VISIBLE > total) start = Math.max(0, total - VISIBLE);
+  const windowItems = suggestions.slice(start, start + VISIBLE);
+
+  return (
+    <Box flexDirection="column" marginTop={1} height={Math.min(VISIBLE, total)}>
+      {windowItems.map((s, idx) => {
+        const realIdx = start + idx;
+        const isSelected = realIdx === selected;
+        return (
+          <Box key={s.fullPath} paddingLeft={1} paddingY={0}>
+            <Text color={isSelected ? "magenta" : "gray"}>
+              {isSelected ? "❯ " : "  "}
+            </Text>
+            <Text color={isSelected ? "magenta" : "white"} bold={isSelected} dimColor={!isSelected}>
+              {s.label}
+            </Text>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+});
+PathSuggestions.displayName = "PathSuggestions";
+
+// Componente memoizado para sugestões de slash commands
+const SlashSuggestions = memo(({ 
+  suggestions, 
+  selectedIndex 
+}: { 
+  suggestions: any[]; 
+  selectedIndex: number;
+}) => (
+  <Box flexDirection="column" marginTop={1}>
+    {suggestions.map((s, idx) => {
+      const isSelected = idx === selectedIndex;
+      return (
+        <Box key={s.name} paddingLeft={1} paddingY={0}>
+          <Text color={isSelected ? "magenta" : "gray"}>
+            {isSelected ? "❯ " : "  "}
+          </Text>
+          <Text color={isSelected ? "magenta" : "white"} bold={isSelected} dimColor={!isSelected}>
+            {s.name} <Text color="gray">- {s.description}</Text>
+          </Text>
+        </Box>
+      );
+    })}
+  </Box>
+));
+SlashSuggestions.displayName = "SlashSuggestions";
+
+// Componente memoizado para o footer
+const Footer = memo(({ isReadOnly }: { isReadOnly: boolean }) => (
+  <Box paddingX={1} justifyContent="center">
+    <Text color="gray" dimColor>
+      ctrl+c to exit | Enter to submit | Shift+Enter for new line | /help commands | esc interrupt
+    </Text>
+  </Box>
+));
+Footer.displayName = "Footer";
+
+export const InputPrompt = memo(({ 
+  onSubmit, 
+  isReadOnly, 
+  onInterrupt, 
+  disableWhileProcessing = false 
+}: InputPromptProps) => {
   const { stdout } = useStdout();
-  const [viewWidth, setViewWidth] = useState(() => stdout.columns - 6);
+  const [viewWidth] = useState(() => stdout.columns - 6);
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashIndex, setSlashIndex] = useState(0);
+  
+  // CRÍTICO: Manter histórico de renderizações para evitar flicker em paste
+  const renderCountRef = useRef(0);
+  const lastRenderTextRef = useRef("");
+  const stableKeyRef = useRef(0);
 
-  useEffect(() => {
-    const onResize = () => setViewWidth(stdout.columns - 6);
-    stdout.on("resize", onResize);
-    return () => {
-      stdout.off("resize", onResize);
-    };
-  }, [stdout]);
-
-  // Wrapper para onSubmit em modo processing (read-only):
-  // - Qualquer input não vazio do dev é emitido como mensagem simples ao backend
-  // - Sem suporte a prefixos [hint|constraint|override|assume|cancel]
   const permissiveOnSubmit = (value: string) => {
     const trimmed = (value || "").trim();
-
     if (isReadOnly) {
       if (trimmed.length > 0) {
-        const payload = trimmed;
-        uiEventBus.emit("user_overlay", { kind: "message", payload, ts: Date.now() });
-        return; // não envia para o fluxo normal para não poluir o chat
+        uiEventBus.emit("user_overlay", { kind: "message", payload: trimmed, ts: Date.now() });
       }
-      return; // ignore vazios enquanto read-only
+      return;
     }
-
-    // Fora do modo read-only: segue o fluxo normal
     onSubmit(value);
   };
 
   const effectiveReadOnly = isReadOnly;
 
-  const { text, cursorPosition, viewStart, setText } = useCustomInput({
-    // Sobrepõe a lógica padrão: nunca submete se autocomplete aberto
+  const { text, cursorPosition, setText } = useCustomInput({
     onSubmit: (value: string) => {
       if (disableWhileProcessing && isReadOnly) return;
-      if (pathAutocomplete.open) return; // Nunca submit se autocomplete aberto
+      if (pathAutocomplete.open) return;
       permissiveOnSubmit(value);
     },
     viewWidth,
@@ -66,28 +184,58 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     onInterrupt,
   });
 
-  // PREPARO DE VARIÁVEIS DERIVADAS (independente do retorno condicional)
-  const visibleText = text.slice(viewStart, viewStart + viewWidth);
-  const visibleCursorPosition = cursorPosition - viewStart;
-  const textBeforeCursor = visibleText.slice(0, visibleCursorPosition);
-  const charAtCursor = visibleText.slice(visibleCursorPosition, visibleCursorPosition + 1);
-  const textAfterCursor = visibleText.slice(visibleCursorPosition + 1);
+  // Calcula linhas e posição do cursor COM ESTABILIZAÇÃO AGRESSIVA
+  const linesData = useMemo(() => {
+    // Incrementa contador de render apenas se texto mudou de verdade
+    if (lastRenderTextRef.current !== text) {
+      renderCountRef.current++;
+      lastRenderTextRef.current = text;
+      
+      // FORÇA key estável: só muda a cada 10 renders ou quando submit
+      if (renderCountRef.current % 10 === 0) {
+        stableKeyRef.current++;
+      }
+    }
 
-  // Cursor sempre visível: se não houver caractere sob o cursor, usamos um espaço visual
-  const cursorGlyph = charAtCursor && charAtCursor.length > 0 ? charAtCursor : " ";
+    const lines = text.split('\n');
+    
+    // Calcula linha e coluna do cursor
+    let remainingChars = cursorPosition;
+    let cursorLine = 0;
+    let cursorCol = 0;
 
-  // ALTERADO: A cor da borda agora reflete o estado de "read-only"
-  const borderColor = isReadOnly ? "gray" : "gray";
+    for (let i = 0; i < lines.length; i++) {
+      const lineLength = lines[i].length;
+      if (remainingChars <= lineLength) {
+        cursorLine = i;
+        cursorCol = remainingChars;
+        break;
+      }
+      remainingChars -= lineLength + 1;
+      
+      if (i === lines.length - 1) {
+        cursorLine = i;
+        cursorCol = lineLength;
+      }
+    }
 
-  // Define o texto do placeholder. Só será mostrado quando o agente estiver a trabalhar.
+    return {
+      lines,
+      cursorLine,
+      cursorCol,
+      totalLines: lines.length,
+      stableKey: stableKeyRef.current // Key estável para Box container
+    };
+  }, [text, cursorPosition]);
+
+  const displayData = linesData;
+
   const placeholder = isReadOnly ? " Press Esc to cancel | Enter message while agent runs" : "";
-
-  // Determina se o placeholder deve ser mostrado
   const showPlaceholder = text.length === 0 && isReadOnly;
 
   const slashQuery = useMemo(() => (text.startsWith("/") ? text : ""), [text]);
   const slashSuggestions = useMemo(() => {
-    if (!slashQuery) return [] as ReturnType<typeof filterSlashCommands>;
+    if (!slashQuery) return [];
     return filterSlashCommands(slashQuery);
   }, [slashQuery]);
 
@@ -113,16 +261,11 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     } else if (key.return) {
       const choice = slashSuggestions[slashIndex];
       if (choice) {
-        const cmd = choice.name;
         setSlashOpen(false);
-        // Insere o comando completo no input buffer em vez de submeter imediatamente
         try {
-          // useCustomInput.setText expects an optional numeric cursor position as the 2nd arg.
-          // Omitting the 2nd argument moves the cursor to the end (desired behavior here).
-          setText(`${cmd} `);
+          setText(`${choice.name} `);
         } catch (e) {
-          // Se o hook não expor setText por algum motivo, fallback para submissão direta (compatibilidade)
-          permissiveOnSubmit(`${cmd} `);
+          permissiveOnSubmit(`${choice.name} `);
         }
       }
     } else if (key.escape) {
@@ -130,9 +273,6 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     }
   }, { isActive: slashOpen });
 
-  // 2) RENDERIZAÇÃO: EVITAR EARLY RETURN QUE ALTERE ORDEM DE HOOKS
-
-  // --- Forçar cursor no final se flag global estiver setada ---
   useEffect(() => {
     if ((globalThis as any).__BLUMA_FORCE_CURSOR_END__) {
       setText(text, text.length);
@@ -140,11 +280,10 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
     }
   }, [text, setText]);
 
-  // --- Path Autocomplete Integration ---
   const cwd = process.cwd();
   const pathAutocomplete = useAtCompletion({ cwd, text, cursorPosition, setText });
+  
   useInput((input, key) => {
-    // PATH AUTOCOMPLETE: ENTER/TAB só insere path, nunca submete
     if (pathAutocomplete.open) {
       if (key.downArrow) {
         pathAutocomplete.setSelected((i) => Math.min(i + 1, Math.max(0, pathAutocomplete.suggestions.length - 1)));
@@ -153,18 +292,14 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
         pathAutocomplete.setSelected((i) => Math.max(i - 1, 0));
         return;
       } else if (key.return || key.tab) {
-        // Simpler behavior: if autocomplete is open and we have a selected suggestion,
-        // attempt to insert it. We also guard by checking that there is an @ pattern
-        // immediately before the cursor to avoid accidental inserts.
         const selected = pathAutocomplete.suggestions[pathAutocomplete.selected];
         if (selected) {
-          // Quick scan for @pattern before cursor (same logic as useAtCompletion.scanForAt)
           const before = text.slice(0, cursorPosition);
           const m = before.match(/@([\w\/.\-_]*)$/);
           if (m) {
-            (globalThis as any).__BLUMA_SUPPRESS_SUBMIT__ = true; // ensure input hook won't submit
+            (globalThis as any).__BLUMA_SUPPRESS_SUBMIT__ = true;
             pathAutocomplete.insertAtSelection();
-            return; // garante que não prossegue para submit ou reset de cursor
+            return;
           }
         }
         return;
@@ -172,111 +307,69 @@ export const InputPrompt = ({ onSubmit, isReadOnly, onInterrupt, disableWhilePro
         pathAutocomplete.close();
         return;
       }
-      // Enquanto autocomplete aberto, block submit
       return;
     }
   }, { isActive: true });
 
-  // SUBMIT: Só permite se o cursor tiver UM espaço após path
-  function canSubmitGivenCursor() {
-    // Cursor deve não estar "colado" a path gerado pelo @autocomplete;
-    // Checamos se o caractere após cursor é espaço ou fim da string
-    if (visibleCursorPosition < visibleText.length) {
-      return visibleText[visibleCursorPosition] === " ";
-    } else {
-      // Está no final, não envia!
-      return false;
-    }
-  }
-
-  // Adapte o chamado da onSubmit ao checar canSubmitGivenCursor antes de submeter input
-  // (Se necessário, adaptar o hook useCustomInput; aqui ilustramos lógica para uso no permissiveOnSubmit ou onSubmit callback)
-
+  // RENDERIZAÇÃO COM KEY ESTÁVEL: Evita unmount/remount completo do container
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" key={`input-container-${displayData.stableKey}`}>
       {disableWhileProcessing ? (
-        // Modo bloqueado visualmente, mantendo hooks estáveis
-        <>
-          <Box borderStyle="round" borderColor="gray" borderDimColor>
-            <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
-              <Text color="white">{">"} </Text>
-              <Text dimColor>ctrl+c to exit</Text>
-            </Box>
+        <Box>
+          <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
+            <Text color="white">{">"} </Text>
+            <Text dimColor>ctrl+c to exit</Text>
           </Box>
-        </>
+        </Box>
       ) : (
         <>
-          <Box borderStyle="round" borderColor={borderColor} borderDimColor={!isReadOnly}>
-            <Box flexDirection="row" paddingX={1} flexWrap="nowrap">
-              <Text color="white">{">"} </Text>
-              {/* 1. Texto antes do cursor */}
-              <Text>{textBeforeCursor}</Text>
-              {/* 2. Cursor sempre visível */}
-              <Text inverse>{cursorGlyph}</Text>
-              {/* 3. Texto depois do cursor ou placeholder */}
-              {showPlaceholder ? (
-                <Text dimColor>{placeholder}</Text>
-              ) : (
-                <Text>{textAfterCursor}</Text>
-              )}
-            </Box>
+          <Box flexDirection="column">
+            {displayData.lines.map((line, idx) => {
+              const isFirstLine = idx === 0;
+              
+              // Key estável por linha: usa índice + hash do conteúdo
+              const lineKey = `line-${idx}-${line.length}`;
+              
+              return (
+                <Box key={lineKey} flexDirection="row" paddingX={1}>
+                  {isFirstLine && <Text color="white">{">"} </Text>}
+                  {!isFirstLine && <Text color="gray">{"│"} </Text>}
+                  
+                  {showPlaceholder && isFirstLine && line.length === 0 ? (
+                    <Text dimColor>{placeholder}</Text>
+                  ) : (
+                    <TextLine
+                      line={line}
+                      lineIndex={idx}
+                      cursorLine={displayData.cursorLine}
+                      cursorCol={displayData.cursorCol}
+                      showCursor={!isReadOnly}
+                    />
+                  )}
+                </Box>
+              );
+            })}
           </Box>
 
-          {/* SUGESTÃO PATH AUTOCOMPLETE */}
-          {pathAutocomplete.open && pathAutocomplete.suggestions.length > 0 && (() => {
-            const VISIBLE = 7; // max items visible in the suggestions box
-            const total = pathAutocomplete.suggestions.length;
-            const sel = Math.max(0, Math.min(pathAutocomplete.selected, total - 1));
-            // calculate window start so selection is visible and attempts to center
-            let start = Math.max(0, sel - Math.floor(VISIBLE / 2));
-            if (start + VISIBLE > total) start = Math.max(0, total - VISIBLE);
-            const windowItems = pathAutocomplete.suggestions.slice(start, start + VISIBLE);
-            return (
-              <Box flexDirection="column" marginTop={1} height={Math.min(VISIBLE, total)} >
-                {windowItems.map((s, idx) => {
-                  const realIdx = start + idx;
-                  const isSelected = realIdx === pathAutocomplete.selected;
-                  return (
-                    <Box key={s.fullPath} paddingLeft={1} paddingY={0}>
-                      <Text color={isSelected ? "magenta" : "gray"}>
-                        {isSelected ? "❯ " : "  "}
-                      </Text>
-                      <Text color={isSelected ? "magenta" : "white"} bold={isSelected} dimColor={!isSelected}>
-                        {s.label}
-                      </Text>
-                    </Box>
-                  );
-                })}
-              </Box>
-            );
-          })()}
+          {pathAutocomplete.open && pathAutocomplete.suggestions.length > 0 && (
+            <PathSuggestions 
+              suggestions={pathAutocomplete.suggestions} 
+              selected={pathAutocomplete.selected}
+            />
+          )}
 
           {slashOpen && slashSuggestions.length > 0 && (
-            <Box flexDirection="column" marginTop={1}>
-              {slashSuggestions.map((s, idx) => {
-                const isSelected = idx === slashIndex;
-                return (
-                  <Box key={s.name} paddingLeft={1} paddingY={0}>
-                    <Text color={isSelected ? "magenta" : "gray"}>
-                      {isSelected ? "❯ " : "  "}
-                    </Text>
-                    <Text color={isSelected ? "magenta" : "white"} bold={isSelected} dimColor={!isSelected}>
-                      {s.name} <Text color="gray">- {s.description}</Text>
-                    </Text>
-                  </Box>
-                );
-              })}
-            </Box>
+            <SlashSuggestions 
+              suggestions={slashSuggestions} 
+              selectedIndex={slashIndex}
+            />
           )}
         </>
       )}
 
-      {/* Rodapé informativo */}
-      <Box paddingX={1} justifyContent="center">
-        <Text color="gray" dimColor>
-          ctrl+c to exit | /help to explore commands | esc to interrupt | {isReadOnly ? "Read-only mode (message passthrough)" : "Editable mode"}
-        </Text>
-      </Box>
+      <Footer isReadOnly={isReadOnly} />
     </Box>
   );
-};
+});
+
+InputPrompt.displayName = "InputPrompt";
