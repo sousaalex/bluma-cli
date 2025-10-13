@@ -226,22 +226,22 @@ export const renderTodoTool = ({ args }: RenderProps): React.ReactElement => {
           <Text dimColor> todo</Text>
         </Box>
         <Box paddingLeft={2} flexDirection="column">
-          <Text color="cyan">
+          {/* <Text color="cyan">
             📋 {pending} pending, {completed} completed
           </Text>
-          
+           */}
           {tasks.length > 0 && tasks.length <= 10 && (
             <Box paddingLeft={2} flexDirection="column" marginTop={1}>
               {tasks.map((task: any, idx: number) => {
                 const isComplete = task.isComplete === true;
-                const checkbox = isComplete ? '[X]' : '[ ]';
+                const checkbox = isComplete ? '[x]' : '[ ]';
                 const description = task.description || 'No description';
                 const displayText = description.length > 60 
                   ? description.substring(0, 57) + '...' 
                   : description;
                 
                 // Cores: verde para completo, amarelo para pendente
-                const color = isComplete ? 'green' : 'yellow';
+                const color = isComplete ? 'gray' : 'yellow';
                 
                 return (
                   <Text 
