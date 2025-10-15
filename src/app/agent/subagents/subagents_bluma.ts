@@ -4,7 +4,7 @@ import path from 'path';
 
 import { MCPClient } from '../tools/mcp/mcp_client';
 import { ToolInvoker } from '../tool_invoker';
-import type { LLMClient } from '../core/llm';
+import type { LLMClient } from '../core/llm/llm';
 import type { OrchestrationContext } from './types';
 import { getSubAgentByCommand, registerSubAgent } from './registry';
 import { InitSubAgent } from './init/init_subagent';

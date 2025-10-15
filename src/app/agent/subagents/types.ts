@@ -4,7 +4,7 @@ import { EventEmitter } from 'events';
 import { MCPClient } from '../tools/mcp/mcp_client';
 import { ToolInvoker } from '../tool_invoker';
 
-import type { LLMClient } from '../core/llm';
+import type { LLMClient } from '../core/llm/llm';
 export interface OrchestrationContext {
   projectRoot: string;
   eventBus: EventEmitter;

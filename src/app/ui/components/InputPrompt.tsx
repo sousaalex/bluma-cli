@@ -1,4 +1,4 @@
-// Ficheiro: InputPrompt.tsx - CORRIGIDO SEM ALTERAR APP.TSX
+// Ficheiro: InputPrompt.tsx - CÓDIGO COMPLETO E AJUSTADO
 import { Box, Text, useStdout, useInput } from "ink";
 import { useCustomInput } from "../utils/useSimpleInputBuffer.js";
 import { useEffect, useMemo, useState, useRef, memo } from "react";
@@ -296,6 +296,8 @@ export const InputPrompt = memo(({
   const pathAutocomplete = useAtCompletion({ cwd, text, cursorPosition, setText });
   
   useInput((input, key) => {
+    // Early exit for keys that should not interfere with text editing
+    if (key.backspace || key.delete || key.ctrl || key.meta) return;
     if (pathAutocomplete.open) {
       if (key.downArrow) {
         pathAutocomplete.setSelected((i) => Math.min(i + 1, Math.max(0, pathAutocomplete.suggestions.length - 1)));

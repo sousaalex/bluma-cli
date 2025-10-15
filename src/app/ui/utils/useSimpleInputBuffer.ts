@@ -1,4 +1,4 @@
-// Ficheiro: utils/useCustomInput.ts - CORRIGIDO (onSubmit gerencia user_overlay)
+// Ficheiro: utils/useCustomInput.ts - VERSÃO FINAL CORRIGIDA
 import { useReducer, useRef, useCallback, useEffect } from 'react';
 import { useInput, type Key } from 'ink';
 
@@ -138,6 +138,7 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
     }
     
     case 'BACKSPACE': {
+      // Backspace: remove o caractere À ESQUERDA do cursor
       if (state.cursorPosition > 0) {
         const newText =
           state.text.slice(0, state.cursorPosition - 1) +
@@ -150,11 +151,13 @@ function inputReducer(state: InputState, action: InputAction, viewWidth: number)
     }
     
     case 'DELETE': {
+      // Delete: remove o caractere À DIREITA do cursor (cursor NÃO se move)
       if (state.cursorPosition < state.text.length) {
         const newText =
           state.text.slice(0, state.cursorPosition) +
           state.text.slice(state.cursorPosition + 1);
-        return { ...state, text: newText };
+        const newViewStart = adjustView(state.cursorPosition, state.viewStart);
+        return { text: newText, cursorPosition: state.cursorPosition, viewStart: newViewStart };
       }
       return state;
     }
@@ -228,10 +231,44 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
 
   useInput(
     (input, key: Key) => {
-      // Flush buffer se não for input de texto
+      // Detecção de Backspace e Delete
+      const hasBackspaceFlag = key.backspace;
+      const hasDeleteFlag = key.delete;
+      const hasBackspaceChar = input === '\u007F' || input === '\b' || 
+                               input === '\u0008' || input.charCodeAt(0) === 127 || 
+                               input.charCodeAt(0) === 8;
+      
+      // BACKSPACE: flag backspace OU caractere backspace
+      if (hasBackspaceFlag || hasBackspaceChar) {
+        if (inputBuffer.current.length > 0) {
+          flushInputBuffer();
+        }
+        dispatch({ type: 'BACKSPACE' });
+        return;
+      }
+      
+      // DELETE com CTRL/META: apaga à direita
+      if (hasDeleteFlag && (key.ctrl || key.meta)) {
+        if (inputBuffer.current.length > 0) {
+          flushInputBuffer();
+        }
+        dispatch({ type: 'DELETE' });
+        return;
+      }
+      
+      // DELETE sozinho: tratado como BACKSPACE (mapeamento do terminal)
+      if (hasDeleteFlag && !key.ctrl && !key.meta) {
+        if (inputBuffer.current.length > 0) {
+          flushInputBuffer();
+        }
+        dispatch({ type: 'BACKSPACE' });
+        return;
+      }
+
+      // Flush buffer para outras teclas especiais
       if (inputBuffer.current.length > 0 && (key.ctrl || key.meta || key.escape || 
-          key.return || key.backspace || key.delete || key.leftArrow || 
-          key.rightArrow || key.upArrow || key.downArrow || key.tab || key.shift)) {
+          key.return || key.leftArrow || key.rightArrow || key.upArrow || 
+          key.downArrow || key.tab || key.shift)) {
         flushInputBuffer();
       }
 
@@ -241,7 +278,7 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
         return;
       }
 
-      // Em read-only: Enter submete (onSubmit decidirá se é user_overlay ou não)
+      // Em read-only: Enter submete
       if (isReadOnly) {
         if (key.return && !key.shift) {
           if (state.text.trim().length > 0) {
@@ -254,8 +291,6 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
           dispatch({ type: 'NEWLINE' });
           return;
         }
-        if (key.backspace) return dispatch({ type: 'BACKSPACE' });
-        if (key.delete) return dispatch({ type: 'DELETE' });
         if (key.leftArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'left' });
         if (key.rightArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'right' });
         if (key.upArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'up' });
@@ -292,8 +327,6 @@ export const useCustomInput = ({ onSubmit, viewWidth, isReadOnly, onInterrupt }:
       }
       
       // Navegação
-      if (key.backspace) return dispatch({ type: 'BACKSPACE' });
-      if (key.delete) return dispatch({ type: 'DELETE' });
       if (key.leftArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'left' });
       if (key.rightArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'right' });
       if (key.upArrow) return dispatch({ type: 'MOVE_CURSOR', direction: 'up' });

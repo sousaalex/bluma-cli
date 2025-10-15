@@ -4,32 +4,33 @@
       "type": "function",
       "function": {
         "name": "shell_command",
-        "description": "Executes a terminal command in a robust and Windows/Linux compatible way.",
+        "description": "Executes terminal commands in a universal and robust way. Automatically detects the appropriate shell (bash/sh on Linux/macOS, cmd/PowerShell on Windows). Handles timeouts gracefully and captures all output. Use for: installing packages (npm/pip/cargo), running tests, building projects, git operations, and any shell commands.",
         "parameters": {
           "type": "object",
           "properties": {
             "command": {
               "type": "string",
-              "description": "Shell command to execute"
+              "description": "The shell command to execute. Examples: 'npm install express', 'git status', 'pytest tests/', 'cargo build --release'. The command will be executed in the appropriate shell for the OS."
             },
             "timeout": {
               "type": "integer",
-              "description": "Maximum execution time in seconds",
-              "default": 20
+              "description": "Maximum execution time in seconds. Default is 300 (5 minutes). Increase for long-running commands like large builds or npm installs. The process will be terminated gracefully if timeout is exceeded.",
+              "default": 300,
+              "minimum": 1,
+              "maximum": 3600
             },
             "cwd": {
               "type": "string",
-              "description": "Working directory for command execution (must use absolute path)"
+              "description": "Working directory for command execution. Must be an absolute path. Defaults to current working directory if not specified. Use this to execute commands in specific project folders."
             },
             "verbose": {
               "type": "boolean",
-              "description": "If True, returns detailed report; if False, only main output",
+              "description": "If true, returns detailed execution report including platform info, duration, and full output. If false, returns concise output with just status, exit code, and stdout/stderr. Use verbose=true for debugging command issues.",
               "default": false
             }
           },
           "required": [
-            "command",
-            "timeout"
+            "command"
           ]
         }
       }

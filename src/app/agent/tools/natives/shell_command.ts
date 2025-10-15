@@ -1,136 +1,229 @@
 // src/app/agent/tools/shell_command.ts
 
 import os from 'os';
-import { exec, ExecException } from 'child_process';
+import { spawn } from 'child_process';
+import path from 'path';
 
-// --- Tipos e Interfaces ---
-// Definir interfaces claras para os argumentos de entrada e os dados de saída
-// torna a ferramenta previsível e mais fácil para o LLM (e para os humanos) usar.
-
-/**
- * Define a estrutura dos argumentos que a função `shellCommand` aceita.
- */
 interface ShellCommandArgs {
   command: string;
-  timeout: number;
+  timeout?: number;
   cwd?: string;
   verbose?: boolean;
 }
 
-/**
- * Define a estrutura do resultado de uma única tentativa de execução.
- */
 interface CommandResult {
-  method: string;
-  status: 'Success' | 'Error' | 'Timeout';
-  code?: number | null; // Código de saída do processo
-  output?: string;      // Saída padrão (stdout)
-  error?: string;       // Saída de erro (stderr) ou mensagem de erro da execução
-}
-
-/**
- * Define a estrutura do relatório completo, usado no modo 'verbose'.
- */
-interface Report {
-  platform: string;
+  status: 'success' | 'error' | 'timeout';
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
   command: string;
   cwd: string;
-  env?: { [key: string]: string };
-  results: CommandResult[];
+  platform: string;
+  duration: number;
 }
 
 /**
- * Executa um comando de terminal de forma robusta e assíncrona.
- * Esta função foi projetada para ser segura, capturando todos os resultados e erros
- * em um formato JSON estruturado, sem travar a aplicação principal.
- *
- * @param args - Objeto com os parâmetros da função.
- * @param args.command - Comando a executar (ex: 'npm install', 'git pull').
- * @param args.timeout - Tempo máximo de execução em segundos (default: 20).
- * @param args.cwd - Diretório onde executar o comando (default: atual).
- * @param args.verbose - Se True, retorna um relatório detalhado; se False, só o resultado principal.
- * @returns Uma Promise que resolve para uma string JSON com o resultado da execução.
+ * Executa comandos shell de forma universal e robusta.
+ * Suporta Linux, macOS e Windows com detecção automática do shell apropriado.
  */
 export function shellCommand(args: ShellCommandArgs): Promise<string> {
-  // Desestruturação dos argumentos com valores padrão para torná-los opcionais.
-  const { command, timeout = 20, cwd = process.cwd(), verbose = false } = args;
+  const {
+    command,
+    timeout = 300, // 5 minutos por padrão
+    cwd = process.cwd(),
+    verbose = false
+  } = args;
 
-  // Envolvemos toda a lógica em uma Promise. Isso é essencial para lidar com
-  // a natureza assíncrona de `child_process.exec`. A função retornará
-  // imediatamente esta Promise, e o código que a chamou pode usar `await`
-  // para esperar pela sua resolução (quando o comando terminar).
   return new Promise((resolve) => {
-    // Prepara o objeto de relatório que será preenchido.
-    const report: Report = {
-      platform: os.platform(), // Coleta o sistema operacional (ex: 'win32', 'linux')
-      command: command,
-      cwd: cwd,
-      results: [],
-    };
+    const startTime = Date.now();
+    const platform = os.platform();
+    
+    // Detecta o shell apropriado para o sistema operacional
+    let shellCmd: string;
+    let shellArgs: string[];
 
-    // Se o modo verboso estiver ativado, coleta algumas variáveis de ambiente úteis para depuração.
-    if (verbose) {
-      report.env = {
-        PATH: process.env.PATH || "NOT SET",
-        ComSpec: process.env.ComSpec || "NOT SET", // Específico do Windows, útil para saber qual cmd está sendo usado
-      };
+    if (platform === 'win32') {
+      // Windows: usa PowerShell ou cmd
+      shellCmd = process.env.COMSPEC || 'cmd.exe';
+      shellArgs = ['/c', command];
+    } else {
+      // Linux/macOS: usa bash ou sh
+      shellCmd = process.env.SHELL || '/bin/bash';
+      shellArgs = ['-c', command];
     }
 
-    // `child_process.exec` é a função principal. Ela cria um novo processo de shell
-    // e executa o comando dentro dele. Isso é poderoso, pois permite o uso de
-    // pipes (`|`), redirecionamentos (`>`), e outras funcionalidades do shell.
-    const childProcess = exec(
-      command,
-      {
-        // O diretório de trabalho para o comando.
-        cwd: cwd,
-        // O timeout em milissegundos. Se o comando exceder este tempo, ele será encerrado.
-        timeout: timeout * 1000,
-        // A opção `shell` foi removida, pois `exec` usa o shell por padrão.
-        // Especificar a codificação garante que a saída seja tratada como texto UTF-8.
-        encoding: 'utf-8',
-      },
-      // Este é o callback que será executado QUANDO o processo filho terminar,
-      // seja por sucesso, erro ou timeout.
-      (error: ExecException | null, stdout: string, stderr: string) => {
+    let stdout = '';
+    let stderr = '';
+    let timedOut = false;
+    let finished = false;
+
+    // Spawn o processo filho
+    const childProcess = spawn(shellCmd, shellArgs, {
+      cwd: cwd,
+      env: process.env,
+      // Importante: no Windows, precisamos do shell, mas spawn já lida com isso
+      windowsHide: true,
+    });
+
+    // Timeout handler
+    const timeoutId = setTimeout(() => {
+      if (!finished) {
+        timedOut = true;
+        childProcess.kill('SIGTERM');
         
-        // Prepara o objeto de resultado com as informações do processo finalizado.
+        // Se não matar em 2s, força com SIGKILL
+        setTimeout(() => {
+          if (!finished) {
+            childProcess.kill('SIGKILL');
+          }
+        }, 2000);
+      }
+    }, timeout * 1000);
+
+    // Captura stdout
+    if (childProcess.stdout) {
+      childProcess.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+    }
+
+    // Captura stderr
+    if (childProcess.stderr) {
+      childProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+    }
+
+    // Handle de erros no processo
+    childProcess.on('error', (error) => {
+      if (!finished) {
+        finished = true;
+        clearTimeout(timeoutId);
+        
         const result: CommandResult = {
-          method: 'child_process.exec',
-          status: 'Success',
-          // Se `error` existir, ele contém o código de saída. Caso contrário, o código é 0 (sucesso).
-          code: error ? error.code || null : 0,
-          // Limpa espaços em branco do início e fim das saídas.
-          output: stdout.trim(),
-          error: stderr.trim(),
+          status: 'error',
+          exitCode: null,
+          stdout: stdout.trim(),
+          stderr: `Failed to execute command: ${error.message}`,
+          command: command,
+          cwd: cwd,
+          platform: platform,
+          duration: Date.now() - startTime
         };
 
-        // Se o objeto `error` não for nulo, algo deu errado.
-        if (error) {
-          // A propriedade `killed` é `true` se o processo foi encerrado pelo timeout.
-          if (error.killed) {
-            result.status = 'Timeout';
-            // Concatena a mensagem de timeout com qualquer saída de erro que possa ter sido gerada.
-            result.error = `Command exceeded timeout of ${timeout} seconds. ${stderr.trim()}`.trim();
-          } else {
-            // Se não foi timeout, foi um erro de execução (ex: comando não encontrado, permissão negada).
-            result.status = 'Error';
-            // Concatena a mensagem de erro principal com a saída de erro padrão.
-            result.error = `${error.message}\n${stderr.trim()}`.trim();
-          }
-        }
-        
-        // Decide o que retornar com base na flag 'verbose'.
-        if (verbose) {
-          // No modo verboso, adiciona o resultado ao relatório completo.
-          report.results.push(result);
-          // Resolve a Promise com o relatório completo, formatado para leitura humana.
-          resolve(JSON.stringify(report, null, 2));
-        } else {
-          // No modo normal, resolve a Promise apenas com o resultado da execução.
-          resolve(JSON.stringify(result, null, 2));
-        }
+        resolve(formatResult(result, verbose));
       }
-    );
+    });
+
+    // Handle de conclusão do processo
+    childProcess.on('close', (code, signal) => {
+      if (!finished) {
+        finished = true;
+        clearTimeout(timeoutId);
+
+        const result: CommandResult = {
+          status: timedOut ? 'timeout' : (code === 0 ? 'success' : 'error'),
+          exitCode: code,
+          stdout: stdout.trim(),
+          stderr: timedOut 
+            ? `Command timed out after ${timeout} seconds\n${stderr.trim()}`
+            : stderr.trim(),
+          command: command,
+          cwd: cwd,
+          platform: platform,
+          duration: Date.now() - startTime
+        };
+
+        resolve(formatResult(result, verbose));
+      }
+    });
+  });
+}
+
+/**
+ * Formata o resultado para retorno ao agente
+ */
+function formatResult(result: CommandResult, verbose: boolean): string {
+  if (verbose) {
+    return JSON.stringify(result, null, 2);
+  }
+
+  // Modo conciso: apenas as informações essenciais
+  const output: any = {
+    status: result.status,
+    exitCode: result.exitCode
+  };
+
+  if (result.stdout) {
+    output.stdout = result.stdout;
+  }
+
+  if (result.stderr) {
+    output.stderr = result.stderr;
+  }
+
+  if (result.status === 'timeout') {
+    output.message = `Command exceeded timeout of ${result.duration / 1000}s`;
+  }
+
+  return JSON.stringify(output, null, 2);
+}
+
+/**
+ * Versão helper para comandos que precisam de output em tempo real
+ * (útil para npm install, builds longos, etc)
+ */
+export function shellCommandStreaming(
+  command: string,
+  cwd: string = process.cwd(),
+  onOutput?: (data: string, isError: boolean) => void
+): Promise<{ exitCode: number | null; success: boolean }> {
+  return new Promise((resolve) => {
+    const platform = os.platform();
+    let shellCmd: string;
+    let shellArgs: string[];
+
+    if (platform === 'win32') {
+      shellCmd = process.env.COMSPEC || 'cmd.exe';
+      shellArgs = ['/c', command];
+    } else {
+      shellCmd = process.env.SHELL || '/bin/bash';
+      shellArgs = ['-c', command];
+    }
+
+    const childProcess = spawn(shellCmd, shellArgs, {
+      cwd: cwd,
+      env: process.env,
+      windowsHide: true,
+    });
+
+    if (childProcess.stdout && onOutput) {
+      childProcess.stdout.on('data', (data) => {
+        onOutput(data.toString(), false);
+      });
+    }
+
+    if (childProcess.stderr && onOutput) {
+      childProcess.stderr.on('data', (data) => {
+        onOutput(data.toString(), true);
+      });
+    }
+
+    childProcess.on('close', (code) => {
+      resolve({
+        exitCode: code,
+        success: code === 0
+      });
+    });
+
+    childProcess.on('error', (error) => {
+      if (onOutput) {
+        onOutput(`Error: ${error.message}`, true);
+      }
+      resolve({
+        exitCode: null,
+        success: false
+      });
+    });
   });
 }

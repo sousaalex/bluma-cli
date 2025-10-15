@@ -9,7 +9,7 @@ import { ToolInvoker } from './tool_invoker';
 import { MCPClient } from './tools/mcp/mcp_client';
 import { AdvancedFeedbackSystem } from './feedback/feedback_system';
 import { BluMaAgent } from './bluma/core/bluma';
-import { LLMClient, OpenAIAdapter } from './core/llm';
+import { LLMClient, OpenAIAdapter } from './core/llm/llm';
 import { SubAgentsBluMa } from './subagents/subagents_bluma';
 
 // --- Carregamento de Configuração Global ---
@@ -48,7 +48,7 @@ export class Agent {
     const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
     this.deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || '';
 
-    const missing: string[] = [];
+    /* const missing: string[] = [];
     if (!endpoint) missing.push('AZURE_OPENAI_ENDPOINT');
     if (!apiKey) missing.push('AZURE_OPENAI_API_KEY');
     if (!apiVersion) missing.push('AZURE_OPENAI_API_VERSION');
@@ -100,15 +100,21 @@ export class Agent {
       });
       throw new Error(message);
     }
-
-    const openai = new OpenAI({
+ */
+    /* const openai = new OpenAI({
       // Configuração do cliente OpenAI hospedado no Azure
       apiKey: apiKey,
       baseURL: `${endpoint}/openai/deployments/${this.deploymentName}`,
       defaultQuery: { 'api-version': apiVersion },
       defaultHeaders: { 'api-key': apiKey },
     });
-    this.llm = new OpenAIAdapter(openai);
+    this.llm = new OpenAIAdapter(openai); */
+    const ollama = new OpenAI({
+      baseURL: "http://127.0.0.1:11434/v1",
+      apiKey: "ollama", // placeholder
+    });
+
+    this.llm = new OpenAIAdapter(ollama);
 
     // Instancia o núcleo BluMaAgent que cuidará do loop/estado
     this.core = new BluMaAgent(
